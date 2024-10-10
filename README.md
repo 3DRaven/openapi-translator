@@ -45,3 +45,80 @@ In principle, the content of the visitors can be anything, but as an example, I 
 3. In the same folder, there are "tests" These consist of a set of specifications (dir openapi), files resulting from the translation (actual), and reference files for comparison (expected). After the test generates a set of files, a `git diff` comparison is performed, and if there is a difference, the test fails. Thus, to test the scripts, it is not necessary to rebuild the project.
 
 The overall goal of the project is to simplify the customization of the translator as much as possible.
+
+
+## пример скрипта 
+
+```lua
+--- Represents property of type string.
+---@class StringDecriptor
+---@field format string | nil # The format of the string type
+---@field pattern string | nil                 # The pattern for the string type
+---@field enum string[] | nil                  # The enumeration of possible string values
+---@field min_length integer | nil              # The minimum length of the string
+---@field max_length integer | nil              # The maximum length of the string
+
+--- This visitor is invoked when a property of type string is found.
+--- Returns a string based on the provided string descriptor.
+--- @param namesStack ModelName[] # chain of model names from root to this point
+--- @param stringDescriptor StringDecriptor # object descriptor
+--- @param extensions table # table with free form with "x-" OpenAPI extensions for this level of spec
+--- @return WriteOperation[] # Returns the output code and  file name for writing code
+function visitStringProperty(namesStack, stringDescriptor, extensions)
+    local parentModelName = getParentModelName(namesStack)
+    if parentModelName == nil then
+        --- This is possible if a schema is constructed as a separate value;
+        --- such a schema is not a model but can be used as a reference in other schemas.
+        --- For example, you can add descriptions and other elements to it instead of copying them
+        --- within the specification. So, we simply don't need to do anything in this case.
+        print("String property without parent skipt")
+    else
+        local parentType = global_context:getLastParentType("visitStringProperty")
+        if parentType == ParentType.OBJECT or
+            parentType == ParentType.ALL_OF then
+            local currentPropertyName = getCurrentPropertyNameMandatory(namesStack)
+            local required = global_context:isPropertyRequired("visitStringProperty", parentModelName,
+                currentPropertyName)
+            local requiredMarker = getRequiredMarker(required, "@NonNull ")
+
+            local code = string.format("    private %sString %s;\n", requiredMarker,
+                currentPropertyName);
+
+            global_context:addProperties("visitStringProperty", parentModelName,
+                { WriteOperation.new_append(code, parentModelName) })
+        elseif parentType == ParentType.ARRAY then
+        elseif parentType == ParentType.ADDITIONAL then
+        else
+            error("Unknown parent type for String")
+        end
+    end
+    return {}
+end
+
+local function beforeDecorator()
+    global_context:addLastChildrenModelName("visitStringProperty", "String")
+end
+
+return functionCallAndLog("visitStringProperty", visitStringProperty, beforeDecorator)
+
+```
+
+Lua Doc allows the Lua Language Server to understand types and suggest errors. Each script is called with a signature generally similar to the following:
+
+```lua
+function visitStringProperty(namesStack, stringDescriptor, extensions)
+```
+
+- `namesStack`: This is simply the path to this point in the specification, containing the names of models and properties. Visitors can be implemented without this, but I found it more convenient; however, it is optional to use.
+
+- `stringDescriptor`: This is just a set of data that the visitor must process from the specification.
+
+- `extensions`: Extensions are `x-properties` that can be added to the specification for its extension, such as `x-ot-name`, an extension I've used to simplify the assignment of model names; in general, they can be anything. 
+
+Every visitor always receives all associated information in full. Visitors can form a context by passing information to other visitors, for example, using:
+  
+  ```lua
+  global_context:addLastChildrenModelName("visitStringProperty", "String")
+  ```
+  
+For the "parent" visitor, you can convey that a string type is being processed.
