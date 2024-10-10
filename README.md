@@ -118,3 +118,8 @@ function visitStringProperty(namesStack, stringDescriptor, extensions)
 Every visitor always receives all associated information in full. Visitors can form a context by passing information to other visitors, for example, using:
 `global_context:addLastChildrenModelName("visitStringProperty", "String")`
 For the "parent" visitor, you can convey that a string type is being processed.
+
+
+# run example
+
+`openapi-translator -r ./resources -t java translate --spec ./openapi.yml --out ./`

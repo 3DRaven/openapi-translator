@@ -60,6 +60,7 @@ pub fn visit_command(command: &Commands) -> Result<()> {
     } = command
     {
         info!("Command execution start for [{:?}]", spec_path);
+        info!("Output path [{:?}]", out_path);
 
         CACHE
             .lock()
