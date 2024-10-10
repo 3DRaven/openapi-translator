@@ -119,7 +119,6 @@ Every visitor always receives all associated information in full. Visitors can f
 `global_context:addLastChildrenModelName("visitStringProperty", "String")`
 For the "parent" visitor, you can convey that a string type is being processed.
 
-
 # run example
 
 `openapi-translator -r ./resources -t java translate --spec ./openapi.yml --out ./`
