@@ -37,3 +37,11 @@ Options:
 5. During the traversal, visitors are invoked within a shared Lua context, which forms the result of the translation.
 
 In principle, the content of the visitors can be anything, but as an example, I made a translation from OpenAPI 3 to Java models.
+
+# Scripts
+
+1. All scripts are located in the resources folder.
+2. They can be modified without rebuilding the project.
+3. In the same folder, there are "tests" These consist of a set of specifications (dir openapi), files resulting from the translation (actual), and reference files for comparison (expected). After the test generates a set of files, a `git diff` comparison is performed, and if there is a difference, the test fails. Thus, to test the scripts, it is not necessary to rebuild the project.
+
+The overall goal of the project is to simplify the customization of the translator as much as possible.
