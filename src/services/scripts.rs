@@ -28,12 +28,18 @@ where
     let lua_vm = get_lua_vm();
     let func = scripts::get_lua_function(func_name, &lua_vm)?;
 
-    let args_vec = serde_json::to_value(descriptor)?
-        .as_array()
-        .ok_or_else(|| anyhow!("Not a array of args in descriptor"))?
-        .iter()
-        .map(|it| lua_vm.to_value(it))
-        .collect::<Result<Vec<_>, _>>()?;
+    let args_value = serde_json::to_value(descriptor)?;
+
+    let args_vec = if args_value.is_array() {
+        args_value
+            .as_array()
+            .ok_or_else(|| anyhow!("Not a array of args in descriptor"))?
+            .iter()
+            .map(|it| lua_vm.to_value(it))
+            .collect::<Result<Vec<_>, _>>()?
+    } else {
+        vec![lua_vm.to_value(&args_value)?]
+    };
 
     let code: mlua::Value = match &args_vec {
         args if args.len() == 1 => func.call(&args[0]),
