@@ -10,7 +10,7 @@
 --- This visitor is invoked when a property of type number is found.
 --- Returns a code for creating property for number value
 --- @param namesStack ModelName[] # chain of model names from root to this point
---- @param numberDescriptor StringDecriptor # object descriptor
+--- @param numberDescriptor StringDescriptor # object descriptor
 --- @param extensions table # table with free form with "x-" OpenAPI extensions for this level of spec
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 function visitNumberProperty(namesStack, numberDescriptor, extensions)

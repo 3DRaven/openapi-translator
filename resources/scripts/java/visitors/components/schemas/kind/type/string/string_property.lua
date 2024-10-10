@@ -1,5 +1,5 @@
 --- Represents property of type string.
----@class StringDecriptor
+---@class StringDescriptor
 ---@field format string | nil # The format of the string type
 ---@field pattern string | nil                 # The pattern for the string type
 ---@field enum string[] | nil                  # The enumeration of possible string values
@@ -9,7 +9,7 @@
 --- This visitor is invoked when a property of type string is found.
 --- Returns a string based on the provided string descriptor.
 --- @param namesStack ModelName[] # chain of model names from root to this point
---- @param stringDescriptor StringDecriptor # object descriptor
+--- @param stringDescriptor StringDescriptor # object descriptor
 --- @param extensions table # table with free form with "x-" OpenAPI extensions for this level of spec
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 function visitStringProperty(namesStack, stringDescriptor, extensions)

@@ -10,7 +10,7 @@ use crate::{
     services::{code, scripts},
 };
 
-//TODO: сделать одноразовую компиляцию
+//TODO: cached compilation
 pub fn get_lua_function<'a>(script_name: &str, lua: &'a Lua) -> Result<Function<'a>> {
     let script_path = CLI.get_scripts_dir().join(format!("{}.lua", script_name));
     let script = fs::read_to_string(&script_path)
