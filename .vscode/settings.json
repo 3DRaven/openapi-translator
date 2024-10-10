@@ -126,7 +126,8 @@
         "visitResponsesStart",
         "visitResponsesEnd",
         "visitResponseHeaderStart",
-        "visitResponseHeaderEnd"
+        "visitResponseHeaderEnd",
+        "adaptWriteOperations"
     ],
     "terminal.integrated.scrollback": 16777216,
     "references.preferredLocation": "view",

@@ -1,6 +1,9 @@
+
 # openapi-translator
+
 Translator from OpenAPI v3 to some code. Project under development.
-```
+
+```text
 Usage: openapi-translator [OPTIONS] --target <TARGET> <COMMAND>
 
 Commands:
@@ -26,7 +29,6 @@ Options:
 3. By adding Lua Language server to vscode you will receive autocompletion and hints, working refactoring tools
 4. The example is written to generate models for java
 
-
 # How it Works
 
 1. The openapi-translator utility is called.
@@ -45,12 +47,11 @@ In principle, the content of the visitors can be anything, but as an example, I 
 
 The overall goal of the project is to simplify the customization of the translator as much as possible.
 
-
-## Script example 
+## Script example
 
 ```lua
 --- Represents property of type string.
----@class StringDecriptor
+---@class StringDescriptor
 ---@field format string | nil # The format of the string type
 ---@field pattern string | nil                 # The pattern for the string type
 ---@field enum string[] | nil                  # The enumeration of possible string values
@@ -60,7 +61,7 @@ The overall goal of the project is to simplify the customization of the translat
 --- This visitor is invoked when a property of type string is found.
 --- Returns a string based on the provided string descriptor.
 --- @param namesStack ModelName[] # chain of model names from root to this point
---- @param stringDescriptor StringDecriptor # object descriptor
+--- @param stringDescriptor StringDescriptor # object descriptor
 --- @param extensions table # table with free form with "x-" OpenAPI extensions for this level of spec
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 function visitStringProperty(namesStack, stringDescriptor, extensions)
@@ -70,7 +71,7 @@ function visitStringProperty(namesStack, stringDescriptor, extensions)
         --- such a schema is not a model but can be used as a reference in other schemas.
         --- For example, you can add descriptions and other elements to it instead of copying them
         --- within the specification. So, we simply don't need to do anything in this case.
-        print("String property without parent skipt")
+        print("String property without parent skip")
     else
         local parentType = global_context:getLastParentType("visitStringProperty")
         if parentType == ParentType.OBJECT or
@@ -112,12 +113,8 @@ function visitStringProperty(namesStack, stringDescriptor, extensions)
 
 - `stringDescriptor`: This is just a set of data that the visitor must process from the specification.
 
-- `extensions`: Extensions are `x-properties` that can be added to the specification for its extension, such as `x-ot-name`, an extension I've used to simplify the assignment of model names; in general, they can be anything. 
+- `extensions`: Extensions are `x-properties` that can be added to the specification for its extension, such as `x-ot-name`, an extension I've used to simplify the assignment of model names; in general, they can be anything.
 
 Every visitor always receives all associated information in full. Visitors can form a context by passing information to other visitors, for example, using:
-  
-  ```lua
-  global_context:addLastChildrenModelName("visitStringProperty", "String")
-  ```
-  
+`global_context:addLastChildrenModelName("visitStringProperty", "String")`
 For the "parent" visitor, you can convey that a string type is being processed.
