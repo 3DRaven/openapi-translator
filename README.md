@@ -1,5 +1,5 @@
 # openapi-translator
-Translator from OpenAPI v3 to some code
+Translator from OpenAPI v3 to some code. Project under development.
 ```
 Usage: openapi-translator [OPTIONS] --target <TARGET> <COMMAND>
 
@@ -25,7 +25,6 @@ Options:
 2. Lua scripts work in one common context as a set of visitors, just like in a regular parser
 3. By adding Lua Language server to vscode you will receive autocompletion and hints, working refactoring tools
 4. The example is written to generate models for java
-5. Project under development
 
 
 # How it Works
