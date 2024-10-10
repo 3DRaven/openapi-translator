@@ -1,6 +1,6 @@
 # openapi-translator
 Translator from OpenAPI v3 to some code
-
+```
 Usage: openapi-translator [OPTIONS] --target <TARGET> <COMMAND>
 
 Commands:
@@ -19,7 +19,7 @@ Options:
           Print help
   -V, --version
           Print version
-
+```
 
 1. It is based on a set of lua scripts; in order to customize the generation, you do not need to rebuild the project.
 2. Lua scripts work in one common context as a set of visitors, just like in a regular parser
