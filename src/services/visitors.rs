@@ -29,11 +29,12 @@ use crate::{
         SCRIPT_OBJECT_END, SCRIPT_OBJECT_PROPERTY_END, SCRIPT_OBJECT_PROPERTY_START,
         SCRIPT_OBJECT_START, SCRIPT_ONE_OF_END, SCRIPT_ONE_OF_SCHEMA_END,
         SCRIPT_ONE_OF_SCHEMA_START, SCRIPT_ONE_OF_START, SCRIPT_RESPONSES_END,
-        SCRIPT_RESPONSES_START, SCRIPT_RESPONSE_END, SCRIPT_RESPONSE_HEADERS_END,
-        SCRIPT_RESPONSE_HEADERS_START, SCRIPT_RESPONSE_START, SCRIPT_SCHEMAS_END,
-        SCRIPT_SCHEMAS_START, SCRIPT_SCHEMA_DEFAULT, SCRIPT_SCHEMA_DISCRIMINATOR,
-        SCRIPT_SCHEMA_END, SCRIPT_SCHEMA_EXAMPLE, SCRIPT_SCHEMA_EXTERNAL_DOCS, SCRIPT_SCHEMA_START,
-        SCRIPT_SPEC_END, SCRIPT_SPEC_EXTERNAL_DOCS, SCRIPT_SPEC_INFO, SCRIPT_SPEC_INFO_CONTACT,
+        SCRIPT_RESPONSES_START, SCRIPT_RESPONSE_END, SCRIPT_RESPONSE_HEADER_END,
+        SCRIPT_RESPONSE_HEADER_EXAMPLE, SCRIPT_RESPONSE_HEADER_START, SCRIPT_RESPONSE_START,
+        SCRIPT_SCHEMAS_END, SCRIPT_SCHEMAS_START, SCRIPT_SCHEMA_DEFAULT,
+        SCRIPT_SCHEMA_DISCRIMINATOR, SCRIPT_SCHEMA_END, SCRIPT_SCHEMA_EXAMPLE,
+        SCRIPT_SCHEMA_EXTERNAL_DOCS, SCRIPT_SCHEMA_START, SCRIPT_SPEC_END,
+        SCRIPT_SPEC_EXTERNAL_DOCS, SCRIPT_SPEC_INFO, SCRIPT_SPEC_INFO_CONTACT,
         SCRIPT_SPEC_INFO_LICENSE, SCRIPT_SPEC_SECURITIES_END, SCRIPT_SPEC_SECURITIES_START,
         SCRIPT_SPEC_SECURITY, SCRIPT_SPEC_SERVER, SCRIPT_SPEC_SERVERS_END,
         SCRIPT_SPEC_SERVERS_START, SCRIPT_SPEC_SERVER_VARIABLE, SCRIPT_SPEC_START, SCRIPT_SPEC_TAG,
@@ -620,9 +621,47 @@ pub fn visit_header(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
     names_stack: Vec<ModelName>,
-    headers: &ReferenceOr<Header>,
-    extensions: &IndexMap<String, serde_json::Value>,
+    header_name: &str,
+    header: &ReferenceOr<Header>,
 ) -> Result<()> {
+    match header {
+        ReferenceOr::Reference { reference } => {
+            visit_header(
+                parsed_spec,
+                out_path,
+                names_stack,
+                header_name,
+                references::resolve_reference::<Header>(reference, parsed_spec)?,
+            )?;
+        }
+        ReferenceOr::Item(header) => {
+            let mut property_stack = names_stack.clone();
+            property_stack.push(ModelName {
+                base: header_name.to_owned(),
+                extended: header.extensions.get(DEFAULT_EXTENSION_FOR_NAME).cloned(),
+            });
+
+            scripts::call_with_descriptor(
+                out_path,
+                &(&property_stack, &header, &header.extensions),
+                SCRIPT_RESPONSE_HEADER_START,
+            )?;
+
+            scripts::call_with_descriptor(
+                out_path,
+                &(&property_stack, &header.example, &header.extensions),
+                SCRIPT_RESPONSE_HEADER_EXAMPLE,
+            )?;
+
+            // header.example
+
+            scripts::call_with_descriptor(
+                out_path,
+                &(&property_stack, &header, &header.extensions),
+                SCRIPT_RESPONSE_HEADER_END,
+            )?;
+        }
+    }
     Ok(())
 }
 
@@ -633,40 +672,21 @@ pub fn visit_headers(
     headers: &IndexMap<String, ReferenceOr<Header>>,
     extensions: &IndexMap<String, serde_json::Value>,
 ) -> Result<()> {
-    scripts::call_with_descriptor(
-        out_path,
-        &(names_stack.clone(), headers, extensions),
-        SCRIPT_RESPONSE_HEADERS_START,
-    )?;
+    // scripts::call_with_descriptor(
+    //     out_path,
+    //     &(names_stack.clone(), headers, extensions),
+    //     SCRIPT_RESPONSE_HEADERS_START,
+    // )?;
 
-    headers.iter().try_for_each(|it| match it.1 {
-        ReferenceOr::Reference { reference } => visit_header(
-            parsed_spec,
-            out_path,
-            names_stack.clone(),
-            references::resolve_reference::<Header>(reference, parsed_spec)?,
-            extensions,
-        ),
-        ReferenceOr::Item(header) => {
-            let mut property_stack = names_stack.clone();
-            property_stack.push(ModelName {
-                base: it.0.to_owned(),
-                extended: header.extensions.get(DEFAULT_EXTENSION_FOR_NAME).cloned(),
-            });
+    // headers
+    //     .iter()
+    //     .try_for_each(|it| visit_header(parsed_spec, out_path, names_stack.clone(), it.0, it.1))?;
 
-            scripts::call_with_descriptor(
-                out_path,
-                &(names_stack.clone(), headers, extensions),
-                SCRIPT_RESPONSE_HEADERS_START,
-            )
-        }
-    })?;
-
-    scripts::call_with_descriptor(
-        out_path,
-        &(names_stack.clone(), headers, extensions),
-        SCRIPT_RESPONSE_HEADERS_END,
-    )?;
+    // scripts::call_with_descriptor(
+    //     out_path,
+    //     &(names_stack.clone(), headers, extensions),
+    //     SCRIPT_RESPONSE_HEADERS_END,
+    // )?;
     Ok(())
 }
 

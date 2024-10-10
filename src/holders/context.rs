@@ -40,6 +40,11 @@ pub const SCRIPT_RESPONSE_END: &str = "visitors/components/responses/response_en
 pub const SCRIPT_RESPONSE_HEADERS_START: &str =
     "visitors/components/responses/response_headers_start";
 pub const SCRIPT_RESPONSE_HEADERS_END: &str = "visitors/components/responses/response_headers_end";
+pub const SCRIPT_RESPONSE_HEADER_START: &str =
+    "visitors/components/responses/response_header_start";
+pub const SCRIPT_RESPONSE_HEADER_END: &str = "visitors/components/responses/response_header_end";
+pub const SCRIPT_RESPONSE_HEADER_EXAMPLE: &str =
+    "visitors/components/responses/response_header_example";
 
 pub const SCRIPT_SCHEMAS_START: &str = "visitors/components/schemas/schemas_start";
 pub const SCRIPT_SCHEMAS_END: &str = "visitors/components/schemas/schemas_end";

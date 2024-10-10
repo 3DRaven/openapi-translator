@@ -1,14 +1,14 @@
 
 # openapi-translator
 
-Translator from OpenAPI v3 to some code. Project under development.
+Translator from OpenAPI v3 to some code. Project under development. The core is written in Rust, and a set of visitors written in Lua is called for code generation.
 
 ```text
 Usage: openapi-translator [OPTIONS] --target <TARGET> <COMMAND>
 
 Commands:
-  test       
-  translate  
+  test
+  translate
   help       Print this message or the help of the given subcommand(s)
 
 Options:
