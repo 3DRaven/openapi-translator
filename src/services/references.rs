@@ -7,13 +7,12 @@ use std::sync::Arc;
 use crate::holders::context::compute_if_absent;
 use crate::holders::context::CLIENT;
 use crate::structs::common::ParsedSpec;
-use crate::traits::common::AsSchemaRef;
 
 use anyhow::anyhow;
 use anyhow::Context;
 use anyhow::Result;
 use log::debug;
-use openapiv3::{ReferenceOr, Schema};
+use openapiv3::ReferenceOr;
 use serde::de::DeserializeOwned;
 use url::Url;
 

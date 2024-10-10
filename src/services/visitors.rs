@@ -622,34 +622,6 @@ pub fn visit_header(
     headers: &ReferenceOr<Header>,
     extensions: &IndexMap<String, serde_json::Value>,
 ) -> Result<()> {
-    headers.iter().try_for_each(|it| {
-        match it.1 {
-            ReferenceOr::Reference { reference } => {
-                visit_header(
-                    parsed_spec,
-                    out_path,
-                    names_stack.clone(),
-                    &it.headers,
-                    response_extensions,
-                )?;
-            }
-            ReferenceOr::Item(_) => todo!(),
-        }
-        let mut property_stack = names_stack.clone();
-        property_stack.push(ModelName {
-            base: String::from("discriminator"),
-            extended: discriminator
-                .extensions
-                .get(DEFAULT_EXTENSION_FOR_NAME)
-                .cloned(),
-        });
-
-        scripts::call_with_descriptor(
-            out_path,
-            &(property_stack, discriminator, &discriminator.extensions),
-            SCRIPT_SCHEMA_DISCRIMINATOR,
-        )
-    })?;
     Ok(())
 }
 
