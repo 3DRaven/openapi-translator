@@ -26,3 +26,14 @@ Options:
 3. By adding Lua Language server to vscode you will receive autocompletion and hints, working refactoring tools
 4. The example is written to generate models for java
 5. Project under development
+
+
+# How it Works
+
+1. The openapi-translator utility is called.
+2. It loads the OpenAPI 3 specification and parses it.
+3. Then, traversal of the parsed model by visitors begins.
+4. A prelude.lua script is executed before all visitors, where common functions can be written.
+5. During the traversal, visitors are invoked within a shared Lua context, which forms the result of the translation.
+
+In principle, the content of the visitors can be anything, but as an example, I made a translation from OpenAPI 3 to Java models.
