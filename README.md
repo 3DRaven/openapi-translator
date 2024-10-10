@@ -47,7 +47,7 @@ In principle, the content of the visitors can be anything, but as an example, I 
 The overall goal of the project is to simplify the customization of the translator as much as possible.
 
 
-## пример скрипта 
+## Script example 
 
 ```lua
 --- Represents property of type string.
