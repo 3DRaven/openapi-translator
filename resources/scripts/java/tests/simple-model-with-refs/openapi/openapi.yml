@@ -1,0 +1,119 @@
+openapi: "3.1.0"
+info:
+  version: 1.0.0
+  title: Simple model generated
+servers:
+  - url: http://localhost
+paths:
+  /endpoint:
+    get:
+      responses:
+        "200":
+          description: just a stub
+x-ot-target-parameters:
+  test: string value
+  test1: 1
+  test2:
+    value: 1
+    value2: 2
+components:
+  schemas:
+    Object:
+      ## schema level extensions here
+      # object_start with schema level extensions script
+      type: object
+      properties:
+        # object_property_start with schema level extensions script
+        value:
+          ## string level extensions here
+          # string_property with string level extensions script
+          type: string
+        # object_property_end with schema level extensions script
+        # object_property_start with schema level extensions script
+        value1:
+          ## integer level extensions here
+          # integer_property with integer level extensions script
+          type: string
+        # object_property_end with schema level extensions script
+
+    Array:
+      type: array
+      items:
+        type: string
+    ArrayWithArrayWithArray:
+      type: array
+      items:
+        type: array
+        items:
+          type: array
+          items:
+            type: string
+    ObjectWitArray:
+      type: object
+      properties:
+        value:
+          type: array
+          items:
+            type: string
+    ArrayWitObjects:
+      type: array
+      items:
+        type: object
+        properties:
+          value:
+            type: string
+    FreeAdd1:
+      type: object
+      x-ot-additional-properties-name: customName
+      additionalProperties: true
+    Any:
+      type: object
+      additionalProperties:
+        type: object
+    Person:
+      type: object
+      properties:
+        freeAdd1:
+          type: object
+          additionalProperties: true
+        freeAddWithCustomName:
+          type: object
+          x-ot-additional-properties-name: customName
+          additionalProperties: true
+        freeAdd2:
+          type: object
+          additionalProperties: {}
+        stringAdd:
+          type: object
+          additionalProperties:
+            type: string
+        objectAdd:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              value:
+                type: string
+        address:
+          type: object
+          properties:
+            value:
+              type: string
+        addressWithAdds:
+          type: object
+          properties:
+            value:
+              type: string
+          additionalProperties:
+            type: object
+            x-ot-additional-properties-name: customAdditionalPropertiesName
+            x-ot-name: CustomObjectName
+            properties:
+              value:
+                type: string
+        emails:
+          type: array
+          items:
+            type: string
+        regular:
+          type: string

@@ -1,0 +1,47 @@
+openapi: "3.1.0"
+info:
+  version: 1.0.0
+  title: Swagger Petstore
+  license:
+    name: MIT
+servers:
+  - url: http://petstore.swagger.io/v1
+paths:
+  /pets:
+    get:
+      responses:
+        '200':
+          description: A paged array of pets
+components:
+  schemas:
+    BooleanModel:
+      type: object
+      required:
+        - value
+      properties:
+        value:
+          type: boolean
+        inner_type:
+          type: object
+          x-model-name: InnerTtype
+          properties:
+            prop:
+              type: string
+            link:
+              $ref: #/components/schemas/AdditionalProperties
+    AdditionalProperties:
+      type: object
+      x-ot-name: Test
+      additionalProperties:
+        x-ot-additional-properties-name: InnerAdditionalProperties
+        type: string
+    LocalPets:
+      type: array
+      maxItems: 100
+      items:
+        $ref: "separated.yml#/components/schemas/Pet"
+    RemotePets:
+      type: array
+      maxItems: 100
+      items:
+        $ref: https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/examples/v3.0/petstore.yaml#/components/schemas/Pet

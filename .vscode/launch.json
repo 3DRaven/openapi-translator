@@ -1,0 +1,36 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug",
+            "type": "lldb",
+            "request": "launch",
+            // "initCommands": ["settings set target.process.thread.step-avoid-libraries std"],
+            "program": "${workspaceRoot}/target/debug/openapi-translator",
+            "args": [
+                "-t",
+                "java",
+                "-p",
+                "{\"replaces\":1}",
+                "test",
+                // "-n",
+                // "simple-model-with-refs",
+                "-n",
+                "inheritance",
+                // "-n",
+                // "cycled-refs",
+                // "-n",
+                // "hard"
+            ],
+            "cwd": "${workspaceRoot}",
+            "stopOnEntry": false,
+            "preLaunchTask": "rust: cargo fix warnings and build",
+            "sourceLanguages": [
+                "rust"
+            ]
+        }
+    ]
+}
