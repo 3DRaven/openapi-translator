@@ -106,15 +106,14 @@ return functionCallAndLog("visitStringProperty", visitStringProperty, beforeDeco
 
 Lua Doc allows the Lua Language Server to understand types and suggest errors. Each script is called with a signature generally similar to the following:
 
-```lua
-function visitStringProperty(namesStack, stringDescriptor, extensions)
-```
+`function visitStringProperty(namesStack, stringDescriptor, extensions)`
 
 - `namesStack`: This is simply the path to this point in the specification, containing the names of models and properties. Visitors can be implemented without this, but I found it more convenient; however, it is optional to use.
 
 - `stringDescriptor`: This is just a set of data that the visitor must process from the specification.
 
 - `extensions`: Extensions are `x-properties` that can be added to the specification for its extension, such as `x-ot-name`, an extension I've used to simplify the assignment of model names; in general, they can be anything.
+- `return value`: for all scripts it is WriteOperation[] it is single write operation to some file or file removing operation.
 
 Every visitor always receives all associated information in full. Visitors can form a context by passing information to other visitors, for example, using:
 `global_context:addLastChildrenModelName("visitStringProperty", "String")`
