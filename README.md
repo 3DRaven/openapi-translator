@@ -1,88 +1,28 @@
 # openapi-translator
 Translator from OpenAPI v3 to some code
 
+Usage: openapi-translator [OPTIONS] --target <TARGET> <COMMAND>
+
+Commands:
+  test       
+  translate  
+  help       Print this message or the help of the given subcommand(s)
+
+Options:
+  -t, --target <TARGET>
+          Name of dir with translation scripts and tests
+  -p, --target-parameters <TARGET_PARAMETERS>
+          Parameters for target Lua scripts are simply JSON of arbitrary structure, which will be converted into a Lua table and passed to the scripts as a global parameter named targetParameters. These parameters will replace the parameters passed in the OpenAPI spec as x-ot-target-parameters
+  -r, --resources <RESOURCES>
+          Base dir for all translator resources [default: resources]
+  -h, --help
+          Print help
+  -V, --version
+          Print version
 
 
-1. Пройти через схему, определить имя
-2. Пройти в массив, он пишется в ту же модель
-
-type: array
-items:
-    type: string
-
-val array: List<         String            >
-
-Model:
-  type: array
-  items:
-    type: array
-    items:
-      type: integer
-
-val array: List<        List<String>       >
-
-
-{
-  "p":[{id}]
-}
-
-Model:
-  type: object
-  properties:
-    p:
-      type: array
-      items:
-        type: object
-        properties:
-          id:
-            type: integer
-
-#С разбиением на модели, методы возвращают [(code,model),(code,model)]
-Model:
-  type: object_start [{Model,1}] >w
-  properties: 
-    ppp:
-      type: string [{Model,1},{ppp,2}] >>w
-    prop:         
-      type: object_start [{Model,1},{prop,2}] >w
-      properties:
-          arr:      
-            type: array_start [{Model,1},{prop,2},{arr,3}] >>w
-            items: string [{Model,1},{prop,2},{arr,3}] >>w
-            additionalProperties::
-              type: object_start [{Model,1},{prop,2},{arr,3}] >w 
-              properties:
-                id:
-                  type: integer [{Model,1},{prop,2},{arr,3},{id,4}] >>w
-              type: object_end [{Model,1},{prop,2},{arr,3}] >w>w 
-            type: array_end [{Model,1},{prop,2},{arr,3}] >>w            
-      type: object_end [{Model,1},{prop,2}] >w>w
-  type: object_end [{Model,1}] >w>-
-
-#без разбиения на модели
-Model:
-  type: object [{Model,1}] >1
-  properties: 
-    ppp:
-      type: string [{Model,1},{ppp,2}] >1
-    prop:         
-      type: object [{Model,1},{prop,2}] >1
-      properties:
-          arr:      
-            type: array [{Model,1},{prop,2},{arr,3}] >1
-            items: string [{Model,1},{prop,2},{arr,3}] >1
-            items:
-              type: object [{Model,1},{prop,2},{arr,3}] >1 
-              properties:
-                id:
-                  type: integer [{Model,1},{prop,2},{arr,3},{id,4}] >1
-
-
-val array: List<         Model               >
-
-type: array
-items:
-  $ref: '#/components/schemas/Pet'
-
-val array: $ref
-
+1. It is based on a set of lua scripts; in order to customize the generation, you do not need to rebuild the project.
+2. Lua scripts work in one common context as a set of visitors, just like in a regular parser
+3. By adding Lua Language server to vscode you will receive autocompletion and hints, working refactoring tools
+4. The example is written to generate models for java
+5. Project under development
