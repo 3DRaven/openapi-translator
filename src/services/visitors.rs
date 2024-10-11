@@ -191,7 +191,7 @@ fn compare_and_save_diff(actual_path: &Path, expected_path: &Path, patch_dir: &P
 pub fn visit_not<T>(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
-    names_stack: Vec<ModelName>,
+    names_stack: &[ModelName],
     schema_ref: &ReferenceOr<T>,
 ) -> Result<()>
 where
@@ -199,7 +199,7 @@ where
 {
     let schema_extensions = schema::get_extensions_with_schema_resolving(parsed_spec, schema_ref)?;
 
-    let mut property_stack = names_stack.clone();
+    let mut property_stack = names_stack.to_vec();
     property_stack.push(ModelName {
         base: String::from("not"),
         extended: schema_extensions
@@ -213,7 +213,7 @@ where
         SCRIPT_NOT_PROPERTY_START,
     )?;
 
-    visit_schema(parsed_spec, out_path, property_stack.clone(), schema_ref)?;
+    visit_schema(parsed_spec, out_path, &mut property_stack, schema_ref)?;
 
     scripts::call_with_descriptor(
         out_path,
@@ -225,7 +225,7 @@ where
 pub fn visit_schema<T>(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
-    mut names_stack: Vec<ModelName>,
+    names_stack: &mut [ModelName],
     schema_ref: &ReferenceOr<T>,
 ) -> Result<()>
 where
@@ -236,7 +236,7 @@ where
             visit_schema(
                 parsed_spec,
                 out_path,
-                names_stack.clone(),
+                names_stack,
                 references::resolve_reference::<T>(reference, parsed_spec)?,
             )?;
         }
@@ -251,80 +251,71 @@ where
 
             scripts::call_with_descriptor(
                 out_path,
-                &(names_stack.clone(), schema_data, schema_extensions),
+                &(&names_stack, &schema_data, &schema_extensions),
                 SCRIPT_SCHEMA_START,
             )?;
 
-            visit_discriminator(out_path, names_stack.clone(), schema_data)?;
-            visit_schema_external_docs(out_path, names_stack.clone(), schema_data)?;
-            visit_schema_example(out_path, names_stack.clone(), schema_data)?;
-            visit_schema_default(out_path, names_stack.clone(), schema_data)?;
+            visit_discriminator(out_path, names_stack, schema_data)?;
+            visit_schema_external_docs(out_path, names_stack, schema_data)?;
+            visit_schema_example(out_path, names_stack, schema_data)?;
+            visit_schema_default(out_path, names_stack, schema_data)?;
 
             match &schema_item.as_schema().schema_kind {
                 openapiv3::SchemaKind::Type(type_) => match type_ {
                     openapiv3::Type::Object(object_descriptor) => visit_object(
                         parsed_spec,
                         out_path,
-                        names_stack.clone(),
+                        names_stack,
                         object_descriptor,
                         schema_extensions,
                     )?,
                     openapiv3::Type::Array(array_descriptor) => visit_array(
                         parsed_spec,
                         out_path,
-                        names_stack.clone(),
+                        names_stack,
                         array_descriptor,
                         schema_extensions,
                     )?,
                     // Simple types
-                    openapiv3::Type::String(string_descriptor) => visit_string(
-                        out_path,
-                        names_stack.clone(),
-                        string_descriptor,
-                        schema_extensions,
-                    )?,
-                    openapiv3::Type::Number(number_descriptor) => visit_number(
-                        out_path,
-                        names_stack.clone(),
-                        number_descriptor,
-                        schema_extensions,
-                    )?,
-                    openapiv3::Type::Integer(integer_descriptor) => visit_integer(
-                        out_path,
-                        names_stack.clone(),
-                        integer_descriptor,
-                        schema_extensions,
-                    )?,
+                    openapiv3::Type::String(string_descriptor) => {
+                        visit_string(out_path, names_stack, string_descriptor, schema_extensions)?
+                    }
+                    openapiv3::Type::Number(number_descriptor) => {
+                        visit_number(out_path, names_stack, number_descriptor, schema_extensions)?
+                    }
+                    openapiv3::Type::Integer(integer_descriptor) => {
+                        visit_integer(out_path, names_stack, integer_descriptor, schema_extensions)?
+                    }
                     openapiv3::Type::Boolean(_) => {
-                        visit_boolean(out_path, names_stack.clone(), schema_extensions)?
+                        visit_boolean(out_path, names_stack, schema_extensions)?
                     }
                 },
                 openapiv3::SchemaKind::OneOf { one_of } => visit_one_of(
                     parsed_spec,
                     out_path,
-                    names_stack.clone(),
+                    names_stack,
                     one_of,
                     schema_extensions,
                 )?,
                 openapiv3::SchemaKind::AllOf { all_of } => visit_all_of(
                     parsed_spec,
                     out_path,
-                    names_stack.clone(),
+                    names_stack,
                     all_of,
                     schema_extensions,
                 )?,
                 openapiv3::SchemaKind::AnyOf { any_of } => visit_any_of(
                     parsed_spec,
                     out_path,
-                    names_stack.clone(),
+                    names_stack,
                     any_of,
                     schema_extensions,
                 )?,
                 openapiv3::SchemaKind::Not { not } => {
-                    visit_not(parsed_spec, out_path, names_stack.clone(), not)?
+                    visit_not(parsed_spec, out_path, names_stack, not)?
                 }
                 openapiv3::SchemaKind::Any(any_schema) => {
-                    visit_any_schema(out_path, names_stack.clone(), any_schema, schema_extensions)?
+                    visit_any_schema(out_path, names_stack, any_schema, schema_extensions)?
                 }
             }
             scripts::call_with_descriptor(
@@ -340,7 +331,7 @@ where
 pub fn visit_response(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
-    mut names_stack: Vec<ModelName>,
+    names_stack: &mut [ModelName],
     response_ref: &ReferenceOr<Response>,
 ) -> Result<()> {
     match response_ref {
@@ -348,7 +339,7 @@ pub fn visit_response(
             visit_response(
                 parsed_spec,
                 out_path,
-                names_stack.clone(),
+                names_stack,
                 references::resolve_reference::<Response>(reference, parsed_spec)?,
             )?;
         }
@@ -361,14 +352,14 @@ pub fn visit_response(
 
             scripts::call_with_descriptor(
                 out_path,
-                &(names_stack.clone(), it, response_extensions),
+                &(&names_stack, it, &response_extensions),
                 SCRIPT_RESPONSE_START,
             )?;
 
             visit_headers(
                 parsed_spec,
                 out_path,
-                names_stack.clone(),
+                names_stack,
                 &it.headers,
                 response_extensions,
             )?;
@@ -385,7 +376,7 @@ pub fn visit_response(
 
 pub fn visit_string(
     out_path: &Path,
-    names_stack: Vec<ModelName>,
+    names_stack: &[ModelName],
     string_descriptor: &StringType,
     extensions: &IndexMap<String, serde_json::Value>,
 ) -> Result<()> {
@@ -398,7 +389,7 @@ pub fn visit_string(
 
 pub fn visit_any_schema(
     out_path: &Path,
-    names_stack: Vec<ModelName>,
+    names_stack: &[ModelName],
     any_schema_descriptor: &AnySchema,
     extensions: &IndexMap<String, serde_json::Value>,
 ) -> Result<()> {
@@ -411,7 +402,7 @@ pub fn visit_any_schema(
 
 pub fn visit_number(
     out_path: &Path,
-    names_stack: Vec<ModelName>,
+    names_stack: &[ModelName],
     number_descriptor: &NumberType,
     extensions: &IndexMap<String, serde_json::Value>,
 ) -> Result<()> {
@@ -424,7 +415,7 @@ pub fn visit_number(
 
 pub fn visit_integer(
     out_path: &Path,
-    names_stack: Vec<ModelName>,
+    names_stack: &[ModelName],
     integer_descriptor: &IntegerType,
     extensions: &IndexMap<String, serde_json::Value>,
 ) -> Result<()> {
@@ -438,13 +429,13 @@ pub fn visit_integer(
 pub fn visit_array(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
-    names_stack: Vec<ModelName>,
+    names_stack: &[ModelName],
     array_descriptor: &ArrayType,
     extensions: &IndexMap<String, serde_json::Value>,
 ) -> Result<()> {
     scripts::call_with_descriptor(
         out_path,
-        &(names_stack.clone(), array_descriptor, extensions),
+        &(names_stack, array_descriptor, extensions),
         SCRIPT_ARRAY_PROPERTY_START,
     )?;
 
@@ -454,13 +445,13 @@ pub fn visit_array(
         .map(|schema_ref| -> Result<()> {
             let array_item_extensions =
                 schema::get_extensions_with_schema_resolving(parsed_spec, schema_ref)?;
-            let mut property_name_stack = names_stack.clone();
+            let mut property_name_stack = names_stack.to_vec();
             // Array it is as object with one property with name items
             property_name_stack.push(ModelName {
                 base: String::from("items"),
                 extended: array_item_extensions.get(EXTENSION_FOR_NAME).cloned(),
             });
-            visit_schema(parsed_spec, out_path, property_name_stack, schema_ref)?;
+            visit_schema(parsed_spec, out_path, &mut property_name_stack, schema_ref)?;
             Ok(())
         })
         .transpose()?;
@@ -474,7 +465,7 @@ pub fn visit_array(
 
 pub fn visit_boolean(
     out_path: &Path,
-    names_stack: Vec<ModelName>,
+    names_stack: &[ModelName],
     extensions: &IndexMap<String, serde_json::Value>,
 ) -> Result<()> {
     scripts::call_with_descriptor(
@@ -487,7 +478,7 @@ pub fn visit_boolean(
 pub fn visit_one_of(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
-    names_stack: Vec<ModelName>,
+    names_stack: &[ModelName],
     schemas: &[ReferenceOr<Schema>],
     extensions: &IndexMap<String, serde_json::Value>,
 ) -> Result<()> {
@@ -496,7 +487,7 @@ pub fn visit_one_of(
     schemas.iter().enumerate().try_for_each(|it| {
         let schema_extensions = schema::get_extensions_with_schema_resolving(parsed_spec, it.1)?;
 
-        let mut current_schema_stack = names_stack.clone();
+        let mut current_schema_stack = names_stack.to_vec();
         current_schema_stack.push(ModelName {
             base: format!("oneOf-{}", it.0),
             extended: schema_extensions.get(EXTENSION_FOR_NAME).cloned(),
@@ -508,7 +499,7 @@ pub fn visit_one_of(
             SCRIPT_ONE_OF_SCHEMA_START,
         )?;
 
-        visit_schema(parsed_spec, out_path, current_schema_stack.clone(), it.1)?;
+        visit_schema(parsed_spec, out_path, &mut current_schema_stack, it.1)?;
 
         scripts::call_with_descriptor(
             out_path,
@@ -523,7 +514,7 @@ pub fn visit_one_of(
 pub fn visit_all_of(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
-    names_stack: Vec<ModelName>,
+    names_stack: &[ModelName],
     schemas: &[ReferenceOr<Schema>],
     extensions: &IndexMap<String, serde_json::Value>,
 ) -> Result<()> {
@@ -532,7 +523,7 @@ pub fn visit_all_of(
     schemas.iter().enumerate().try_for_each(|it| {
         let schema_extensions = schema::get_extensions_with_schema_resolving(parsed_spec, it.1)?;
 
-        let mut current_schema_stack = names_stack.clone();
+        let mut current_schema_stack = names_stack.to_vec();
         current_schema_stack.push(ModelName {
             base: format!("allOf-{}", it.0),
             extended: schema_extensions.get(EXTENSION_FOR_NAME).cloned(),
@@ -544,7 +535,7 @@ pub fn visit_all_of(
             SCRIPT_ALL_OF_SCHEMA_START,
         )?;
 
-        visit_schema(parsed_spec, out_path, current_schema_stack.clone(), it.1)?;
+        visit_schema(parsed_spec, out_path, &mut current_schema_stack, it.1)?;
 
         scripts::call_with_descriptor(
             out_path,
@@ -559,7 +550,7 @@ pub fn visit_all_of(
 pub fn visit_any_of(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
-    names_stack: Vec<ModelName>,
+    names_stack: &[ModelName],
     schemas: &[ReferenceOr<Schema>],
     extensions: &IndexMap<String, serde_json::Value>,
 ) -> Result<()> {
@@ -568,7 +559,7 @@ pub fn visit_any_of(
     schemas.iter().enumerate().try_for_each(|it| {
         let schema_extensions = schema::get_extensions_with_schema_resolving(parsed_spec, it.1)?;
 
-        let mut current_schema_stack = names_stack.clone();
+        let mut current_schema_stack = names_stack.to_vec();
         current_schema_stack.push(ModelName {
             base: format!("anyOf-{}", it.0),
             extended: schema_extensions.get(EXTENSION_FOR_NAME).cloned(),
@@ -580,7 +571,7 @@ pub fn visit_any_of(
             SCRIPT_ANY_OF_SCHEMA_START,
         )?;
 
-        visit_schema(parsed_spec, out_path, current_schema_stack.clone(), it.1)?;
+        visit_schema(parsed_spec, out_path, &mut current_schema_stack, it.1)?;
 
         scripts::call_with_descriptor(
             out_path,
@@ -594,11 +585,11 @@ pub fn visit_any_of(
 
 pub fn visit_discriminator(
     out_path: &Path,
-    names_stack: Vec<ModelName>,
+    names_stack: &[ModelName],
     schema_data: &SchemaData,
 ) -> Result<()> {
     if let Some(discriminator) = schema_data.discriminator.as_ref() {
-        let mut property_stack = names_stack.clone();
+        let mut property_stack = names_stack.to_vec();
         property_stack.push(ModelName {
             base: String::from("discriminator"),
             extended: discriminator.extensions.get(EXTENSION_FOR_NAME).cloned(),
@@ -615,7 +606,7 @@ pub fn visit_discriminator(
 
 pub fn visit_header_example(
     out_path: &Path,
-    names_stack: Vec<ModelName>,
+    names_stack: &[ModelName],
     example: &Option<serde_json::Value>,
     extensions: &IndexMap<String, serde_json::Value>,
 ) -> Result<()> {
@@ -629,7 +620,7 @@ pub fn visit_header_example(
 pub fn visit_header_examples_example(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
-    names_stack: Vec<ModelName>,
+    names_stack: &[ModelName],
     example_name: &str,
     example_ref: &ReferenceOr<Example>,
 ) -> Result<()> {
@@ -637,12 +628,12 @@ pub fn visit_header_examples_example(
         ReferenceOr::Reference { reference } => visit_header_examples_example(
             parsed_spec,
             out_path,
-            names_stack.clone(),
+            names_stack,
             example_name,
             references::resolve_reference::<Example>(reference, parsed_spec)?,
         ),
         ReferenceOr::Item(example) => {
-            let mut property_stack = names_stack.clone();
+            let mut property_stack = names_stack.to_vec();
             property_stack.push(ModelName {
                 base: example_name.to_owned(),
                 extended: example.extensions.get(EXTENSION_FOR_NAME).cloned(),
@@ -667,7 +658,7 @@ pub fn visit_header_examples_example(
 pub fn visit_header_examples(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
-    names_stack: Vec<ModelName>,
+    names_stack: &[ModelName],
     examples: &IndexMap<String, ReferenceOr<Example>>,
     extensions: &IndexMap<String, serde_json::Value>,
 ) -> Result<()> {
@@ -678,7 +669,7 @@ pub fn visit_header_examples(
     )?;
 
     examples.iter().try_for_each(|it| {
-        visit_header_examples_example(parsed_spec, out_path, names_stack.clone(), it.0, it.1)
+        visit_header_examples_example(parsed_spec, out_path, names_stack, it.0, it.1)
     })?;
 
     scripts::call_with_descriptor(
@@ -691,7 +682,7 @@ pub fn visit_header_examples(
 pub fn visit_header(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
-    names_stack: Vec<ModelName>,
+    names_stack: &[ModelName],
     header_name: &str,
     header: &ReferenceOr<Header>,
 ) -> Result<()> {
@@ -706,7 +697,7 @@ pub fn visit_header(
             )?;
         }
         ReferenceOr::Item(header) => {
-            let mut property_stack = names_stack.clone();
+            let mut property_stack = names_stack.to_vec();
             property_stack.push(ModelName {
                 base: header_name.to_owned(),
                 extended: header.extensions.get(EXTENSION_FOR_NAME).cloned(),
@@ -714,13 +705,23 @@ pub fn visit_header(
 
             scripts::call_with_descriptor(
                 out_path,
-                &(&property_stack, &header, &header.extensions),
+                &(
+                    &property_stack,
+                    &header.description,
+                    &header.style,
+                    &header.required,
+                    &header.deprecated,
+                    &header.format,
+                    &header.example,
+                    &header.examples,
+                    &header.extensions,
+                ),
                 SCRIPT_RESPONSE_HEADER_START,
             )?;
 
             visit_header_example(
                 out_path,
-                property_stack.clone(),
+                &property_stack,
                 &header.example,
                 &header.extensions,
             )?;
@@ -728,14 +729,24 @@ pub fn visit_header(
             visit_header_examples(
                 parsed_spec,
                 out_path,
-                property_stack.clone(),
+                &property_stack,
                 &header.examples,
                 &header.extensions,
             )?;
 
             scripts::call_with_descriptor(
                 out_path,
-                &(&property_stack, &header, &header.extensions),
+                &(
+                    &property_stack,
+                    &header.description,
+                    &header.style,
+                    &header.required,
+                    &header.deprecated,
+                    &header.format,
+                    &header.example,
+                    &header.examples,
+                    &header.extensions,
+                ),
                 SCRIPT_RESPONSE_HEADER_END,
             )?;
         }
@@ -746,23 +757,23 @@ pub fn visit_header(
 pub fn visit_headers(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
-    names_stack: Vec<ModelName>,
+    names_stack: &[ModelName],
     headers: &IndexMap<String, ReferenceOr<Header>>,
     extensions: &IndexMap<String, serde_json::Value>,
 ) -> Result<()> {
     scripts::call_with_descriptor(
         out_path,
-        &(names_stack.clone(), headers, extensions),
+        &(names_stack, headers, extensions),
         SCRIPT_RESPONSE_HEADERS_START,
     )?;
 
     headers
         .iter()
-        .try_for_each(|it| visit_header(parsed_spec, out_path, names_stack.clone(), it.0, it.1))?;
+        .try_for_each(|it| visit_header(parsed_spec, out_path, names_stack, it.0, it.1))?;
 
     scripts::call_with_descriptor(
         out_path,
-        &(names_stack.clone(), headers, extensions),
+        &(names_stack, headers, extensions),
         SCRIPT_RESPONSE_HEADERS_END,
     )?;
     Ok(())
@@ -770,11 +781,11 @@ pub fn visit_headers(
 
 pub fn visit_schema_external_docs(
     out_path: &Path,
-    names_stack: Vec<ModelName>,
+    names_stack: &[ModelName],
     schema_data: &SchemaData,
 ) -> Result<()> {
     if let Some(external_docs) = schema_data.external_docs.as_ref() {
-        let mut property_stack = names_stack.clone();
+        let mut property_stack = names_stack.to_vec();
         property_stack.push(ModelName {
             base: String::from("externalDocs"),
             extended: external_docs.extensions.get(EXTENSION_FOR_NAME).cloned(),
@@ -862,7 +873,7 @@ pub fn visit_spec_components(
                 visit_schema(
                     &parsed_spec,
                     out_path,
-                    vec![ModelName::new(schema_name.to_owned())],
+                    &mut [ModelName::new(schema_name.to_owned())],
                     schema_ref,
                 )
             })?;
@@ -877,7 +888,7 @@ pub fn visit_spec_components(
                 visit_response(
                     &parsed_spec,
                     out_path,
-                    vec![ModelName::new(response_name.to_owned())],
+                    &mut [ModelName::new(response_name.to_owned())],
                     response_ref,
                 )
             })?;
@@ -903,11 +914,11 @@ pub fn visit_spec_tag_external_docs(
 
 pub fn visit_schema_example(
     out_path: &Path,
-    names_stack: Vec<ModelName>,
+    names_stack: &[ModelName],
     schema_data: &SchemaData,
 ) -> Result<()> {
     if let Some(docs) = schema_data.example.as_ref() {
-        let mut property_stack = names_stack.clone();
+        let mut property_stack = names_stack.to_vec();
         property_stack.push(ModelName {
             base: String::from("example"),
             extended: None,
@@ -924,11 +935,11 @@ pub fn visit_schema_example(
 
 pub fn visit_schema_default(
     out_path: &Path,
-    names_stack: Vec<ModelName>,
+    names_stack: &[ModelName],
     schema_data: &SchemaData,
 ) -> Result<()> {
     if let Some(docs) = schema_data.example.as_ref() {
-        let mut property_stack = names_stack.clone();
+        let mut property_stack = names_stack.to_vec();
         property_stack.push(ModelName {
             base: String::from("default"),
             extended: None,
@@ -1026,13 +1037,13 @@ pub fn visit_spec_servers(
 pub fn visit_object(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
-    names_stack: Vec<ModelName>,
+    names_stack: &[ModelName],
     object_description: &ObjectType,
     extensions: &IndexMap<String, serde_json::Value>,
 ) -> Result<()> {
     scripts::call_with_descriptor(
         out_path,
-        &(names_stack.clone(), object_description, extensions),
+        &(names_stack, object_description, extensions),
         SCRIPT_OBJECT_START,
     )?;
 
@@ -1041,7 +1052,7 @@ pub fn visit_object(
             let property_extensions =
                 schema::get_extensions_with_schema_resolving(parsed_spec, property_schema_ref)?;
 
-            let mut property_stack = names_stack.clone();
+            let mut property_stack = names_stack.to_vec();
             property_stack.push(ModelName {
                 base: local_property_name.to_owned(),
                 extended: property_extensions.get(EXTENSION_FOR_NAME).cloned(),
@@ -1056,7 +1067,7 @@ pub fn visit_object(
             visit_schema(
                 parsed_spec,
                 out_path,
-                property_stack.clone(),
+                &mut property_stack,
                 property_schema_ref,
             )?;
 
@@ -1071,7 +1082,7 @@ pub fn visit_object(
     if let Some(it) = object_description.additional_properties.as_ref() {
         match it {
             openapiv3::AdditionalProperties::Any(value) => {
-                let mut property_stack = names_stack.clone();
+                let mut property_stack = names_stack.to_vec();
                 //AdditionalProperties it is just especial one property
                 property_stack.push(ModelName {
                     base: DEFAULT_OBJECT_ADDITIONAL_PROPERTIES.to_owned(),
@@ -1102,7 +1113,7 @@ pub fn visit_object(
                         additional_properties_schema,
                     )?;
 
-                let mut property_stack = names_stack.clone();
+                let mut property_stack = names_stack.to_vec();
                 //AdditionalProperties it is just especial one property
                 property_stack.push(ModelName {
                     base: DEFAULT_OBJECT_ADDITIONAL_PROPERTIES.to_owned(),
@@ -1125,7 +1136,7 @@ pub fn visit_object(
                 visit_schema(
                     parsed_spec,
                     out_path,
-                    property_stack.clone(),
+                    &mut property_stack,
                     additional_properties_schema,
                 )?;
 
@@ -1145,7 +1156,7 @@ pub fn visit_object(
 
     scripts::call_with_descriptor(
         out_path,
-        &(names_stack.clone(), object_description, extensions),
+        &(names_stack, object_description, extensions),
         SCRIPT_OBJECT_END,
     )
 }
