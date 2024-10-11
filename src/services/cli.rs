@@ -6,10 +6,10 @@ use std::ffi::OsStr;
 
 use crate::{
     holders::context::{
-        get_lua_vm, recreate_lua_vm, CLI, DEFAULT_EXTENSION_TARGET_PARAMETERS_NAME,
-        DEFAULT_EXTENSION_TARGET_PARAMETERS_NAME_IN_LUA, DEFAULT_TESTS_EXPECTED_DIR_NAME,
+        get_lua_vm, recreate_lua_vm, CLI, DEFAULT_TESTS_EXPECTED_DIR_NAME,
         DEFAULT_TESTS_OPENAPI_DIR_NAME, DEFAULT_TESTS_OPENAPI_FILE_NAME,
-        DEFAULT_TESTS_OUT_DIR_NAME, LOG_CONTEXT, SCRIPT_PRELUDE,
+        DEFAULT_TESTS_OUT_DIR_NAME, EXTENSION_TARGET_PARAMETERS_NAME, LOG_CONTEXT, SCRIPT_PRELUDE,
+        TARGET_PARAMETERS_NAME_IN_LUA,
     },
     Commands,
 };
@@ -22,13 +22,12 @@ pub fn set_global_lua_parameters(openapi: &OpenAPI) -> Result<()> {
 
     openapi
         .extensions
-        .get(DEFAULT_EXTENSION_TARGET_PARAMETERS_NAME)
+        .get(EXTENSION_TARGET_PARAMETERS_NAME)
         .map(|it| {
             let params_value = lua_vm.to_value(it)?;
-            lua_vm.globals().set(
-                DEFAULT_EXTENSION_TARGET_PARAMETERS_NAME_IN_LUA,
-                params_value,
-            )
+            lua_vm
+                .globals()
+                .set(TARGET_PARAMETERS_NAME_IN_LUA, params_value)
         })
         .transpose()?;
 
@@ -36,10 +35,9 @@ pub fn set_global_lua_parameters(openapi: &OpenAPI) -> Result<()> {
         .as_ref()
         .map(|it| {
             let params_value = lua_vm.to_value(it)?;
-            lua_vm.globals().set(
-                DEFAULT_EXTENSION_TARGET_PARAMETERS_NAME_IN_LUA,
-                params_value,
-            )
+            lua_vm
+                .globals()
+                .set(TARGET_PARAMETERS_NAME_IN_LUA, params_value)
         })
         .transpose()?;
 

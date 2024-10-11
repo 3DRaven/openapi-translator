@@ -9,28 +9,29 @@ use diffy::create_patch;
 use indexmap::IndexMap;
 use log::{error, info};
 use openapiv3::{
-    AnySchema, ArrayType, Components, Contact, ExternalDocumentation, Header, Info, IntegerType,
-    License, NumberType, ObjectType, OpenAPI, ReferenceOr, Response, Schema, SchemaData,
-    SecurityRequirement, Server, StringType, Tag,
+    AnySchema, ArrayType, Components, Contact, Example, ExternalDocumentation, Header, Info,
+    IntegerType, License, NumberType, ObjectType, OpenAPI, ReferenceOr, Response, Schema,
+    SchemaData, SecurityRequirement, Server, StringType, Tag,
 };
 use serde::de::DeserializeOwned;
 
 use crate::{
     holders::context::{
-        CACHE, DEFAULT_EXTENSION_ANY_ADDITIONAL_PROPERTIES_NAME, DEFAULT_EXTENSION_FOR_NAME,
-        DEFAULT_EXTENSION_FOR_NOT_PROPERTY_NAME, DEFAULT_OBJECT_ADDITIONAL_PROPERTIES,
-        SCRIPT_ALL_OF_END, SCRIPT_ALL_OF_SCHEMA_END, SCRIPT_ALL_OF_SCHEMA_START,
-        SCRIPT_ALL_OF_START, SCRIPT_ANY_OF_END, SCRIPT_ANY_OF_SCHEMA_END,
-        SCRIPT_ANY_OF_SCHEMA_START, SCRIPT_ANY_OF_START, SCRIPT_ANY_SCHEMA,
-        SCRIPT_ARRAY_PROPERTY_END, SCRIPT_ARRAY_PROPERTY_START, SCRIPT_BOOLEAN_PROPERTY,
-        SCRIPT_INTEGER_PROPERTY, SCRIPT_NOT_PROPERTY_END, SCRIPT_NOT_PROPERTY_START,
-        SCRIPT_NUMBER_PROPERTY, SCRIPT_OBJECT_ADDITIONAL_PROPERTIES,
-        SCRIPT_OBJECT_ADDITIONAL_PROPERTIES_END, SCRIPT_OBJECT_ADDITIONAL_PROPERTIES_START,
-        SCRIPT_OBJECT_END, SCRIPT_OBJECT_PROPERTY_END, SCRIPT_OBJECT_PROPERTY_START,
-        SCRIPT_OBJECT_START, SCRIPT_ONE_OF_END, SCRIPT_ONE_OF_SCHEMA_END,
-        SCRIPT_ONE_OF_SCHEMA_START, SCRIPT_ONE_OF_START, SCRIPT_RESPONSES_END,
-        SCRIPT_RESPONSES_START, SCRIPT_RESPONSE_END, SCRIPT_RESPONSE_HEADERS_END,
-        SCRIPT_RESPONSE_HEADERS_START, SCRIPT_RESPONSE_HEADER_END, SCRIPT_RESPONSE_HEADER_EXAMPLE,
+        CACHE, DEFAULT_OBJECT_ADDITIONAL_PROPERTIES, EXTENSION_ANY_ADDITIONAL_PROPERTIES_NAME,
+        EXTENSION_FOR_NAME, EXTENSION_FOR_NOT_PROPERTY_NAME, SCRIPT_ALL_OF_END,
+        SCRIPT_ALL_OF_SCHEMA_END, SCRIPT_ALL_OF_SCHEMA_START, SCRIPT_ALL_OF_START,
+        SCRIPT_ANY_OF_END, SCRIPT_ANY_OF_SCHEMA_END, SCRIPT_ANY_OF_SCHEMA_START,
+        SCRIPT_ANY_OF_START, SCRIPT_ANY_SCHEMA, SCRIPT_ARRAY_PROPERTY_END,
+        SCRIPT_ARRAY_PROPERTY_START, SCRIPT_BOOLEAN_PROPERTY, SCRIPT_INTEGER_PROPERTY,
+        SCRIPT_NOT_PROPERTY_END, SCRIPT_NOT_PROPERTY_START, SCRIPT_NUMBER_PROPERTY,
+        SCRIPT_OBJECT_ADDITIONAL_PROPERTIES, SCRIPT_OBJECT_ADDITIONAL_PROPERTIES_END,
+        SCRIPT_OBJECT_ADDITIONAL_PROPERTIES_START, SCRIPT_OBJECT_END, SCRIPT_OBJECT_PROPERTY_END,
+        SCRIPT_OBJECT_PROPERTY_START, SCRIPT_OBJECT_START, SCRIPT_ONE_OF_END,
+        SCRIPT_ONE_OF_SCHEMA_END, SCRIPT_ONE_OF_SCHEMA_START, SCRIPT_ONE_OF_START,
+        SCRIPT_RESPONSES_END, SCRIPT_RESPONSES_START, SCRIPT_RESPONSE_END,
+        SCRIPT_RESPONSE_HEADERS_END, SCRIPT_RESPONSE_HEADERS_START, SCRIPT_RESPONSE_HEADER_END,
+        SCRIPT_RESPONSE_HEADER_EXAMPLE, SCRIPT_RESPONSE_HEADER_EXAMPLES_END,
+        SCRIPT_RESPONSE_HEADER_EXAMPLES_EXAMPLE, SCRIPT_RESPONSE_HEADER_EXAMPLES_START,
         SCRIPT_RESPONSE_HEADER_START, SCRIPT_RESPONSE_START, SCRIPT_SCHEMAS_END,
         SCRIPT_SCHEMAS_START, SCRIPT_SCHEMA_DEFAULT, SCRIPT_SCHEMA_DISCRIMINATOR,
         SCRIPT_SCHEMA_END, SCRIPT_SCHEMA_EXAMPLE, SCRIPT_SCHEMA_EXTERNAL_DOCS, SCRIPT_SCHEMA_START,
@@ -202,7 +203,7 @@ where
     property_stack.push(ModelName {
         base: String::from("not"),
         extended: schema_extensions
-            .get(DEFAULT_EXTENSION_FOR_NOT_PROPERTY_NAME)
+            .get(EXTENSION_FOR_NOT_PROPERTY_NAME)
             .cloned(),
     });
 
@@ -243,7 +244,7 @@ where
             let schema_extensions = &schema_item.as_schema().schema_data.extensions;
 
             if let Some(it) = names_stack.last_mut() {
-                it.extended = schema_extensions.get(DEFAULT_EXTENSION_FOR_NAME).cloned();
+                it.extended = schema_extensions.get(EXTENSION_FOR_NAME).cloned();
             }
 
             let schema_data = &schema_item.as_schema().schema_data;
@@ -355,7 +356,7 @@ pub fn visit_response(
             let response_extensions = &it.extensions;
 
             if let Some(it) = names_stack.last_mut() {
-                it.extended = response_extensions.get(DEFAULT_EXTENSION_FOR_NAME).cloned();
+                it.extended = response_extensions.get(EXTENSION_FOR_NAME).cloned();
             }
 
             scripts::call_with_descriptor(
@@ -457,9 +458,7 @@ pub fn visit_array(
             // Array it is as object with one property with name items
             property_name_stack.push(ModelName {
                 base: String::from("items"),
-                extended: array_item_extensions
-                    .get(DEFAULT_EXTENSION_FOR_NAME)
-                    .cloned(),
+                extended: array_item_extensions.get(EXTENSION_FOR_NAME).cloned(),
             });
             visit_schema(parsed_spec, out_path, property_name_stack, schema_ref)?;
             Ok(())
@@ -500,7 +499,7 @@ pub fn visit_one_of(
         let mut current_schema_stack = names_stack.clone();
         current_schema_stack.push(ModelName {
             base: format!("oneOf-{}", it.0),
-            extended: schema_extensions.get(DEFAULT_EXTENSION_FOR_NAME).cloned(),
+            extended: schema_extensions.get(EXTENSION_FOR_NAME).cloned(),
         });
 
         scripts::call_with_descriptor(
@@ -536,7 +535,7 @@ pub fn visit_all_of(
         let mut current_schema_stack = names_stack.clone();
         current_schema_stack.push(ModelName {
             base: format!("allOf-{}", it.0),
-            extended: schema_extensions.get(DEFAULT_EXTENSION_FOR_NAME).cloned(),
+            extended: schema_extensions.get(EXTENSION_FOR_NAME).cloned(),
         });
 
         scripts::call_with_descriptor(
@@ -572,7 +571,7 @@ pub fn visit_any_of(
         let mut current_schema_stack = names_stack.clone();
         current_schema_stack.push(ModelName {
             base: format!("anyOf-{}", it.0),
-            extended: schema_extensions.get(DEFAULT_EXTENSION_FOR_NAME).cloned(),
+            extended: schema_extensions.get(EXTENSION_FOR_NAME).cloned(),
         });
 
         scripts::call_with_descriptor(
@@ -602,10 +601,7 @@ pub fn visit_discriminator(
         let mut property_stack = names_stack.clone();
         property_stack.push(ModelName {
             base: String::from("discriminator"),
-            extended: discriminator
-                .extensions
-                .get(DEFAULT_EXTENSION_FOR_NAME)
-                .cloned(),
+            extended: discriminator.extensions.get(EXTENSION_FOR_NAME).cloned(),
         });
 
         scripts::call_with_descriptor(
@@ -615,6 +611,81 @@ pub fn visit_discriminator(
         )?;
     }
     Ok(())
+}
+
+pub fn visit_header_example(
+    out_path: &Path,
+    names_stack: Vec<ModelName>,
+    example: &Option<serde_json::Value>,
+    extensions: &IndexMap<String, serde_json::Value>,
+) -> Result<()> {
+    scripts::call_with_descriptor(
+        out_path,
+        &(&names_stack, example, extensions),
+        SCRIPT_RESPONSE_HEADER_EXAMPLE,
+    )
+}
+
+pub fn visit_header_examples_example(
+    parsed_spec: &ParsedSpec,
+    out_path: &Path,
+    names_stack: Vec<ModelName>,
+    example_name: &str,
+    example_ref: &ReferenceOr<Example>,
+) -> Result<()> {
+    match example_ref {
+        ReferenceOr::Reference { reference } => visit_header_examples_example(
+            parsed_spec,
+            out_path,
+            names_stack.clone(),
+            example_name,
+            references::resolve_reference::<Example>(reference, parsed_spec)?,
+        ),
+        ReferenceOr::Item(example) => {
+            let mut property_stack = names_stack.clone();
+            property_stack.push(ModelName {
+                base: example_name.to_owned(),
+                extended: example.extensions.get(EXTENSION_FOR_NAME).cloned(),
+            });
+
+            scripts::call_with_descriptor(
+                out_path,
+                &(
+                    &property_stack,
+                    &example.summary,
+                    &example.description,
+                    &example.value,
+                    &example.external_value,
+                    &example.extensions,
+                ),
+                SCRIPT_RESPONSE_HEADER_EXAMPLES_EXAMPLE,
+            )
+        }
+    }
+}
+
+pub fn visit_header_examples(
+    parsed_spec: &ParsedSpec,
+    out_path: &Path,
+    names_stack: Vec<ModelName>,
+    examples: &IndexMap<String, ReferenceOr<Example>>,
+    extensions: &IndexMap<String, serde_json::Value>,
+) -> Result<()> {
+    scripts::call_with_descriptor(
+        out_path,
+        &(&names_stack, examples, extensions),
+        SCRIPT_RESPONSE_HEADER_EXAMPLES_START,
+    )?;
+
+    examples.iter().try_for_each(|it| {
+        visit_header_examples_example(parsed_spec, out_path, names_stack.clone(), it.0, it.1)
+    })?;
+
+    scripts::call_with_descriptor(
+        out_path,
+        &(&names_stack, examples, extensions),
+        SCRIPT_RESPONSE_HEADER_EXAMPLES_END,
+    )
 }
 
 pub fn visit_header(
@@ -638,7 +709,7 @@ pub fn visit_header(
             let mut property_stack = names_stack.clone();
             property_stack.push(ModelName {
                 base: header_name.to_owned(),
-                extended: header.extensions.get(DEFAULT_EXTENSION_FOR_NAME).cloned(),
+                extended: header.extensions.get(EXTENSION_FOR_NAME).cloned(),
             });
 
             scripts::call_with_descriptor(
@@ -647,13 +718,20 @@ pub fn visit_header(
                 SCRIPT_RESPONSE_HEADER_START,
             )?;
 
-            scripts::call_with_descriptor(
+            visit_header_example(
                 out_path,
-                &(&property_stack, &header.example, &header.extensions),
-                SCRIPT_RESPONSE_HEADER_EXAMPLE,
+                property_stack.clone(),
+                &header.example,
+                &header.extensions,
             )?;
 
-            // header.example
+            visit_header_examples(
+                parsed_spec,
+                out_path,
+                property_stack.clone(),
+                &header.examples,
+                &header.extensions,
+            )?;
 
             scripts::call_with_descriptor(
                 out_path,
@@ -699,10 +777,7 @@ pub fn visit_schema_external_docs(
         let mut property_stack = names_stack.clone();
         property_stack.push(ModelName {
             base: String::from("externalDocs"),
-            extended: external_docs
-                .extensions
-                .get(DEFAULT_EXTENSION_FOR_NAME)
-                .cloned(),
+            extended: external_docs.extensions.get(EXTENSION_FOR_NAME).cloned(),
         });
 
         scripts::call_with_descriptor(
@@ -969,7 +1044,7 @@ pub fn visit_object(
             let mut property_stack = names_stack.clone();
             property_stack.push(ModelName {
                 base: local_property_name.to_owned(),
-                extended: property_extensions.get(DEFAULT_EXTENSION_FOR_NAME).cloned(),
+                extended: property_extensions.get(EXTENSION_FOR_NAME).cloned(),
             });
 
             scripts::call_with_descriptor(
@@ -1002,7 +1077,7 @@ pub fn visit_object(
                     base: DEFAULT_OBJECT_ADDITIONAL_PROPERTIES.to_owned(),
                     // additionalProperties does not have schema, so extensions to it sent from object level
                     extended: extensions
-                        .get(DEFAULT_EXTENSION_ANY_ADDITIONAL_PROPERTIES_NAME)
+                        .get(EXTENSION_ANY_ADDITIONAL_PROPERTIES_NAME)
                         .cloned(),
                 });
 
@@ -1032,7 +1107,7 @@ pub fn visit_object(
                 property_stack.push(ModelName {
                     base: DEFAULT_OBJECT_ADDITIONAL_PROPERTIES.to_owned(),
                     extended: additional_properties_extensions
-                        .get(DEFAULT_EXTENSION_ANY_ADDITIONAL_PROPERTIES_NAME)
+                        .get(EXTENSION_ANY_ADDITIONAL_PROPERTIES_NAME)
                         .cloned(),
                 });
 

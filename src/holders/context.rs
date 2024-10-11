@@ -20,13 +20,12 @@ pub const DEFAULT_TESTS_EXPECTED_DIR_NAME: &str = "expected";
 pub const DEFAULT_TESTS_OPENAPI_FILE_NAME: &str = "openapi.yml";
 pub const DEFAULT_LOGS_COLOR_MODE: &str = "always";
 pub const DEFAULT_LOGS_LOG_LEVEL: &str = "debug";
-pub const DEFAULT_EXTENSION_FOR_NAME: &str = "x-ot-name";
-pub const DEFAULT_EXTENSION_FOR_NOT_PROPERTY_NAME: &str = "x-ot-name-not-property";
 
-pub const DEFAULT_EXTENSION_ANY_ADDITIONAL_PROPERTIES_NAME: &str =
-    "x-ot-additional-properties-name";
-pub const DEFAULT_EXTENSION_TARGET_PARAMETERS_NAME: &str = "x-ot-target-parameters";
-pub const DEFAULT_EXTENSION_TARGET_PARAMETERS_NAME_IN_LUA: &str = "targetParameters";
+pub const EXTENSION_FOR_NAME: &str = "x-ot-name";
+pub const EXTENSION_FOR_NOT_PROPERTY_NAME: &str = "x-ot-name-not-property";
+pub const EXTENSION_ANY_ADDITIONAL_PROPERTIES_NAME: &str = "x-ot-additional-properties-name";
+pub const EXTENSION_TARGET_PARAMETERS_NAME: &str = "x-ot-target-parameters";
+pub const TARGET_PARAMETERS_NAME_IN_LUA: &str = "targetParameters";
 
 ///Scripts names
 pub const DEFAULT_OBJECT_ADDITIONAL_PROPERTIES: &str = "additionalProperties";
@@ -38,13 +37,21 @@ pub const SCRIPT_RESPONSES_END: &str = "visitors/components/responses/responses_
 pub const SCRIPT_RESPONSE_START: &str = "visitors/components/responses/response_start";
 pub const SCRIPT_RESPONSE_END: &str = "visitors/components/responses/response_end";
 pub const SCRIPT_RESPONSE_HEADERS_START: &str =
-    "visitors/components/responses/response_headers_start";
-pub const SCRIPT_RESPONSE_HEADERS_END: &str = "visitors/components/responses/response_headers_end";
+    "visitors/components/responses/headers/response_headers_start";
+pub const SCRIPT_RESPONSE_HEADERS_END: &str =
+    "visitors/components/responses/headers/response_headers_end";
 pub const SCRIPT_RESPONSE_HEADER_START: &str =
-    "visitors/components/responses/response_header_start";
-pub const SCRIPT_RESPONSE_HEADER_END: &str = "visitors/components/responses/response_header_end";
+    "visitors/components/responses/headers/response_header_start";
+pub const SCRIPT_RESPONSE_HEADER_END: &str =
+    "visitors/components/responses/headers/response_header_end";
 pub const SCRIPT_RESPONSE_HEADER_EXAMPLE: &str =
-    "visitors/components/responses/response_header_example";
+    "visitors/components/responses/headers/response_header_example";
+pub const SCRIPT_RESPONSE_HEADER_EXAMPLES_EXAMPLE: &str =
+    "visitors/components/responses/headers/response_header_examples_example";
+pub const SCRIPT_RESPONSE_HEADER_EXAMPLES_START: &str =
+    "visitors/components/responses/headers/response_header_examples_start";
+pub const SCRIPT_RESPONSE_HEADER_EXAMPLES_END: &str =
+    "visitors/components/responses/headers/response_header_examples_end";
 
 pub const SCRIPT_SCHEMAS_START: &str = "visitors/components/schemas/schemas_start";
 pub const SCRIPT_SCHEMAS_END: &str = "visitors/components/schemas/schemas_end";
