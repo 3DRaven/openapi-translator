@@ -18,11 +18,24 @@
                 "test",
                 // "-n",
                 // "simple-model-with-refs",
+                // "-n",
+                // "inheritance",
                 "-n",
-                "inheritance",
+                "simple-model",
                 // "-n",
                 // "cycled-refs",
                 // "-n",
+
+
+
+
+
+
+
+
+
+
+                
                 // "hard"
             ],
             "cwd": "${workspaceRoot}",

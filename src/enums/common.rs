@@ -32,16 +32,14 @@ pub enum Script {
     ResponseStart,
     #[serde(rename = "RESPONSE_END")]
     ResponseEnd,
-    #[serde(rename = "RESPONSE_HEADERS_START")]
-    ResponseHeadersStart,
-    #[serde(rename = "RESPONSE_HEADERS_END")]
-    ResponseHeadersEnd,
-    #[serde(rename = "RESPONSE_HEADER_START")]
-    ResponseHeaderStart,
-    #[serde(rename = "RESPONSE_HEADER_END")]
-    ResponseHeaderEnd,
-    #[serde(rename = "RESPONSE_HEADER_EXAMPLE")]
-    ResponseHeaderExample,
+    #[serde(rename = "HEADERS_START")]
+    HeadersStart,
+    #[serde(rename = "HEADERS_END")]
+    HeadersEnd,
+    #[serde(rename = "HEADER_START")]
+    HeaderStart,
+    #[serde(rename = "HEADER_END")]
+    HeaderEnd,
     #[serde(rename = "EXAMPLES_EXAMPLE")]
     ExamplesExample,
     #[serde(rename = "EXAMPLES_START")]
@@ -57,11 +55,15 @@ pub enum Script {
     #[serde(rename = "MEDIA_TYPE_END")]
     MediaTypeEnd,
     #[serde(rename = "MEDIA_TYPE_EXAMPLE")]
-    MediaTypeExample,
+    GenericExample,
     #[serde(rename = "ENCODING_START")]
     EncodingStart,
     #[serde(rename = "ENCODING_END")]
     EncodingEnd,
+    #[serde(rename = "ENCODINGS_START")]
+    EncodingsStart,
+    #[serde(rename = "ENCODINGS_END")]
+    EncodingsEnd,
 
     #[serde(rename = "SCHEMAS_START")]
     SchemasStart,
@@ -317,21 +319,10 @@ impl From<&Script> for &'static str {
             Script::ResponsesEnd => "visitors/components/responses/responses_end",
             Script::ResponseStart => "visitors/components/responses/response_start",
             Script::ResponseEnd => "visitors/components/responses/response_end",
-            Script::ResponseHeadersStart => {
-                "visitors/components/responses/headers/response_headers_start"
-            }
-            Script::ResponseHeadersEnd => {
-                "visitors/components/responses/headers/response_headers_end"
-            }
-            Script::ResponseHeaderStart => {
-                "visitors/components/responses/headers/header/response_header_start"
-            }
-            Script::ResponseHeaderEnd => {
-                "visitors/components/responses/headers/header/response_header_end"
-            }
-            Script::ResponseHeaderExample => {
-                "visitors/components/responses/headers/header/response_header_example"
-            }
+            Script::HeadersStart => "visitors/common/headers/headers_start",
+            Script::HeadersEnd => "visitors/common/headers/headers_end",
+            Script::HeaderStart => "visitors/common/headers/header/header_start",
+            Script::HeaderEnd => "visitors/common/headers/header/header_end",
             Script::ExamplesExample => "visitors/common/examples/examples_example",
             Script::ExamplesStart => "visitors/common/examples/examples_start",
             Script::ExamplesEnd => "visitors/common/examples/examples_end",
@@ -343,7 +334,6 @@ impl From<&Script> for &'static str {
             }
             Script::MediaTypeStart => "visitors/common/media_type/media_type_start",
             Script::MediaTypeEnd => "visitors/common/media_type/media_type_end",
-            Script::MediaTypeExample => "visitors/common/media_type/media_type_example",
             Script::EncodingStart => "visitors/common/media_type/encoding/encoding_start",
             Script::EncodingEnd => "visitors/common/media_type/encoding/encoding_end",
 
@@ -425,6 +415,9 @@ impl From<&Script> for &'static str {
             Script::ObjectPropertyEnd => {
                 "visitors/components/schemas/kind/type/object/object_property_end"
             }
+            Script::GenericExample => "visitors/common/generic_example/example",
+            Script::EncodingsStart => "visitors/common/media_type/media_type_encodings_start",
+            Script::EncodingsEnd => "visitors/common/media_type/media_type_encodings_end",
         }
     }
 }

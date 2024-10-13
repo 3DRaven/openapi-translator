@@ -5,8 +5,8 @@ use openapi_translator::services::cli;
 
 fn main() -> Result<()> {
     init_logger();
-    info!("Translation start");
+    info!("======== TRANSLATION START ========");
     cli::visit_commands()?;
-    info!("Translation finished");
+    info!("======== TRANSLATION FINISHED ========");
     Ok(())
 }

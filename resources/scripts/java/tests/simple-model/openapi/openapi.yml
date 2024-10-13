@@ -1,0 +1,24 @@
+openapi: 3.1.0
+info:
+  title: Pairwise Test API
+  version: 1.0.0
+
+paths:
+  /test-endpoint:
+    get:
+      summary: An endpoint for testing purposes
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SampleResponse"
+
+components:
+  schemas:
+    ObjectSchema:
+      type: object
+      properties:
+        requiredField:
+          type: string

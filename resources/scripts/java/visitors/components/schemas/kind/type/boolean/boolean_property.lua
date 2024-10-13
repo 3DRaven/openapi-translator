@@ -1,10 +1,15 @@
+--- Represents a property of type boolean.
+---@class BooleanType
+---@field enumeration (boolean | nil)[] # The enumeration of possible boolean values. Can contain true, false, or nil values.
+
 --- This visitor is invoked when a property of type boolean is found.
 --- Returns a code for creating storage for additionalProperties (Map as example)
 --- @param namesStack ModelName[] # chain of model names from root to this point
 --- @param extensions table # table with free form with "x-" OpenAPI extensions for this level of spec
+--- @param booleanDescriptor BooleanType # boolean property descriptor
 --- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
-function visitBooleanProperty(namesStack, extensions, callsStack)
+function visitBooleanProperty(namesStack, booleanDescriptor, extensions, callsStack)
     local parentModelName = getParentModelName(namesStack)
     if parentModelName == nil then
         --- This is possible if a schema is constructed as a separate value;

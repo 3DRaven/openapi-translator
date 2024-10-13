@@ -160,11 +160,19 @@
         "visitSpecInfoStart",
         "visitSpecInfoEnd",
         "visitSpecServerStart",
-        "visitSpecServerEnd"
+        "visitSpecServerEnd",
+        "visitGenericExample",
+        "visitMediaTypeEncodingsStart",
+        "visitMediaTypeEncodingsEnd",
+        "visitHeadersStart",
+        "visitHeadersEnd",
+        "visitHeaderStart",
+        "visitHeaderEnd"
     ],
     "terminal.integrated.scrollback": 16777216,
     "references.preferredLocation": "view",
     "cSpell.words": [
+        "dicriminator",
         "diffy",
         "indexmap",
         "mlua",
