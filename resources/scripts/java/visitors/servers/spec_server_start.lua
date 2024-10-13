@@ -11,8 +11,9 @@
 --- @param variables table<string, ServerVariable>|nil # A map between a variable name and its value for URL template substitution.
 --- @param callStack table # table with free form with "x-" OpenAPI extensions for this level of spec
 --- @param extensions table<string, any> # Inline extensions to this object.
+--- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
-function visitSpecServerStart(url, description, variables, callStack, extensions)
+function visitSpecServerStart(url, description, variables, callStack, extensions, callsStack)
     return {}
 end
 

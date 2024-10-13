@@ -4,8 +4,9 @@
 --- @param parentType ParentType # Type of parent for this property
 --- @param objectDescriptor ObjectDescriptor # object descriptor
 --- @param extensions table # table with free form with "x-" OpenAPI extensions for this level of spec
+--- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
-function visitObjectEnd(namesStack, parentType, objectDescriptor, extensions)
+function visitObjectEnd(namesStack, parentType, objectDescriptor, extensions, callsStack)
     local currentModelName = getCurrentModelNameMandatory(namesStack)
 
     local parentModelName = getParentModelName(namesStack)

@@ -4,8 +4,9 @@
 --- @param default string # REQUIRED. The default value to use for substitution if an alternate is not supplied.
 --- @param description string|nil # An optional description for the server variable.
 --- @param extensions table<string, any> # Inline extensions to this object.
+--- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
-function visitSpecServerVariable(variableName, enumeration, default, description, extensions)
+function visitSpecServerVariable(variableName, enumeration, default, description, extensions, callsStack)
     return {}
 end
 
