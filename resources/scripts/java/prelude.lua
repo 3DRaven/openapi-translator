@@ -1,7 +1,221 @@
 --- This section contains all global functions and variables that are created before the visitors
 --- start working.
 
---- TYPES
+--- TYPES -----------------------------------------------------------------------------------------------
+
+--- Represents an ExternalDocumentation Object that allows referencing an external resource for extended documentation.
+---@class ExternalDocumentation
+---@field description string | nil # A short description of the target documentation. Supports CommonMark syntax for rich text representation.
+---@field url string # The URL for the target documentation (Required). Must be a valid URL format.
+---@field extensions table<string, any> # Inline extensions to this object.
+
+--- Represents a Tag Object which adds metadata to a single tag used by the Operation Object.
+---@class Tag
+---@field name string # The name of the tag (Required).
+---@field description string | nil # A short description for the tag. Supports CommonMark syntax for rich text representation.
+---@field external_docs ExternalDocumentation | nil # Additional external documentation for this tag.
+---@field extensions table<string, any> # Inline extensions to this object.
+
+--- @class ServerVariable
+--- An object representing a Server Variable for server URL template substitution.
+--- @field enumeration string[] # An enumeration of string values for limited set substitution options.
+--- @field default string # REQUIRED. The default value to use for substitution if an alternate is not supplied.
+--- @field description string|nil # An optional description for the server variable.
+--- @field extensions table<string, any> # Inline extensions to this object.
+
+--- @class Server
+--- An object representing a Server.
+--- @field url string # REQUIRED. A URL to the target host. Supports Server Variables and MAY be relative.
+--- @field description string|nil # An optional string describing the host designated by the URL.
+--- @field variables table<string, ServerVariable>|nil # A map between a variable name and its value for URL template substitution.
+--- @field extensions table<string, any> # Inline extensions to this object.
+
+--- The object provides metadata about the API.
+--- The metadata MAY be used by the clients if needed,
+--- and MAY be presented in editing or documentation generation tools for convenience.
+--- @class Info
+--- @field title string # REQUIRED. The title of the application.
+--- @field description string|nil # A short description of the application. CommonMark syntax MAY be used for rich text representation.
+--- @field terms_of_service string|nil # A URL to the Terms of Service for the API. MUST be in the format of a URL.
+--- @field contact Contact|nil # The contact information for the exposed API.
+--- @field license License|nil # The license information for the exposed API.
+--- @field version string # REQUIRED. The version of the OpenAPI document, distinct from the OpenAPI Specification version or the API implementation version.
+--- @field extensions table<string, any> # Inline extensions to this object.
+
+--- License information for the exposed API.
+--- @class License
+--- @field name string # REQUIRED. The license name used for the API.
+--- @field url string|nil # A URL to the license used for the API. MUST be in the format of a URL.
+--- @field extensions table<string, any> # Inline extensions to this object.
+
+--- @class Contact
+--- Contact information for the exposed API.
+--- @field name string|nil # The identifying name of the contact person/organization.
+--- @field url string|nil # The URL pointing to the contact information. MUST be in the format of a URL.
+--- @field email string|nil # The email address of the contact person/organization. MUST be in the format of an email address.
+--- @field extensions table<string, any> # Inline extensions to this object.
+
+--- Represents a property of type boolean.
+---@class BooleanType
+---@field enumeration (boolean | nil)[] # The enumeration of possible boolean values. Can contain true, false, or nil values.
+
+--- Represents a catch-all for any combination of properties that doesn't correspond to one of the
+--- predefined subsets.
+---@class AnySchema
+---@field typ string | nil                      # The type of the schema
+---@field pattern string | nil                  # The pattern in the schema
+---@field multiple_of number | nil              # A multiple constraint for numeric types
+---@field exclusive_minimum boolean | nil       # Indicates if there is an exclusive minimum constraint
+---@field exclusive_maximum boolean | nil       # Indicates if there is an exclusive maximum constraint
+---@field minimum number | nil                  # The minimum value for numeric types
+---@field maximum number | nil                  # The maximum value for numeric types
+---@field properties table<string, table> | nil  # Properties defined in the schema
+---@field required string[] | nil               # Required properties in the schema
+---@field additional_properties table | nil   # Additional properties definition
+---@field min_properties integer | nil           # Minimum number of properties allowed
+---@field max_properties integer | nil           # Maximum number of properties allowed
+---@field items table | nil       # Items definition for array types
+---@field min_items integer | nil                # Minimum number of items in an array
+---@field max_items integer | nil                # Maximum number of items in an array
+---@field unique_items boolean | nil            # Indicates if array items must be unique
+---@field enumeration table[] | nil             # Enumeration of possible values
+---@field format string | nil                   # Format of the schema
+---@field min_length integer | nil               # Minimum length for string types
+---@field max_length integer | nil               # Maximum length for string types
+---@field one_of table | nil                    # Array of schemas where at least one should match
+---@field all_of table | nil                    # Array of schemas where all should match
+---@field any_of table | nil                    # Array of schemas where any can match
+---@field not table | nil                       # Schema that must not match
+
+--- Allows referencing an external resource for extended documentation.
+---@class ExternalDocsDescriptor
+---@field description string | nil # A short description of the target documentation
+---@field url string # REQUIRED. URL for the target documentation
+---@field extensions table<string, any> # Inline extensions to this object
+
+--- Used to aid in serialization, deserialization, and validation when request bodies or response payloads
+--- may be one of a number of different schemas.
+---@class Discriminator
+---@field propertyName string # REQUIRED. Name of the property in the payload holding the discriminator value
+---@field mapping table<string, string> # Mappings between payload values and schema names or references
+---@field extensions table<string, any> # Inline extensions to this object
+
+--- The Link object represents a possible design-time link for a response.
+--- The presence of a link does not guarantee the caller's ability to
+--- successfully invoke it, rather it provides a known relationship and
+--- traversal mechanism between responses and other operations.
+---
+--- Unlike dynamic links (i.e. links provided in the response payload),
+--- the OAS linking mechanism does not require link information in the runtime response.
+---
+--- For computing links, and providing instructions to execute them,
+--- a runtime expression is used for accessing values in an operation
+--- and using them as parameters while invoking the linked operation.
+--- @class Link
+--- @field description string|nil A description of the link.
+---        CommonMark syntax MAY be used for rich text representation.
+--- @field operation LinkOperation Either a operationRef or operationId
+--- @field request_body any|nil A literal value or {expression} to use as a request body
+---        when calling the target operation.
+--- @field parameters table<string, any> A map representing parameters to pass to an operation
+---        as specified with operationId or identified via operationRef.
+---        The key is the parameter name to be used, whereas the value
+---        can be a constant or an expression to be evaluated and passed
+---        to the linked operation. The parameter name can be qualified
+---        using the parameter location [{in}.]{name} for operations
+---        that use the same parameter name in different locations (e.g. path.id).
+--- @field server Server|nil A server object to be used by the target operation.
+--- @field extensions table<string, any> Inline extensions to this object.
+
+--- Represents either an operation reference or operation ID.
+--- @class LinkOperation
+--- @field operation_ref string A relative or absolute reference to an OAS operation.
+---        This field is mutually exclusive of the operationId field,
+---        and MUST point to an Operation Object. Relative operationRef
+---        values MAY be used to locate an existing Operation Object
+---        in the OpenAPI definition.
+--- @field operation_id string The name of an existing, resolvable OAS operation,
+---        as defined with a unique operationId. This field is
+---        mutually exclusive of the operationRef field.
+
+--- Describes a single response from an API Operation, including design-time,
+--- static links to operations based on the response.
+--- @class Response
+--- @field description string REQUIRED. A short description of the response.
+---        CommonMark syntax MAY be used for rich text representation.
+--- @field headers table<string, ReferenceOr<Header>> Maps a header name to its definition.
+---        RFC7230 states header names are case insensitive.
+---        If a response header is defined with the name "Content-Type",
+---        it SHALL be ignored.
+--- @field content table<string, MediaType> A map containing descriptions of potential response payloads.
+---        The key is a media type or media type range and the value
+---        describes it. For responses that match multiple keys,
+---        only the most specific key is applicable. e.g. text/plain
+---        overrides text/*
+--- @field links table<string, ReferenceOr<Link>> A map of operations links that can be followed from the response.
+---        The key of the map is a short name for the link, following
+---        the naming constraints of the names for Component Objects.
+--- @field extensions table<string, any> Inline extensions to this object.
+
+--- Represents a reference or an item.
+---@class ReferenceOr<T>
+---@field reference string # The reference string, applicable if it is a reference.
+---@field item any
+
+--- Represents the style of a header parameter.
+---@class HeaderStyle
+---@field Simple string # Simple style parameters defined by RFC6570.
+
+--- Defines the schema or content representation for a parameter.
+---@class ParameterSchemaOrContent
+---@field Schema ReferenceOr|nil # The schema defining the type used for the parameter.
+---@field Content Content        # A map containing media type representations for the parameter. Must contain only one entry.
+
+--- Represents a map from media type to its definition.
+---@class Content : table<string, MediaType>
+
+--- Describes a media type with potentially multiple examples and encoding information.
+---@class MediaType
+---@field schema ReferenceOr|nil # The schema defining the content of the request, response, or parameter.
+---@field example any|nil        # An example of the media type in the specified format; mutually exclusive with examples.
+---@field examples table<string, ReferenceOr>|nil # Examples matching the media type and schema; mutually exclusive with example.
+---@field encoding table<string, Encoding>|nil      # Map between a property name and its encoding information; applies to specific media types.
+---@field extensions table<string, any>          # Inline extensions to this object.
+
+--- Represents an example of a media type.
+---@class Example
+---@field summary string|nil             # Short description for the example.
+---@field description string|nil         # Long description for the example; may use CommonMark syntax.
+---@field value any|nil                  # Embedded literal example; mutually exclusive with external_value.
+---@field external_value string|nil      # URL pointing to the example; mutually exclusive with value.
+---@field extensions table<string, any>  # Inline extensions to this object.
+
+--- Describes encoding properties for a specific field in a request body.
+---@class Encoding
+---@field content_type string|nil                # Content-Type for encoding a specific property.
+---@field headers table<string, ReferenceOr>|nil # Additional headers for multipart media type (excluding Content-Type).
+---@field style QueryStyle|nil                   # Serialization style for a specific property.
+---@field explode boolean|nil                    # Determine separate parameters for array/object values; default to false.
+---@field allow_reserved boolean|nil             # Whether reserved characters are allowed without percent-encoding; default to false.
+---@field extensions table<string, any>          # Inline extensions to this object.
+
+--- Defines how parameters are serialized for query strings or form parameters.
+---@class QueryStyle
+---@field Form string          # Form style parameters defined by RFC6570.
+---@field SpaceDelimited string # Parameters separated by spaces.
+---@field PipeDelimited string  # Parameters separated by pipes.
+---@field DeepObject string     # Nested objects rendered using form parameters.
+
+--- Represents the headers parameter, which is a map from strings to references or items.
+---@class Header
+---@field description string | nil # A brief description of the parameter. May include CommonMark syntax for rich text representation.
+---@field style HeaderStyle        # The style of the header.
+---@field required boolean         # Indicates if the parameter is mandatory. Must be true if located in "path".
+---@field deprecated boolean | nil # Specifies if the parameter is deprecated and should be phased out.
+---@field format ParameterSchemaOrContent # The format of the parameter schema or content.
+---@field example table | nil        # An example value of the parameter.
+---@field examples table<string, ReferenceOr> # A map of examples associated with the parameter.
+---@field extensions table<string, any>       # Inline extensions to this object.
 
 --- Represents a Schema object which encapsulates both schema data and kind.
 --- @class Schema
