@@ -1,3 +1,10 @@
+--- @class ServerVariable
+--- An object representing a Server Variable for server URL template substitution.
+--- @field enumeration string[] # An enumeration of string values for limited set substitution options.
+--- @field default string # REQUIRED. The default value to use for substitution if an alternate is not supplied.
+--- @field description string|nil # An optional description for the server variable.
+--- @field extensions table<string, any> # Inline extensions to this object.
+
 --- @class Server
 --- An object representing a Server.
 --- @field url string # REQUIRED. A URL to the target host. Supports Server Variables and MAY be relative.

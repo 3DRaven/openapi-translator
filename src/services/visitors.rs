@@ -700,15 +700,7 @@ pub fn visit_media_type_encoding(
     Script::EncodingStart
         .call_with_descriptor(
             out_path,
-            &(
-                &current_names_stack,
-                &encoding.content_type,
-                &encoding.headers,
-                &encoding.style,
-                &encoding.explode,
-                &encoding.allow_reserved,
-                &encoding.extensions,
-            ),
+            &(&current_names_stack, &encoding, &encoding.extensions),
             call_stack,
         )?
         .and_then(|call_stack| {
@@ -723,15 +715,7 @@ pub fn visit_media_type_encoding(
         })?;
     Script::EncodingEnd.call_with_descriptor(
         out_path,
-        &(
-            &current_names_stack,
-            &encoding.content_type,
-            &encoding.headers,
-            &encoding.style,
-            &encoding.explode,
-            &encoding.allow_reserved,
-            &encoding.extensions,
-        ),
+        &(&current_names_stack, &encoding, &encoding.extensions),
         call_stack,
     )?;
     Ok(())
@@ -765,14 +749,7 @@ pub fn visit_example(
 
             Script::ExamplesExample.call_with_descriptor(
                 out_path,
-                &(
-                    &current_names_stack,
-                    &example.summary,
-                    &example.description,
-                    &example.value,
-                    &example.external_value,
-                    &example.extensions,
-                ),
+                &(&current_names_stack, &example, &example.extensions),
                 call_stack,
             )?;
         }
@@ -952,17 +929,7 @@ pub fn visit_header(
             Script::HeaderStart
                 .call_with_descriptor(
                     out_path,
-                    &(
-                        &current_names_stack,
-                        &header.description,
-                        &header.style,
-                        &header.required,
-                        &header.deprecated,
-                        &header.format,
-                        &header.example,
-                        &header.examples,
-                        &header.extensions,
-                    ),
+                    &(&current_names_stack, &header, &header.extensions),
                     call_stack,
                 )?
                 .and_then(|call_stack| {
@@ -994,17 +961,7 @@ pub fn visit_header(
                 })?;
             Script::HeaderEnd.call_with_descriptor(
                 out_path,
-                &(
-                    &current_names_stack,
-                    &header.description,
-                    &header.style,
-                    &header.required,
-                    &header.deprecated,
-                    &header.format,
-                    &header.example,
-                    &header.examples,
-                    &header.extensions,
-                ),
+                &(&current_names_stack, &header, &header.extensions),
                 call_stack,
             )?;
         }
@@ -1051,12 +1008,7 @@ pub fn visit_spec_tags(
                     visit_external_docs(out_path, &tag.external_docs, call_stack)?;
                     Script::SpecTag.call_with_descriptor(
                         out_path,
-                        &(
-                            &tag.name,
-                            &tag.description,
-                            &tag.external_docs,
-                            &tag.extensions,
-                        ),
+                        &(&tag, &tag.extensions),
                         call_stack,
                     )?;
                     Ok(())
@@ -1245,28 +1197,13 @@ pub fn visit_spec_servers(
             .and_then(|call_stack| {
                 servers.iter().try_for_each(|server| {
                     Script::SpecServerStart
-                        .call_with_descriptor(
-                            out_path,
-                            &(
-                                &server.url,
-                                &server.description,
-                                &server.variables,
-                                &server.extensions,
-                            ),
-                            call_stack,
-                        )?
+                        .call_with_descriptor(out_path, &(&server, &server.extensions), call_stack)?
                         .and_then(|call_stack| {
                             if let Some(variables) = server.variables.as_ref() {
                                 variables.iter().try_for_each(|it| {
                                     Script::SpecServerVariable.call_with_descriptor(
                                         out_path,
-                                        &(
-                                            &it.0,
-                                            &it.1.enumeration,
-                                            &it.1.default,
-                                            &it.1.description,
-                                            &it.1.extensions,
-                                        ),
+                                        &(&server.url, &it.0, &it.1, &it.1.extensions),
                                         call_stack,
                                     )?;
                                     Ok(())
@@ -1276,12 +1213,7 @@ pub fn visit_spec_servers(
                         })?;
                     Script::SpecServerEnd.call_with_descriptor(
                         out_path,
-                        &(
-                            &server.url,
-                            &server.description,
-                            &server.variables,
-                            &server.extensions,
-                        ),
+                        &(&server, &server.extensions),
                         call_stack,
                     )?;
                     Ok(())
