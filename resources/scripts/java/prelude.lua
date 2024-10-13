@@ -1,6 +1,136 @@
 --- This section contains all global functions and variables that are created before the visitors
 --- start working.
 
+--- TYPES
+
+--- Represents a Schema object which encapsulates both schema data and kind.
+--- @class Schema
+--- @field schema_data SchemaData Contains basic schema properties.
+--- @field schema_kind SchemaKind Specifies the kind of schema (e.g., type, composite).
+
+--- Contains basic characteristics of a schema.
+--- @class SchemaData
+--- @field nullable boolean Indicates if the schema is nullable.
+--- @field read_only boolean Indicates if the schema is read-only.
+--- @field write_only boolean Indicates if the schema is write-only.
+--- @field deprecated boolean Indicates if the schema is deprecated.
+--- @field external_docs ExternalDocumentation|nil Link to external documentation.
+--- @field example any|nil Example value compliant with the schema.
+--- @field title string|nil Title of the schema.
+--- @field description string|nil Description of the schema.
+--- @field discriminator Discriminator|nil Discriminator for polymorphism.
+--- @field default any|nil A default value compliant with the schema.
+--- @field extensions table<string, any> Inline extensions to this object.
+
+--- Enum representing different kinds of schemas.
+--- @class SchemaKind
+--- Represents a simple type schema.
+--- @field [1] Type Simple type definition.
+--- Represents a list of potential schemas where one must be valid.
+--- @field one_of table<number, ReferenceOr|Schema> List of possible schemas.
+--- Represents a combination of schemas where all must be valid.
+--- @field all_of table<number, ReferenceOr|Schema> List of combined schemas.
+--- Represents a list of schemas where any must be valid.
+--- @field any_of table<number, ReferenceOr|Schema> List of alternative schemas.
+--- Specifies a schema that should not be applicable.
+--- @field not ReferenceOr|Schema Schema that should not match.
+--- Represents any arbitrary schema.
+--- @field any AnySchema Generic schema allowing any structure.
+
+--- Enum representing different data types in a schema.
+--- @class Type
+--- Represents a string data type with specific attributes.
+--- @field String StringType
+--- Represents a number data type, including floating-point numbers.
+--- @field Number NumberType
+--- Represents an integer data type with its constraints.
+--- @field Integer IntegerType
+--- Represents an object data type with properties and structure.
+--- @field Object ObjectType
+--- Represents an array data type with items of a specified type.
+--- @field Array ArrayType
+--- Represents a boolean data type, true or false.
+--- @field Boolean BooleanType
+
+--- Represents different number formats.
+--- @class NumberFormat
+--- Floating-point format for numbers.
+--- @field Float NumberFormat
+--- Double precision format for numbers.
+--- @field Double NumberFormat
+
+--- Represents different string formats.
+--- @class StringFormat
+--- Date format for strings.
+--- @field date StringFormat
+--- Date and time format for strings.
+--- @field date_time StringFormat
+--- Password format, used for secret fields.
+--- @field password StringFormat
+--- Byte format, representing base64 encoded data.
+--- @field byte StringFormat
+--- Binary format, representing raw binary data.
+--- @field binary StringFormat
+
+--- Represents a string data type with additional validation attributes.
+--- @class StringType
+--- @field format StringFormat Format of the string.
+--- @field pattern string Optional regex pattern to validate the string.
+--- @field enumeration string[] Possible values for the string.
+--- @field min_length number Minimum length of the string.
+--- @field max_length number Maximum length of the string.
+
+--- Represents a number data type with additional validation attributes.
+--- @class NumberType
+--- @field format NumberFormat Format of the number.
+--- @field multiple_of number Optional requirement for the number to be a multiple of this value.
+--- @field exclusive_minimum boolean Whether the minimum value is exclusive.
+--- @field exclusive_maximum boolean Whether the maximum value is exclusive.
+--- @field minimum number Minimum value of the number.
+--- @field maximum number Maximum value of the number.
+--- @field enumeration number[] Possible values for the number.
+
+--- Represents different integer formats.
+--- @class IntegerFormat
+--- Integer format for 32-bit integers.
+--- @field Int32 IntegerFormat
+--- Integer format for 64-bit integers.
+--- @field Int64 IntegerFormat
+--- Represents an integer data type with additional validation attributes.
+
+--- @class IntegerType
+--- @field format IntegerFormat Format of the integer.
+--- @field multiple_of number Optional requirement for the integer to be a multiple of this value.
+--- @field exclusive_minimum boolean Whether the minimum value is exclusive.
+--- @field exclusive_maximum boolean Whether the maximum value is exclusive.
+--- @field minimum number Minimum value of the integer.
+--- @field maximum number Maximum value of the integer.
+--- @field enumeration number[] Possible values for the integer.
+
+--- Represents an object data type with structural attributes.
+--- @class ObjectType
+--- @field properties table<string, ReferenceOr<Schema>> Properties of the object.
+--- @field required string[] List of required property names.
+--- @field additional_properties AdditionalProperties Constraints on additional properties.
+--- @field min_properties number Minimum number of properties.
+--- @field max_properties number Maximum number of properties.
+
+--- Represents an array data type with item constraints.
+--- @class ArrayType
+--- @field items ReferenceOr<Schema> Optional schema for items in the array.
+--- @field min_items number Minimum number of items.
+--- @field max_items number Maximum number of items.
+--- @field unique_items boolean Whether items need to be unique.
+
+--- Enum for specifying additional properties in an object.
+--- @class AdditionalProperties
+--- Indicates any type is allowed as an additional property.
+--- @field Any boolean
+--- Specifies a schema to validate additional properties.
+--- @field Schema ReferenceOr<Schema>
+
+---------------------------------------------------------------------------------------------------
+
 --- Class for storing variables across scripts with loggable access manner for all chain of models
 --- @class GlobalContext
 GlobalContext = {}
@@ -811,6 +941,51 @@ function getNthParentModelNameMandatory(namesStack, n)
     else
         error("Extended model name for parent is null")
     end
+end
+
+--- Function to get generic Nth parent model name
+--- @param callStack string[]
+--- @param n integer # number of parent in stack
+--- @return string # parent model name
+function getNthFromEndCallerScriptType(callStack, n)
+    return callStack[#callStack - n]
+end
+
+--- Determines that there is a specified parent in the call chain
+--- @param getter string # Caller function name
+--- @param callStack string[] # An array of string constants.
+--- @param allowedParents string[] # A list of constants to search for
+--- @return boolean # if true then parent is found in call stack
+function hasSpecifiedParentsInCallChain(getter, callStack, allowedParents)
+    return findFirstMatchFromEnd(getter, callStack, allowedParents) ~= nil
+end
+
+--- Finds the first matching constant from the end of an array.
+--- @param getter string # Caller function name
+--- @param stringsArray string[] # An array of string constants.
+--- @param searchList string[] # A list of constants to search for
+--- @return string|nil # The first found constant from `searchList`, or `nil` if none is found.
+function findFirstMatchFromEnd(getter, stringsArray, searchList)
+    local searchSet = {}
+    for _, const in ipairs(searchList) do
+        searchSet[const] = true
+    end
+
+    for i = #stringsArray, 1, -1 do
+        if searchSet[stringsArray[i]] then
+            print("\nCALL -> [" ..
+                getter ..
+                "] get last string const as [" ..
+                stringsArray[i] .. "] full strings array [\n" .. tableToString(stringsArray) .. "\n]")
+            return stringsArray[i]
+        end
+    end
+
+    print("\nCALL -> [" ..
+        getter ..
+        "] get last string const as [nil] full strings array [\n" .. tableToString(stringsArray) .. "\n]")
+
+    return nil
 end
 
 --- Function to get generic current model name or error

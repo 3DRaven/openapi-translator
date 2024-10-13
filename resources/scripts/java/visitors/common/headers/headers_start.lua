@@ -1,5 +1,5 @@
 --- Represents a reference or an item.
----@class ReferenceOr
+---@class ReferenceOr<T>
 ---@field reference string # The reference string, applicable if it is a reference.
 ---@field item any
 

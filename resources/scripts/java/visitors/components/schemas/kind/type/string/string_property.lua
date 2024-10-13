@@ -1,15 +1,7 @@
---- Represents property of type string.
----@class StringDescriptor
----@field format string | nil # The format of the string type
----@field pattern string | nil                 # The pattern for the string type
----@field enum string[] | nil                  # The enumeration of possible string values
----@field min_length integer | nil              # The minimum length of the string
----@field max_length integer | nil              # The maximum length of the string
-
 --- This visitor is invoked when a property of type string is found.
 --- Returns a string based on the provided string descriptor.
 --- @param namesStack ModelName[] # chain of model names from root to this point
---- @param stringDescriptor StringDescriptor # object descriptor
+--- @param stringDescriptor StringType # object descriptor
 --- @param extensions table # table with free form with "x-" OpenAPI extensions for this level of spec
 --- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
@@ -22,9 +14,8 @@ function visitStringProperty(namesStack, stringDescriptor, extensions, callsStac
         --- within the specification. So, we simply don't need to do anything in this case.
         print("String property without parent skipt")
     else
-        local parentType = global_context:getLastParentType("visitStringProperty")
-        if parentType == ParentType.OBJECT or
-            parentType == ParentType.ALL_OF then
+        if hasSpecifiedParentsInCallChain("visitStringProperty",
+                callsStack, { Script.OBJECT_START, Script.ALL_OF_START }) then
             local currentPropertyName = getCurrentPropertyNameMandatory(namesStack)
             local required = global_context:isPropertyRequired("visitStringProperty", parentModelName,
                 currentPropertyName)
@@ -35,8 +26,6 @@ function visitStringProperty(namesStack, stringDescriptor, extensions, callsStac
 
             global_context:addProperties("visitStringProperty", parentModelName,
                 { WriteOperation.new_append(code, parentModelName) })
-        elseif parentType == ParentType.ARRAY then
-        elseif parentType == ParentType.ADDITIONAL then
         else
             error("Unknown parent type for String")
         end

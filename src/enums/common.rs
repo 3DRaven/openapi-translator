@@ -32,6 +32,10 @@ pub enum Script {
     ResponseStart,
     #[serde(rename = "RESPONSE_END")]
     ResponseEnd,
+    #[serde(rename = "RESPONSE_HEADERS_START")]
+    ResponseHeadersStart,
+    #[serde(rename = "RESPONSE_HEADERS_END")]
+    ResponseHeadersEnd,
     #[serde(rename = "HEADERS_START")]
     HeadersStart,
     #[serde(rename = "HEADERS_END")]
@@ -129,6 +133,10 @@ pub enum Script {
     ObjectPropertyStart,
     #[serde(rename = "OBJECT_PROPERTY_END")]
     ObjectPropertyEnd,
+    #[serde(rename = "OBJECT_PROPERTIES_START")]
+    ObjectPropertiesStart,
+    #[serde(rename = "OBJECT_PROPERTIES_END")]
+    ObjectPropertiesEnd,
     #[serde(rename = "OBJECT_END")]
     ObjectEnd,
     #[serde(rename = "ANY_SCHEMA")]
@@ -418,6 +426,14 @@ impl From<&Script> for &'static str {
             Script::GenericExample => "visitors/common/generic_example/example",
             Script::EncodingsStart => "visitors/common/media_type/media_type_encodings_start",
             Script::EncodingsEnd => "visitors/common/media_type/media_type_encodings_end",
+            Script::ResponseHeadersStart => "visitors/components/responses/response_headers_start",
+            Script::ResponseHeadersEnd => "visitors/components/responses/response_headers_end",
+            Script::ObjectPropertiesStart => {
+                "visitors/components/schemas/kind/type/object/object_properties_start"
+            }
+            Script::ObjectPropertiesEnd => {
+                "visitors/components/schemas/kind/type/object/object_properties_end"
+            }
         }
     }
 }

@@ -400,16 +400,38 @@ pub fn visit_response(
                     &(&current_names_stack, response, &response_extensions),
                     call_stack,
                 )?
-                .and_then(|it| {
+                .and_then(|call_stack| {
                     //TODO: cover all other fields
-                    visit_headers(
-                        parsed_spec,
+                    Script::ResponseHeadersStart
+                        .call_with_descriptor(
+                            out_path,
+                            &(
+                                &current_names_stack,
+                                &response.headers,
+                                &response_extensions,
+                            ),
+                            call_stack,
+                        )?
+                        .and_then(|call_stack| {
+                            visit_headers(
+                                parsed_spec,
+                                out_path,
+                                &current_names_stack,
+                                &response.headers,
+                                response_extensions,
+                                call_stack,
+                            )
+                        })?;
+                    Script::ResponseHeadersEnd.call_with_descriptor(
                         out_path,
-                        &current_names_stack,
-                        &response.headers,
-                        response_extensions,
-                        it,
-                    )
+                        &(
+                            &current_names_stack,
+                            &response.headers,
+                            &response_extensions,
+                        ),
+                        call_stack,
+                    )?;
+                    Ok(())
                 })?;
             Script::ResponseEnd.call_with_descriptor(
                 out_path,
@@ -761,14 +783,18 @@ pub fn visit_parameter_schema_or_content(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
     names_stack: &[ModelName],
-    format: &ParameterSchemaOrContent,
+    parameter_schema_or_content: &ParameterSchemaOrContent,
     extensions: &IndexMap<String, serde_json::Value>,
     call_stack: &CallStack,
 ) -> Result<()> {
     Script::ParameterSchemaOrContentStart
-        .call_with_descriptor(out_path, &(&names_stack, format, extensions), call_stack)?
+        .call_with_descriptor(
+            out_path,
+            &(&names_stack, parameter_schema_or_content, extensions),
+            call_stack,
+        )?
         .and_then(|call_stack| {
-            match format {
+            match parameter_schema_or_content {
                 ParameterSchemaOrContent::Schema(schema_ref) => {
                     //We usually call a separate script for each case, but since the schemas are complex and nested,
                     //we use the parent type in scripts to determine that this call is made from a visitor for the
@@ -802,7 +828,7 @@ pub fn visit_parameter_schema_or_content(
         })?;
     Script::ParameterSchemaOrContentEnd.call_with_descriptor(
         out_path,
-        &(&names_stack, format, extensions),
+        &(&names_stack, parameter_schema_or_content, extensions),
         call_stack,
     )?;
     Ok(())
@@ -1269,7 +1295,7 @@ where
             Script::ObjectPropertyStart
                 .call_with_descriptor(
                     out_path,
-                    &(current_names_stack, schema, extensions),
+                    &(&current_names_stack, schema, extensions),
                     call_stack,
                 )?
                 .and_then(|call_stack| {
@@ -1284,7 +1310,7 @@ where
                 })?;
             Script::ObjectPropertyEnd.call_with_descriptor(
                 out_path,
-                &(names_stack, property_name, schema, extensions),
+                &(current_names_stack, schema, extensions),
                 call_stack,
             )?;
             Ok(())
@@ -1307,18 +1333,32 @@ pub fn visit_object(
             call_stack,
         )?
         .and_then(|call_stack| {
-            object_description.properties.iter().try_for_each(
-                |(local_property_name, property_schema_ref)| -> Result<()> {
-                    visit_object_property(
-                        parsed_spec,
-                        out_path,
-                        names_stack,
-                        local_property_name,
-                        property_schema_ref,
-                        extensions,
-                        call_stack,
-                    )
-                },
+            Script::ObjectPropertiesStart
+                .call_with_descriptor(
+                    out_path,
+                    &(names_stack, &object_description.properties, extensions),
+                    call_stack,
+                )?
+                .and_then(|call_stack| {
+                    object_description.properties.iter().try_for_each(
+                        |(local_property_name, property_schema_ref)| -> Result<()> {
+                            visit_object_property(
+                                parsed_spec,
+                                out_path,
+                                names_stack,
+                                local_property_name,
+                                property_schema_ref,
+                                extensions,
+                                call_stack,
+                            )
+                        },
+                    )?;
+                    Ok(())
+                })?;
+            Script::ObjectPropertiesEnd.call_with_descriptor(
+                out_path,
+                &(names_stack, &object_description.properties, extensions),
+                call_stack,
             )?;
 
             let mut current_names_stack = names_stack.to_vec();

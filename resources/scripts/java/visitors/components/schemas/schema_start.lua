@@ -8,7 +8,7 @@
 ---@field example any | nil # An example of the schema
 ---@field title string | nil # The title of the schema
 ---@field description string | nil # A description of the schema
----@field discriminator DiscriminatorDescriptor | nil # Discriminator for the schema
+---@field discriminator Discriminator | nil # Discriminator for the schema
 ---@field default any | nil # Default value of the schema
 ---@field extensions table<string, any> # Inline extensions to this object
 

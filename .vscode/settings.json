@@ -167,7 +167,15 @@
         "visitHeadersStart",
         "visitHeadersEnd",
         "visitHeaderStart",
-        "visitHeaderEnd"
+        "visitHeaderEnd",
+        "getNthCallerScriptType",
+        "getNthFromEndCallerScriptType",
+        "findFirstMatchFromEnd",
+        "hasSpecifiedParentInCallChain",
+        "hasSpecifiedParentsInCallChain",
+        "visitObjectPropertiesStart",
+        "visitAdditionalPropertyEnd",
+        "visitObjectPropertiesEnd"
     ],
     "terminal.integrated.scrollback": 16777216,
     "references.preferredLocation": "view",

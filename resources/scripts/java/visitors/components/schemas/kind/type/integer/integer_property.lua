@@ -1,16 +1,7 @@
---- @class IntegerDescriptor
---- @field format string|nil A variant that describes the format of the integer.
---- @field multiple_of number|nil An optional field specifying that the value must be a multiple of this number.
---- @field exclusive_minimum boolean An optional field indicating if the minimum value is exclusive.
---- @field exclusive_maximum boolean An optional field indicating if the maximum value is exclusive.
---- @field minimum integer|nil The minimum allowed value for this integer.
---- @field maximum integer|nil The maximum allowed value for this integer.
---- @field enumeration integer[]|nil An optional list of allowed values for this integer.
-
 --- This visitor is invoked when a property of type integer is found.
 --- Returns a code for creating integer value property of object
 --- @param namesStack ModelName[] # chain of model names from root to this point
---- @param integerDescriptor IntegerDescriptor # object descriptor
+--- @param integerDescriptor IntegerType # object descriptor
 --- @param extensions table # table with free form with "x-" OpenAPI extensions for this level of spec
 --- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
