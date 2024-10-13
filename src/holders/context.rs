@@ -22,7 +22,6 @@ pub const DEFAULT_LOGS_COLOR_MODE: &str = "always";
 pub const DEFAULT_LOGS_LOG_LEVEL: &str = "debug";
 
 pub const EXTENSION_FOR_NAME: &str = "x-ot-name";
-pub const EXTENSION_FOR_NOT_PROPERTY_NAME: &str = "x-ot-name-not-property";
 pub const EXTENSION_ANY_ADDITIONAL_PROPERTIES_NAME: &str = "x-ot-additional-properties-name";
 pub const EXTENSION_TARGET_PARAMETERS_NAME: &str = "x-ot-target-parameters";
 pub const TARGET_PARAMETERS_NAME_IN_LUA: &str = "targetParameters";
@@ -41,17 +40,31 @@ pub const SCRIPT_RESPONSE_HEADERS_START: &str =
 pub const SCRIPT_RESPONSE_HEADERS_END: &str =
     "visitors/components/responses/headers/response_headers_end";
 pub const SCRIPT_RESPONSE_HEADER_START: &str =
-    "visitors/components/responses/headers/response_header_start";
+    "visitors/components/responses/headers/header/response_header_start";
 pub const SCRIPT_RESPONSE_HEADER_END: &str =
-    "visitors/components/responses/headers/response_header_end";
+    "visitors/components/responses/headers/header/response_header_end";
 pub const SCRIPT_RESPONSE_HEADER_EXAMPLE: &str =
-    "visitors/components/responses/headers/response_header_example";
+    "visitors/components/responses/headers/header/response_header_example";
 pub const SCRIPT_RESPONSE_HEADER_EXAMPLES_EXAMPLE: &str =
-    "visitors/components/responses/headers/response_header_examples_example";
+    "visitors/components/responses/headers/header/response_header_examples_example";
 pub const SCRIPT_RESPONSE_HEADER_EXAMPLES_START: &str =
-    "visitors/components/responses/headers/response_header_examples_start";
+    "visitors/components/responses/headers/header/response_header_examples_start";
 pub const SCRIPT_RESPONSE_HEADER_EXAMPLES_END: &str =
-    "visitors/components/responses/headers/response_header_examples_end";
+    "visitors/components/responses/headers/header/response_header_examples_end";
+pub const SCRIPT_RESPONSE_HEADER_EXAMPLES_EXAMPLE_FORMAT_START: &str =
+    "visitors/components/responses/headers/header/format/response_header_examples_example_format_start";
+pub const SCRIPT_RESPONSE_HEADER_EXAMPLES_EXAMPLE_FORMAT_END: &str =
+    "visitors/components/responses/headers/header/format/response_header_examples_example_format_end";
+pub const SCRIPT_RESPONSE_HEADER_EXAMPLES_EXAMPLE_FORMAT_MEDIA_TYPE_START: &str =
+    "visitors/components/responses/headers/header/format/response_header_examples_example_format_media_type_start";
+pub const SCRIPT_RESPONSE_HEADER_EXAMPLES_EXAMPLE_FORMAT_MEDIA_TYPE_END: &str =
+    "visitors/components/responses/headers/header/format/response_header_examples_example_format_media_type_end";
+pub const SCRIPT_RESPONSE_HEADER_EXAMPLES_EXAMPLE_FORMAT_MEDIA_TYPE_EXAMPLE: &str =
+    "visitors/components/responses/headers/header/format/response_header_examples_example_format_media_type_example";
+pub const SCRIPT_RESPONSE_HEADER_EXAMPLES_EXAMPLE_FORMAT_MEDIA_TYPE_ENCODING_START: &str =
+    "visitors/components/responses/headers/header/format/response_header_examples_example_format_media_type_encoding_start";
+pub const SCRIPT_RESPONSE_HEADER_EXAMPLES_EXAMPLE_FORMAT_MEDIA_TYPE_ENCODING_END: &str =
+    "visitors/components/responses/headers/header/format/response_header_examples_example_format_media_type_encoding_end";
 
 pub const SCRIPT_SCHEMAS_START: &str = "visitors/components/schemas/schemas_start";
 pub const SCRIPT_SCHEMAS_END: &str = "visitors/components/schemas/schemas_end";
@@ -91,17 +104,10 @@ pub const SCRIPT_ANY_SCHEMA: &str = "visitors/components/schemas/kind/any/any_sc
 //properties
 pub const SCRIPT_NOT_PROPERTY_START: &str =
     "visitors/components/schemas/kind/not/not_property_start";
+
 pub const SCRIPT_NOT_PROPERTY_END: &str = "visitors/components/schemas/kind/not/not_property_end";
 pub const SCRIPT_OBJECT_ADDITIONAL_PROPERTIES: &str =
     "visitors/components/schemas/kind/type/object/object_additional_properties_any";
-pub const SCRIPT_OBJECT_ADDITIONAL_PROPERTIES_START: &str =
-    "visitors/components/schemas/kind/type/object/object_additional_properties_start";
-pub const SCRIPT_OBJECT_ADDITIONAL_PROPERTIES_END: &str =
-    "visitors/components/schemas/kind/type/object/object_additional_properties_end";
-pub const SCRIPT_OBJECT_PROPERTY_START: &str =
-    "visitors/components/schemas/kind/type/object/object_property_start";
-pub const SCRIPT_OBJECT_PROPERTY_END: &str =
-    "visitors/components/schemas/kind/type/object/object_property_end";
 pub const SCRIPT_STRING_PROPERTY: &str =
     "visitors/components/schemas/kind/type/string/string_property";
 pub const SCRIPT_NUMBER_PROPERTY: &str =
@@ -117,23 +123,10 @@ pub const SCRIPT_BOOLEAN_PROPERTY: &str =
 //group_of
 pub const SCRIPT_ONE_OF_START: &str = "visitors/components/schemas/kind/oneOf/one_of_start";
 pub const SCRIPT_ONE_OF_END: &str = "visitors/components/schemas/kind/oneOf/one_of_end";
-pub const SCRIPT_ONE_OF_SCHEMA_START: &str =
-    "visitors/components/schemas/kind/oneOf/one_of_schema_start";
-pub const SCRIPT_ONE_OF_SCHEMA_END: &str =
-    "visitors/components/schemas/kind/oneOf/one_of_schema_end";
 pub const SCRIPT_ALL_OF_START: &str = "visitors/components/schemas/kind/allOf/all_of_start";
 pub const SCRIPT_ALL_OF_END: &str = "visitors/components/schemas/kind/allOf/all_of_end";
-pub const SCRIPT_ALL_OF_SCHEMA_START: &str =
-    "visitors/components/schemas/kind/allOf/all_of_schema_start";
-pub const SCRIPT_ALL_OF_SCHEMA_END: &str =
-    "visitors/components/schemas/kind/allOf/all_of_schema_end";
 pub const SCRIPT_ANY_OF_START: &str = "visitors/components/schemas/kind/anyOf/any_of_start";
 pub const SCRIPT_ANY_OF_END: &str = "visitors/components/schemas/kind/anyOf/any_of_end";
-pub const SCRIPT_ANY_OF_SCHEMA_START: &str =
-    "visitors/components/schemas/kind/anyOf/any_of_schema_start";
-pub const SCRIPT_ANY_OF_SCHEMA_END: &str =
-    "visitors/components/schemas/kind/anyOf/any_of_schema_end";
-
 pub static CLIENT: Lazy<Client> = Lazy::new(reqwest::blocking::Client::new);
 pub static CLI: Lazy<&'static Cli> = Lazy::new(|| Box::leak(Box::new(Cli::parse())));
 pub static LUA_VM: Lazy<Mutex<Lua>> = Lazy::new(|| Mutex::new(Lua::new()));

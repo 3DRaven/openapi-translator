@@ -5,18 +5,20 @@ use openapiv3::OpenAPI;
 use std::ffi::OsStr;
 
 use crate::{
+    enums::common::Script,
     holders::context::{
         get_lua_vm, recreate_lua_vm, CLI, DEFAULT_TESTS_EXPECTED_DIR_NAME,
         DEFAULT_TESTS_OPENAPI_DIR_NAME, DEFAULT_TESTS_OPENAPI_FILE_NAME,
-        DEFAULT_TESTS_OUT_DIR_NAME, EXTENSION_TARGET_PARAMETERS_NAME, LOG_CONTEXT, SCRIPT_PRELUDE,
+        DEFAULT_TESTS_OUT_DIR_NAME, EXTENSION_TARGET_PARAMETERS_NAME, LOG_CONTEXT,
         TARGET_PARAMETERS_NAME_IN_LUA,
     },
+    structs::common::CallStack,
     Commands,
 };
 
-use super::{scripts, visitors};
+use super::visitors;
 
-pub fn set_global_lua_parameters(openapi: &OpenAPI) -> Result<()> {
+pub fn set_global_lua_parameters(openapi: &OpenAPI) -> Result<CallStack> {
     recreate_lua_vm();
     let lua_vm = get_lua_vm();
 
@@ -44,8 +46,7 @@ pub fn set_global_lua_parameters(openapi: &OpenAPI) -> Result<()> {
     let fake_null = lua_vm.null();
     lua_vm.globals().set("null", fake_null)?;
     drop(lua_vm);
-
-    scripts::call_func(SCRIPT_PRELUDE)
+    Script::Prelude.call_func()
 }
 
 pub fn visit_commands() -> Result<()> {

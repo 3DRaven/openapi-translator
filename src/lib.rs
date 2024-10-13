@@ -11,7 +11,6 @@ pub mod services {
     pub mod cli;
     pub mod code;
     pub mod references;
-    pub mod schema;
     pub mod scripts;
     pub mod visitors;
 }

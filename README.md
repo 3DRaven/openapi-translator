@@ -125,5 +125,5 @@ For the "parent" visitor, you can convey that a string type is being processed.
 
 # Alternatives
 
-<https://openapi-generator.tech/>
-<https://github.com/OpenAPITools/openapi-generator>
+Hard to customize <https://github.com/OpenAPITools/openapi-generator>
+Only for Rust <https://docs.rs/openapitor/latest/openapitor>

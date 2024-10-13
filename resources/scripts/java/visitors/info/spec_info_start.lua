@@ -10,12 +10,13 @@
 --- @field version string # REQUIRED. The version of the OpenAPI document, distinct from the OpenAPI Specification version or the API implementation version.
 --- @field extensions table<string, any> # Inline extensions to this object.
 
---- This visitor is invoked at the start of OpenAPI scpec in info section
+--- This visitor is invoked before of OpenAPI scpec in info section
 --- @param info Info # OpenAPI version
+--- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @param extensions table # table with free form with "x-" OpenAPI extensions for this level of spec
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
-function visitSpecInfo(info, extensions)
+function visitSpecInfoStart(info, callsStack, extensions)
     return {}
 end
 
-return functionCallAndLog("visitSpecInfo", visitSpecInfo)
+return functionCallAndLog("visitSpecInfoStart", visitSpecInfoStart)

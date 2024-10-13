@@ -9,46 +9,26 @@ use diffy::create_patch;
 use indexmap::IndexMap;
 use log::{error, info};
 use openapiv3::{
-    AnySchema, ArrayType, Components, Contact, Example, ExternalDocumentation, Header, Info,
-    IntegerType, License, NumberType, ObjectType, OpenAPI, ReferenceOr, Response, Schema,
-    SchemaData, SecurityRequirement, Server, StringType, Tag,
+    AnySchema, ArrayType, Components, Contact, Encoding, Example, ExternalDocumentation, Header,
+    Info, IntegerType, License, MediaType, NumberType, ObjectType, OpenAPI,
+    ParameterSchemaOrContent, ReferenceOr, Response, Schema, SchemaData, SecurityRequirement,
+    Server, StringType, Tag,
 };
 use serde::de::DeserializeOwned;
 
 use crate::{
+    enums::common::Script,
     holders::context::{
         CACHE, DEFAULT_OBJECT_ADDITIONAL_PROPERTIES, EXTENSION_ANY_ADDITIONAL_PROPERTIES_NAME,
-        EXTENSION_FOR_NAME, EXTENSION_FOR_NOT_PROPERTY_NAME, SCRIPT_ALL_OF_END,
-        SCRIPT_ALL_OF_SCHEMA_END, SCRIPT_ALL_OF_SCHEMA_START, SCRIPT_ALL_OF_START,
-        SCRIPT_ANY_OF_END, SCRIPT_ANY_OF_SCHEMA_END, SCRIPT_ANY_OF_SCHEMA_START,
-        SCRIPT_ANY_OF_START, SCRIPT_ANY_SCHEMA, SCRIPT_ARRAY_PROPERTY_END,
-        SCRIPT_ARRAY_PROPERTY_START, SCRIPT_BOOLEAN_PROPERTY, SCRIPT_INTEGER_PROPERTY,
-        SCRIPT_NOT_PROPERTY_END, SCRIPT_NOT_PROPERTY_START, SCRIPT_NUMBER_PROPERTY,
-        SCRIPT_OBJECT_ADDITIONAL_PROPERTIES, SCRIPT_OBJECT_ADDITIONAL_PROPERTIES_END,
-        SCRIPT_OBJECT_ADDITIONAL_PROPERTIES_START, SCRIPT_OBJECT_END, SCRIPT_OBJECT_PROPERTY_END,
-        SCRIPT_OBJECT_PROPERTY_START, SCRIPT_OBJECT_START, SCRIPT_ONE_OF_END,
-        SCRIPT_ONE_OF_SCHEMA_END, SCRIPT_ONE_OF_SCHEMA_START, SCRIPT_ONE_OF_START,
-        SCRIPT_RESPONSES_END, SCRIPT_RESPONSES_START, SCRIPT_RESPONSE_END,
-        SCRIPT_RESPONSE_HEADERS_END, SCRIPT_RESPONSE_HEADERS_START, SCRIPT_RESPONSE_HEADER_END,
-        SCRIPT_RESPONSE_HEADER_EXAMPLE, SCRIPT_RESPONSE_HEADER_EXAMPLES_END,
-        SCRIPT_RESPONSE_HEADER_EXAMPLES_EXAMPLE, SCRIPT_RESPONSE_HEADER_EXAMPLES_START,
-        SCRIPT_RESPONSE_HEADER_START, SCRIPT_RESPONSE_START, SCRIPT_SCHEMAS_END,
-        SCRIPT_SCHEMAS_START, SCRIPT_SCHEMA_DEFAULT, SCRIPT_SCHEMA_DISCRIMINATOR,
-        SCRIPT_SCHEMA_END, SCRIPT_SCHEMA_EXAMPLE, SCRIPT_SCHEMA_EXTERNAL_DOCS, SCRIPT_SCHEMA_START,
-        SCRIPT_SPEC_END, SCRIPT_SPEC_EXTERNAL_DOCS, SCRIPT_SPEC_INFO, SCRIPT_SPEC_INFO_CONTACT,
-        SCRIPT_SPEC_INFO_LICENSE, SCRIPT_SPEC_SECURITIES_END, SCRIPT_SPEC_SECURITIES_START,
-        SCRIPT_SPEC_SECURITY, SCRIPT_SPEC_SERVER, SCRIPT_SPEC_SERVERS_END,
-        SCRIPT_SPEC_SERVERS_START, SCRIPT_SPEC_SERVER_VARIABLE, SCRIPT_SPEC_START, SCRIPT_SPEC_TAG,
-        SCRIPT_SPEC_TAGS_END, SCRIPT_SPEC_TAGS_START, SCRIPT_SPEC_TAG_EXTERNAL_DOCS,
-        SCRIPT_STRING_PROPERTY,
+        EXTENSION_FOR_NAME,
     },
-    services::{references, schema, scripts},
-    structs::common::{ModelName, ParsedSpec},
+    services::references,
+    structs::common::{CallStack, ModelName, ParsedSpec},
     traits::common::AsSchemaRef,
     Commands,
 };
-use anyhow::Result;
 use anyhow::{anyhow, Context};
+use anyhow::{Ok, Result};
 
 use super::cli;
 
@@ -88,21 +68,35 @@ pub fn visit_command(command: &Commands) -> Result<()> {
         let openapi: OpenAPI = serde_json::from_value(spec_as_json.clone())
             .with_context(|| format!("Could not parse spec as OpenAPI v3 [{:?}]", &spec_path))?;
 
-        cli::set_global_lua_parameters(&openapi)?;
+        let call_stack = &cli::set_global_lua_parameters(&openapi)?;
 
-        visit_spec_start(out_path, &openapi)?;
-        visit_spec_info(out_path, &openapi.info)?;
-        visit_spec_servers(out_path, &openapi.servers, &openapi.extensions)?;
-        visit_spec_security(out_path, &openapi.security, &openapi.extensions)?;
-        visit_spec_tags(out_path, &openapi.tags, &openapi.extensions)?;
-        visit_spec_external_docs(out_path, &openapi.external_docs)?;
-        visit_spec_components(
+        Script::SpecStart
+            .call_with_descriptor(
+                out_path,
+                &(&openapi.openapi, &openapi.extensions),
+                call_stack,
+            )?
+            .and_then(|call_stack| {
+                visit_spec_info(out_path, &openapi.info, call_stack)?;
+                visit_spec_servers(out_path, &openapi.servers, &openapi.extensions, call_stack)?;
+                visit_spec_security(out_path, &openapi.security, &openapi.extensions, call_stack)?;
+                visit_spec_tags(out_path, &openapi.tags, &openapi.extensions, call_stack)?;
+                visit_external_docs(out_path, &openapi.external_docs, call_stack)?;
+                visit_spec_components(
+                    out_path,
+                    spec_path,
+                    Arc::new(spec_as_json),
+                    &openapi.components,
+                    call_stack,
+                )?;
+                Ok(())
+            })?;
+
+        Script::SpecEnd.call_with_descriptor(
             out_path,
-            spec_path,
-            Arc::new(spec_as_json),
-            &openapi.components,
+            &(&openapi.openapi, &openapi.extensions),
+            call_stack,
         )?;
-        visit_spec_end(out_path, &openapi)?;
 
         if let Some(expected_path) = expected {
             assert_diff(out_path, expected_path)?
@@ -193,40 +187,31 @@ pub fn visit_not<T>(
     out_path: &Path,
     names_stack: &[ModelName],
     schema_ref: &ReferenceOr<T>,
+    extensions: &IndexMap<String, serde_json::Value>,
+    call_stack: &CallStack,
 ) -> Result<()>
 where
     T: DeserializeOwned + Send + Sync + AsSchemaRef + From<Schema> + 'static,
 {
-    let schema_extensions = schema::get_extensions_with_schema_resolving(parsed_spec, schema_ref)?;
-
-    let mut property_stack = names_stack.to_vec();
-    property_stack.push(ModelName {
-        base: String::from("not"),
-        extended: schema_extensions
-            .get(EXTENSION_FOR_NOT_PROPERTY_NAME)
-            .cloned(),
-    });
-
-    scripts::call_with_descriptor(
+    Script::NotPropertyStart
+        .call_with_descriptor(out_path, &(&names_stack, extensions), call_stack)?
+        .and_then(|it| visit_schema(parsed_spec, out_path, names_stack, "not", schema_ref, it))?;
+    Script::NotPropertyEnd.call_with_descriptor(
         out_path,
-        &(&property_stack, schema_extensions),
-        SCRIPT_NOT_PROPERTY_START,
+        &(&names_stack, extensions),
+        call_stack,
     )?;
 
-    visit_schema(parsed_spec, out_path, &mut property_stack, schema_ref)?;
-
-    scripts::call_with_descriptor(
-        out_path,
-        &(property_stack, schema_extensions),
-        SCRIPT_NOT_PROPERTY_END,
-    )
+    Ok(())
 }
 
 pub fn visit_schema<T>(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
-    names_stack: &mut [ModelName],
+    names_stack: &[ModelName],
+    schema_name: &str,
     schema_ref: &ReferenceOr<T>,
+    call_stack: &CallStack,
 ) -> Result<()>
 where
     T: DeserializeOwned + Send + Sync + AsSchemaRef + From<Schema> + 'static,
@@ -237,91 +222,123 @@ where
                 parsed_spec,
                 out_path,
                 names_stack,
+                schema_name,
                 references::resolve_reference::<T>(reference, parsed_spec)?,
+                call_stack,
             )?;
         }
         ReferenceOr::Item(schema_item) => {
             let schema_extensions = &schema_item.as_schema().schema_data.extensions;
 
-            if let Some(it) = names_stack.last_mut() {
-                it.extended = schema_extensions.get(EXTENSION_FOR_NAME).cloned();
-            }
+            let mut current_name_stack = names_stack.to_vec();
+            current_name_stack.push(ModelName {
+                base: schema_name.to_owned(),
+                extended: schema_extensions.get(EXTENSION_FOR_NAME).cloned(),
+            });
 
             let schema_data = &schema_item.as_schema().schema_data;
 
-            scripts::call_with_descriptor(
-                out_path,
-                &(&names_stack, &schema_data, &schema_extensions),
-                SCRIPT_SCHEMA_START,
-            )?;
+            Script::SchemaStart
+                .call_with_descriptor(
+                    out_path,
+                    &(&current_name_stack, &schema_data, &schema_extensions),
+                    call_stack,
+                )?
+                .and_then(|it| {
+                    visit_discriminator(out_path, &current_name_stack, schema_data, it)?;
+                    visit_schema_external_docs(out_path, &current_name_stack, schema_data, it)?;
+                    visit_example_as_value(out_path, &current_name_stack, schema_data, it)?;
+                    visit_schema_default(out_path, &current_name_stack, schema_data, it)?;
 
-            visit_discriminator(out_path, names_stack, schema_data)?;
-            visit_schema_external_docs(out_path, names_stack, schema_data)?;
-            visit_schema_example(out_path, names_stack, schema_data)?;
-            visit_schema_default(out_path, names_stack, schema_data)?;
-
-            match &schema_item.as_schema().schema_kind {
-                openapiv3::SchemaKind::Type(type_) => match type_ {
-                    openapiv3::Type::Object(object_descriptor) => visit_object(
-                        parsed_spec,
-                        out_path,
-                        names_stack,
-                        object_descriptor,
-                        schema_extensions,
-                    )?,
-                    openapiv3::Type::Array(array_descriptor) => visit_array(
-                        parsed_spec,
-                        out_path,
-                        names_stack,
-                        array_descriptor,
-                        schema_extensions,
-                    )?,
-                    // Simple types
-                    openapiv3::Type::String(string_descriptor) => {
-                        visit_string(out_path, names_stack, string_descriptor, schema_extensions)?
+                    match &schema_item.as_schema().schema_kind {
+                        openapiv3::SchemaKind::Type(type_) => match type_ {
+                            openapiv3::Type::Object(object_descriptor) => visit_object(
+                                parsed_spec,
+                                out_path,
+                                &current_name_stack,
+                                object_descriptor,
+                                schema_extensions,
+                                it,
+                            ),
+                            openapiv3::Type::Array(array_descriptor) => visit_array(
+                                parsed_spec,
+                                out_path,
+                                &current_name_stack,
+                                array_descriptor,
+                                schema_extensions,
+                                it,
+                            ),
+                            // Simple types
+                            openapiv3::Type::String(string_descriptor) => visit_string(
+                                out_path,
+                                &current_name_stack,
+                                string_descriptor,
+                                schema_extensions,
+                                it,
+                            ),
+                            openapiv3::Type::Number(number_descriptor) => visit_number(
+                                out_path,
+                                &current_name_stack,
+                                number_descriptor,
+                                schema_extensions,
+                                it,
+                            ),
+                            openapiv3::Type::Integer(integer_descriptor) => visit_integer(
+                                out_path,
+                                &current_name_stack,
+                                integer_descriptor,
+                                schema_extensions,
+                                it,
+                            ),
+                            openapiv3::Type::Boolean(_) => {
+                                visit_boolean(out_path, &current_name_stack, schema_extensions, it)
+                            }
+                        },
+                        openapiv3::SchemaKind::OneOf { one_of } => visit_one_of(
+                            parsed_spec,
+                            out_path,
+                            &current_name_stack,
+                            one_of,
+                            schema_extensions,
+                            it,
+                        ),
+                        openapiv3::SchemaKind::AllOf { all_of } => visit_all_of(
+                            parsed_spec,
+                            out_path,
+                            &current_name_stack,
+                            all_of,
+                            schema_extensions,
+                            it,
+                        ),
+                        openapiv3::SchemaKind::AnyOf { any_of } => visit_any_of(
+                            parsed_spec,
+                            out_path,
+                            &current_name_stack,
+                            any_of,
+                            schema_extensions,
+                            it,
+                        ),
+                        openapiv3::SchemaKind::Not { not } => visit_not(
+                            parsed_spec,
+                            out_path,
+                            &current_name_stack,
+                            not,
+                            schema_extensions,
+                            it,
+                        ),
+                        openapiv3::SchemaKind::Any(any_schema) => visit_any_schema(
+                            out_path,
+                            &current_name_stack,
+                            any_schema,
+                            schema_extensions,
+                            it,
+                        ),
                     }
-                    openapiv3::Type::Number(number_descriptor) => {
-                        visit_number(out_path, names_stack, number_descriptor, schema_extensions)?
-                    }
-                    openapiv3::Type::Integer(integer_descriptor) => {
-                        visit_integer(out_path, names_stack, integer_descriptor, schema_extensions)?
-                    }
-                    openapiv3::Type::Boolean(_) => {
-                        visit_boolean(out_path, names_stack, schema_extensions)?
-                    }
-                },
-                openapiv3::SchemaKind::OneOf { one_of } => visit_one_of(
-                    parsed_spec,
-                    out_path,
-                    names_stack,
-                    one_of,
-                    schema_extensions,
-                )?,
-                openapiv3::SchemaKind::AllOf { all_of } => visit_all_of(
-                    parsed_spec,
-                    out_path,
-                    names_stack,
-                    all_of,
-                    schema_extensions,
-                )?,
-                openapiv3::SchemaKind::AnyOf { any_of } => visit_any_of(
-                    parsed_spec,
-                    out_path,
-                    names_stack,
-                    any_of,
-                    schema_extensions,
-                )?,
-                openapiv3::SchemaKind::Not { not } => {
-                    visit_not(parsed_spec, out_path, names_stack, not)?
-                }
-                openapiv3::SchemaKind::Any(any_schema) => {
-                    visit_any_schema(out_path, names_stack, any_schema, schema_extensions)?
-                }
-            }
-            scripts::call_with_descriptor(
+                })?;
+            Script::SchemaEnd.call_with_descriptor(
                 out_path,
-                &(names_stack, schema_data, schema_extensions),
-                SCRIPT_SCHEMA_END,
+                &(current_name_stack, schema_data, schema_extensions),
+                call_stack,
             )?;
         }
     }
@@ -331,8 +348,10 @@ where
 pub fn visit_response(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
-    names_stack: &mut [ModelName],
+    names_stack: &[ModelName],
+    response_name: &str,
     response_ref: &ReferenceOr<Response>,
+    call_stack: &CallStack,
 ) -> Result<()> {
     match response_ref {
         ReferenceOr::Reference { reference } => {
@@ -340,34 +359,40 @@ pub fn visit_response(
                 parsed_spec,
                 out_path,
                 names_stack,
+                response_name,
                 references::resolve_reference::<Response>(reference, parsed_spec)?,
+                call_stack,
             )?;
         }
-        ReferenceOr::Item(it) => {
-            let response_extensions = &it.extensions;
+        ReferenceOr::Item(response) => {
+            let response_extensions = &response.extensions;
 
-            if let Some(it) = names_stack.last_mut() {
-                it.extended = response_extensions.get(EXTENSION_FOR_NAME).cloned();
-            }
+            let mut current_names_stack = names_stack.to_vec();
+            current_names_stack.push(ModelName {
+                base: response_name.to_owned(),
+                extended: response_extensions.get(EXTENSION_FOR_NAME).cloned(),
+            });
 
-            scripts::call_with_descriptor(
+            Script::ResponseStart
+                .call_with_descriptor(
+                    out_path,
+                    &(&current_names_stack, response, &response_extensions),
+                    call_stack,
+                )?
+                .and_then(|it| {
+                    visit_headers(
+                        parsed_spec,
+                        out_path,
+                        &current_names_stack,
+                        &response.headers,
+                        response_extensions,
+                        it,
+                    )
+                })?;
+            Script::ResponseEnd.call_with_descriptor(
                 out_path,
-                &(&names_stack, it, &response_extensions),
-                SCRIPT_RESPONSE_START,
-            )?;
-
-            visit_headers(
-                parsed_spec,
-                out_path,
-                names_stack,
-                &it.headers,
-                response_extensions,
-            )?;
-
-            scripts::call_with_descriptor(
-                out_path,
-                &(names_stack, it, response_extensions),
-                SCRIPT_RESPONSE_END,
+                &(current_names_stack, response, response_extensions),
+                call_stack,
             )?;
         }
     }
@@ -379,12 +404,14 @@ pub fn visit_string(
     names_stack: &[ModelName],
     string_descriptor: &StringType,
     extensions: &IndexMap<String, serde_json::Value>,
+    call_stack: &CallStack,
 ) -> Result<()> {
-    scripts::call_with_descriptor(
+    Script::StringProperty.call_with_descriptor(
         out_path,
         &(names_stack, string_descriptor, extensions),
-        SCRIPT_STRING_PROPERTY,
-    )
+        call_stack,
+    )?;
+    Ok(())
 }
 
 pub fn visit_any_schema(
@@ -392,12 +419,14 @@ pub fn visit_any_schema(
     names_stack: &[ModelName],
     any_schema_descriptor: &AnySchema,
     extensions: &IndexMap<String, serde_json::Value>,
+    call_stack: &CallStack,
 ) -> Result<()> {
-    scripts::call_with_descriptor(
+    Script::AnySchema.call_with_descriptor(
         out_path,
         &(names_stack, any_schema_descriptor, extensions),
-        SCRIPT_ANY_SCHEMA,
-    )
+        call_stack,
+    )?;
+    Ok(())
 }
 
 pub fn visit_number(
@@ -405,12 +434,14 @@ pub fn visit_number(
     names_stack: &[ModelName],
     number_descriptor: &NumberType,
     extensions: &IndexMap<String, serde_json::Value>,
+    call_stack: &CallStack,
 ) -> Result<()> {
-    scripts::call_with_descriptor(
+    Script::NumberProperty.call_with_descriptor(
         out_path,
         &(names_stack, number_descriptor, extensions),
-        SCRIPT_NUMBER_PROPERTY,
-    )
+        call_stack,
+    )?;
+    Ok(())
 }
 
 pub fn visit_integer(
@@ -418,12 +449,14 @@ pub fn visit_integer(
     names_stack: &[ModelName],
     integer_descriptor: &IntegerType,
     extensions: &IndexMap<String, serde_json::Value>,
+    call_stack: &CallStack,
 ) -> Result<()> {
-    scripts::call_with_descriptor(
+    Script::IntegerProperty.call_with_descriptor(
         out_path,
         &(names_stack, integer_descriptor, extensions),
-        SCRIPT_INTEGER_PROPERTY,
-    )
+        call_stack,
+    )?;
+    Ok(())
 }
 
 pub fn visit_array(
@@ -432,47 +465,44 @@ pub fn visit_array(
     names_stack: &[ModelName],
     array_descriptor: &ArrayType,
     extensions: &IndexMap<String, serde_json::Value>,
+    call_stack: &CallStack,
 ) -> Result<()> {
-    scripts::call_with_descriptor(
-        out_path,
-        &(names_stack, array_descriptor, extensions),
-        SCRIPT_ARRAY_PROPERTY_START,
-    )?;
-
-    array_descriptor
-        .items
-        .as_ref()
-        .map(|schema_ref| -> Result<()> {
-            let array_item_extensions =
-                schema::get_extensions_with_schema_resolving(parsed_spec, schema_ref)?;
-            let mut property_name_stack = names_stack.to_vec();
-            // Array it is as object with one property with name items
-            property_name_stack.push(ModelName {
-                base: String::from("items"),
-                extended: array_item_extensions.get(EXTENSION_FOR_NAME).cloned(),
-            });
-            visit_schema(parsed_spec, out_path, &mut property_name_stack, schema_ref)?;
+    Script::ArrayPropertyStart
+        .call_with_descriptor(
+            out_path,
+            &(names_stack, array_descriptor, extensions, call_stack),
+            call_stack,
+        )?
+        .and_then(|it| {
+            array_descriptor
+                .items
+                .as_ref()
+                .map(|schema_ref| -> Result<()> {
+                    visit_schema(parsed_spec, out_path, names_stack, "items", schema_ref, it)
+                })
+                .transpose()?;
             Ok(())
-        })
-        .transpose()?;
-
-    scripts::call_with_descriptor(
+        })?;
+    Script::ArrayPropertyEnd.call_with_descriptor(
         out_path,
         &(names_stack, array_descriptor, extensions),
-        SCRIPT_ARRAY_PROPERTY_END,
-    )
+        call_stack,
+    )?;
+    Ok(())
 }
 
 pub fn visit_boolean(
     out_path: &Path,
     names_stack: &[ModelName],
     extensions: &IndexMap<String, serde_json::Value>,
+    call_stack: &CallStack,
 ) -> Result<()> {
-    scripts::call_with_descriptor(
+    Script::BooleanProperty.call_with_descriptor(
         out_path,
         &(names_stack, extensions),
-        SCRIPT_BOOLEAN_PROPERTY,
-    )
+        call_stack,
+    )?;
+    Ok(())
 }
 
 pub fn visit_one_of(
@@ -481,34 +511,24 @@ pub fn visit_one_of(
     names_stack: &[ModelName],
     schemas: &[ReferenceOr<Schema>],
     extensions: &IndexMap<String, serde_json::Value>,
+    call_stack: &CallStack,
 ) -> Result<()> {
-    scripts::call_with_descriptor(out_path, &(&names_stack, extensions), SCRIPT_ONE_OF_START)?;
-
-    schemas.iter().enumerate().try_for_each(|it| {
-        let schema_extensions = schema::get_extensions_with_schema_resolving(parsed_spec, it.1)?;
-
-        let mut current_schema_stack = names_stack.to_vec();
-        current_schema_stack.push(ModelName {
-            base: format!("oneOf-{}", it.0),
-            extended: schema_extensions.get(EXTENSION_FOR_NAME).cloned(),
-        });
-
-        scripts::call_with_descriptor(
-            out_path,
-            &(&current_schema_stack, schema_extensions),
-            SCRIPT_ONE_OF_SCHEMA_START,
-        )?;
-
-        visit_schema(parsed_spec, out_path, &mut current_schema_stack, it.1)?;
-
-        scripts::call_with_descriptor(
-            out_path,
-            &(&current_schema_stack, schema_extensions),
-            SCRIPT_ONE_OF_SCHEMA_END,
-        )
-    })?;
-
-    scripts::call_with_descriptor(out_path, &(names_stack, extensions), SCRIPT_ONE_OF_END)
+    Script::OneOfStart
+        .call_with_descriptor(out_path, &(&names_stack, extensions), call_stack)?
+        .and_then(|call_stack| {
+            schemas.iter().enumerate().try_for_each(|it| {
+                visit_schema(
+                    parsed_spec,
+                    out_path,
+                    names_stack,
+                    &format!("oneOf-{}", it.0),
+                    it.1,
+                    call_stack,
+                )
+            })
+        })?;
+    Script::OneOfEnd.call_with_descriptor(out_path, &(names_stack, extensions), call_stack)?;
+    Ok(())
 }
 
 pub fn visit_all_of(
@@ -517,34 +537,24 @@ pub fn visit_all_of(
     names_stack: &[ModelName],
     schemas: &[ReferenceOr<Schema>],
     extensions: &IndexMap<String, serde_json::Value>,
+    call_stack: &CallStack,
 ) -> Result<()> {
-    scripts::call_with_descriptor(out_path, &(&names_stack, extensions), SCRIPT_ALL_OF_START)?;
-
-    schemas.iter().enumerate().try_for_each(|it| {
-        let schema_extensions = schema::get_extensions_with_schema_resolving(parsed_spec, it.1)?;
-
-        let mut current_schema_stack = names_stack.to_vec();
-        current_schema_stack.push(ModelName {
-            base: format!("allOf-{}", it.0),
-            extended: schema_extensions.get(EXTENSION_FOR_NAME).cloned(),
-        });
-
-        scripts::call_with_descriptor(
-            out_path,
-            &(&current_schema_stack, schema_extensions),
-            SCRIPT_ALL_OF_SCHEMA_START,
-        )?;
-
-        visit_schema(parsed_spec, out_path, &mut current_schema_stack, it.1)?;
-
-        scripts::call_with_descriptor(
-            out_path,
-            &(&current_schema_stack, schema_extensions),
-            SCRIPT_ALL_OF_SCHEMA_END,
-        )
-    })?;
-
-    scripts::call_with_descriptor(out_path, &(names_stack, extensions), SCRIPT_ALL_OF_END)
+    Script::AllOfStart
+        .call_with_descriptor(out_path, &(&names_stack, extensions), call_stack)?
+        .and_then(|call_stack| {
+            schemas.iter().enumerate().try_for_each(|it| {
+                visit_schema(
+                    parsed_spec,
+                    out_path,
+                    names_stack,
+                    &format!("allOf-{}", it.0),
+                    it.1,
+                    call_stack,
+                )
+            })
+        })?;
+    Script::AllOfEnd.call_with_descriptor(out_path, &(names_stack, extensions), call_stack)?;
+    Ok(())
 }
 
 pub fn visit_any_of(
@@ -553,52 +563,47 @@ pub fn visit_any_of(
     names_stack: &[ModelName],
     schemas: &[ReferenceOr<Schema>],
     extensions: &IndexMap<String, serde_json::Value>,
+    call_stack: &CallStack,
 ) -> Result<()> {
-    scripts::call_with_descriptor(out_path, &(&names_stack, extensions), SCRIPT_ANY_OF_START)?;
-
-    schemas.iter().enumerate().try_for_each(|it| {
-        let schema_extensions = schema::get_extensions_with_schema_resolving(parsed_spec, it.1)?;
-
-        let mut current_schema_stack = names_stack.to_vec();
-        current_schema_stack.push(ModelName {
-            base: format!("anyOf-{}", it.0),
-            extended: schema_extensions.get(EXTENSION_FOR_NAME).cloned(),
-        });
-
-        scripts::call_with_descriptor(
-            out_path,
-            &(&current_schema_stack, schema_extensions),
-            SCRIPT_ANY_OF_SCHEMA_START,
-        )?;
-
-        visit_schema(parsed_spec, out_path, &mut current_schema_stack, it.1)?;
-
-        scripts::call_with_descriptor(
-            out_path,
-            &(&current_schema_stack, schema_extensions),
-            SCRIPT_ANY_OF_SCHEMA_END,
-        )
-    })?;
-
-    scripts::call_with_descriptor(out_path, &(names_stack, extensions), SCRIPT_ANY_OF_END)
+    Script::AnyOfStart
+        .call_with_descriptor(out_path, &(&names_stack, extensions), call_stack)?
+        .and_then(|call_stack| {
+            schemas.iter().enumerate().try_for_each(|it| {
+                visit_schema(
+                    parsed_spec,
+                    out_path,
+                    names_stack,
+                    &format!("anyOf-{}", it.0),
+                    it.1,
+                    call_stack,
+                )
+            })
+        })?;
+    Script::AnyOfEnd.call_with_descriptor(out_path, &(names_stack, extensions), call_stack)?;
+    Ok(())
 }
 
 pub fn visit_discriminator(
     out_path: &Path,
     names_stack: &[ModelName],
     schema_data: &SchemaData,
+    call_stack: &CallStack,
 ) -> Result<()> {
     if let Some(discriminator) = schema_data.discriminator.as_ref() {
-        let mut property_stack = names_stack.to_vec();
-        property_stack.push(ModelName {
+        let mut current_names_stack = names_stack.to_vec();
+        current_names_stack.push(ModelName {
             base: String::from("discriminator"),
             extended: discriminator.extensions.get(EXTENSION_FOR_NAME).cloned(),
         });
 
-        scripts::call_with_descriptor(
+        Script::SchemaDiscriminator.call_with_descriptor(
             out_path,
-            &(property_stack, discriminator, &discriminator.extensions),
-            SCRIPT_SCHEMA_DISCRIMINATOR,
+            &(
+                current_names_stack,
+                discriminator,
+                &discriminator.extensions,
+            ),
+            call_stack,
         )?;
     }
     Ok(())
@@ -609,74 +614,319 @@ pub fn visit_header_example(
     names_stack: &[ModelName],
     example: &Option<serde_json::Value>,
     extensions: &IndexMap<String, serde_json::Value>,
+    call_stack: &CallStack,
 ) -> Result<()> {
-    scripts::call_with_descriptor(
+    Script::ResponseHeaderExample.call_with_descriptor(
         out_path,
         &(&names_stack, example, extensions),
-        SCRIPT_RESPONSE_HEADER_EXAMPLE,
-    )
+        call_stack,
+    )?;
+    Ok(())
 }
 
-pub fn visit_header_examples_example(
+pub fn visit_media_type_example(
+    out_path: &Path,
+    names_stack: &[ModelName],
+    example: &Option<serde_json::Value>,
+    extensions: &IndexMap<String, serde_json::Value>,
+    call_stack: &CallStack,
+) -> Result<()> {
+    Script::MediaTypeExample.call_with_descriptor(
+        out_path,
+        &(&names_stack, example, extensions),
+        call_stack,
+    )?;
+    Ok(())
+}
+
+pub fn visit_media_type_encodings(
+    parsed_spec: &ParsedSpec,
+    out_path: &Path,
+    names_stack: &[ModelName],
+    encodings: &IndexMap<String, Encoding>,
+    extensions: &IndexMap<String, serde_json::Value>,
+    call_stack: &CallStack,
+) -> Result<()> {
+    Script::EncodingStart
+        .call_with_descriptor(out_path, &(&names_stack, encodings, extensions), call_stack)?
+        .and_then(|call_stack| {
+            encodings.iter().try_for_each(|encoding| {
+                visit_media_type_encoding(
+                    parsed_spec,
+                    out_path,
+                    names_stack,
+                    encoding.0,
+                    encoding.1,
+                    call_stack,
+                )
+            })
+        })?;
+    Script::EncodingEnd.call_with_descriptor(
+        out_path,
+        &(&names_stack, encodings, extensions),
+        call_stack,
+    )?;
+    Ok(())
+}
+
+pub fn visit_media_type_encoding(
+    parsed_spec: &ParsedSpec,
+    out_path: &Path,
+    names_stack: &[ModelName],
+    encoding_name: &str,
+    encoding: &Encoding,
+    call_stack: &CallStack,
+) -> Result<()> {
+    let mut current_names_stack = names_stack.to_vec();
+    current_names_stack.push(ModelName {
+        base: encoding_name.to_owned(),
+        extended: encoding.extensions.get(EXTENSION_FOR_NAME).cloned(),
+    });
+
+    Script::EncodingStart
+        .call_with_descriptor(
+            out_path,
+            &(
+                &current_names_stack,
+                &encoding.content_type,
+                &encoding.headers,
+                &encoding.style,
+                &encoding.explode,
+                &encoding.allow_reserved,
+                &encoding.extensions,
+            ),
+            call_stack,
+        )?
+        .and_then(|call_stack| {
+            visit_headers(
+                parsed_spec,
+                out_path,
+                &current_names_stack,
+                &encoding.headers,
+                &encoding.extensions,
+                call_stack,
+            )
+        })?;
+    Script::EncodingEnd.call_with_descriptor(
+        out_path,
+        &(
+            &current_names_stack,
+            &encoding.content_type,
+            &encoding.headers,
+            &encoding.style,
+            &encoding.explode,
+            &encoding.allow_reserved,
+            &encoding.extensions,
+        ),
+        call_stack,
+    )?;
+    Ok(())
+}
+
+pub fn visit_example_as_value(
+    out_path: &Path,
+    names_stack: &[ModelName],
+    schema_data: &SchemaData,
+    call_stack: &CallStack,
+) -> Result<()> {
+    if let Some(docs) = schema_data.example.as_ref() {
+        let mut current_names_stack = names_stack.to_vec();
+        current_names_stack.push(ModelName {
+            base: String::from("example"),
+            extended: None,
+        });
+
+        Script::SchemaExample.call_with_descriptor(
+            out_path,
+            &(current_names_stack, docs, &schema_data.extensions),
+            call_stack,
+        )?;
+    }
+    Ok(())
+}
+
+pub fn visit_example(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
     names_stack: &[ModelName],
     example_name: &str,
     example_ref: &ReferenceOr<Example>,
+    call_stack: &CallStack,
 ) -> Result<()> {
     match example_ref {
-        ReferenceOr::Reference { reference } => visit_header_examples_example(
-            parsed_spec,
-            out_path,
-            names_stack,
-            example_name,
-            references::resolve_reference::<Example>(reference, parsed_spec)?,
-        ),
+        ReferenceOr::Reference { reference } => {
+            visit_example(
+                parsed_spec,
+                out_path,
+                names_stack,
+                example_name,
+                references::resolve_reference::<Example>(reference, parsed_spec)?,
+                call_stack,
+            )?;
+        }
         ReferenceOr::Item(example) => {
-            let mut property_stack = names_stack.to_vec();
-            property_stack.push(ModelName {
+            let mut current_names_stack = names_stack.to_vec();
+            current_names_stack.push(ModelName {
                 base: example_name.to_owned(),
                 extended: example.extensions.get(EXTENSION_FOR_NAME).cloned(),
             });
 
-            scripts::call_with_descriptor(
+            Script::ExamplesExample.call_with_descriptor(
                 out_path,
                 &(
-                    &property_stack,
+                    &current_names_stack,
                     &example.summary,
                     &example.description,
                     &example.value,
                     &example.external_value,
                     &example.extensions,
                 ),
-                SCRIPT_RESPONSE_HEADER_EXAMPLES_EXAMPLE,
-            )
+                call_stack,
+            )?;
         }
     }
+    Ok(())
 }
 
-pub fn visit_header_examples(
+pub fn visit_parameter_schema_or_content(
+    parsed_spec: &ParsedSpec,
+    out_path: &Path,
+    names_stack: &[ModelName],
+    format: &ParameterSchemaOrContent,
+    extensions: &IndexMap<String, serde_json::Value>,
+    call_stack: &CallStack,
+) -> Result<()> {
+    Script::ParameterSchemaOrContentStart
+        .call_with_descriptor(out_path, &(&names_stack, format, extensions), call_stack)?
+        .and_then(|call_stack| {
+            match format {
+                ParameterSchemaOrContent::Schema(schema_ref) => {
+                    //We usually call a separate script for each case, but since the schemas are complex and nested,
+                    //we use the parent type in scripts to determine that this call is made from a visitor for the
+                    //format in the example, in order not to duplicate a large amount of code.
+                    visit_schema(
+                        parsed_spec,
+                        out_path,
+                        names_stack,
+                        "format",
+                        schema_ref,
+                        call_stack,
+                    )?;
+                }
+                ParameterSchemaOrContent::Content(media_types) => {
+                    media_types.iter().try_for_each(|media_type| {
+                        //We usually call a separate script for each case, but since the MediaType are complex,
+                        //we use the parent type in scripts to determine that this call is made from a visitor for the
+                        //format in the example, in order not to duplicate a large amount of code.
+                        visit_media_type(
+                            parsed_spec,
+                            out_path,
+                            names_stack,
+                            media_type.0,
+                            media_type.1,
+                            call_stack,
+                        )
+                    })?;
+                }
+            }
+            Ok(())
+        })?;
+    Script::ParameterSchemaOrContentEnd.call_with_descriptor(
+        out_path,
+        &(&names_stack, format, extensions),
+        call_stack,
+    )?;
+    Ok(())
+}
+
+pub fn visit_media_type(
+    parsed_spec: &ParsedSpec,
+    out_path: &Path,
+    names_stack: &[ModelName],
+    media_type_name: &str,
+    media_type: &MediaType,
+    call_stack: &CallStack,
+) -> Result<()> {
+    let mut current_names_stack = names_stack.to_vec();
+    current_names_stack.push(ModelName {
+        base: media_type_name.to_owned(),
+        extended: media_type.extensions.get(EXTENSION_FOR_NAME).cloned(),
+    });
+
+    Script::MediaTypeStart
+        .call_with_descriptor(
+            out_path,
+            &(&current_names_stack, media_type, &media_type.extensions),
+            call_stack,
+        )?
+        .and_then(|call_stack| {
+            if let Some(schema_ref) = &media_type.schema {
+                visit_schema(
+                    parsed_spec,
+                    out_path,
+                    &current_names_stack,
+                    "schema",
+                    schema_ref,
+                    call_stack,
+                )?;
+            }
+
+            visit_media_type_example(
+                out_path,
+                &current_names_stack,
+                &media_type.example,
+                &media_type.extensions,
+                call_stack,
+            )?;
+
+            visit_examples(
+                parsed_spec,
+                out_path,
+                &current_names_stack,
+                &media_type.examples,
+                &media_type.extensions,
+                call_stack,
+            )?;
+
+            visit_media_type_encodings(
+                parsed_spec,
+                out_path,
+                &current_names_stack,
+                &media_type.encoding,
+                &media_type.extensions,
+                call_stack,
+            )?;
+            Ok(())
+        })?;
+    Script::MediaTypeEnd.call_with_descriptor(
+        out_path,
+        &(&current_names_stack, media_type, &media_type.extensions),
+        call_stack,
+    )?;
+    Ok(())
+}
+
+pub fn visit_examples(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
     names_stack: &[ModelName],
     examples: &IndexMap<String, ReferenceOr<Example>>,
     extensions: &IndexMap<String, serde_json::Value>,
+    call_stack: &CallStack,
 ) -> Result<()> {
-    scripts::call_with_descriptor(
+    Script::ExamplesStart
+        .call_with_descriptor(out_path, &(&names_stack, examples, extensions), call_stack)?
+        .and_then(|call_stack| {
+            examples.iter().try_for_each(|it| {
+                visit_example(parsed_spec, out_path, names_stack, it.0, it.1, call_stack)
+            })
+        })?;
+    Script::ExamplesEnd.call_with_descriptor(
         out_path,
         &(&names_stack, examples, extensions),
-        SCRIPT_RESPONSE_HEADER_EXAMPLES_START,
+        call_stack,
     )?;
-
-    examples.iter().try_for_each(|it| {
-        visit_header_examples_example(parsed_spec, out_path, names_stack, it.0, it.1)
-    })?;
-
-    scripts::call_with_descriptor(
-        out_path,
-        &(&names_stack, examples, extensions),
-        SCRIPT_RESPONSE_HEADER_EXAMPLES_END,
-    )
+    Ok(())
 }
 
 pub fn visit_header(
@@ -685,6 +935,7 @@ pub fn visit_header(
     names_stack: &[ModelName],
     header_name: &str,
     header: &ReferenceOr<Header>,
+    call_stack: &CallStack,
 ) -> Result<()> {
     match header {
         ReferenceOr::Reference { reference } => {
@@ -694,19 +945,63 @@ pub fn visit_header(
                 names_stack,
                 header_name,
                 references::resolve_reference::<Header>(reference, parsed_spec)?,
+                call_stack,
             )?;
         }
         ReferenceOr::Item(header) => {
-            let mut property_stack = names_stack.to_vec();
-            property_stack.push(ModelName {
+            let mut current_names_stack = names_stack.to_vec();
+            current_names_stack.push(ModelName {
                 base: header_name.to_owned(),
                 extended: header.extensions.get(EXTENSION_FOR_NAME).cloned(),
             });
 
-            scripts::call_with_descriptor(
+            Script::ResponseHeaderStart
+                .call_with_descriptor(
+                    out_path,
+                    &(
+                        &current_names_stack,
+                        &header.description,
+                        &header.style,
+                        &header.required,
+                        &header.deprecated,
+                        &header.format,
+                        &header.example,
+                        &header.examples,
+                        &header.extensions,
+                    ),
+                    call_stack,
+                )?
+                .and_then(|call_stack| {
+                    visit_parameter_schema_or_content(
+                        parsed_spec,
+                        out_path,
+                        &current_names_stack,
+                        &header.format,
+                        &header.extensions,
+                        call_stack,
+                    )?;
+
+                    visit_header_example(
+                        out_path,
+                        &current_names_stack,
+                        &header.example,
+                        &header.extensions,
+                        call_stack,
+                    )?;
+
+                    visit_examples(
+                        parsed_spec,
+                        out_path,
+                        &current_names_stack,
+                        &header.examples,
+                        &header.extensions,
+                        call_stack,
+                    )
+                })?;
+            Script::ResponseHeaderEnd.call_with_descriptor(
                 out_path,
                 &(
-                    &property_stack,
+                    &current_names_stack,
                     &header.description,
                     &header.style,
                     &header.required,
@@ -716,38 +1011,7 @@ pub fn visit_header(
                     &header.examples,
                     &header.extensions,
                 ),
-                SCRIPT_RESPONSE_HEADER_START,
-            )?;
-
-            visit_header_example(
-                out_path,
-                &property_stack,
-                &header.example,
-                &header.extensions,
-            )?;
-
-            visit_header_examples(
-                parsed_spec,
-                out_path,
-                &property_stack,
-                &header.examples,
-                &header.extensions,
-            )?;
-
-            scripts::call_with_descriptor(
-                out_path,
-                &(
-                    &property_stack,
-                    &header.description,
-                    &header.style,
-                    &header.required,
-                    &header.deprecated,
-                    &header.format,
-                    &header.example,
-                    &header.examples,
-                    &header.extensions,
-                ),
-                SCRIPT_RESPONSE_HEADER_END,
+                call_stack,
             )?;
         }
     }
@@ -760,21 +1024,19 @@ pub fn visit_headers(
     names_stack: &[ModelName],
     headers: &IndexMap<String, ReferenceOr<Header>>,
     extensions: &IndexMap<String, serde_json::Value>,
+    call_stack: &CallStack,
 ) -> Result<()> {
-    scripts::call_with_descriptor(
+    Script::ResponseHeadersStart
+        .call_with_descriptor(out_path, &(names_stack, headers, extensions), call_stack)?
+        .and_then(|call_stack| {
+            headers.iter().try_for_each(|it| {
+                visit_header(parsed_spec, out_path, names_stack, it.0, it.1, call_stack)
+            })
+        })?;
+    Script::ResponseHeadersEnd.call_with_descriptor(
         out_path,
         &(names_stack, headers, extensions),
-        SCRIPT_RESPONSE_HEADERS_START,
-    )?;
-
-    headers
-        .iter()
-        .try_for_each(|it| visit_header(parsed_spec, out_path, names_stack, it.0, it.1))?;
-
-    scripts::call_with_descriptor(
-        out_path,
-        &(names_stack, headers, extensions),
-        SCRIPT_RESPONSE_HEADERS_END,
+        call_stack,
     )?;
     Ok(())
 }
@@ -783,18 +1045,23 @@ pub fn visit_schema_external_docs(
     out_path: &Path,
     names_stack: &[ModelName],
     schema_data: &SchemaData,
+    call_stack: &CallStack,
 ) -> Result<()> {
     if let Some(external_docs) = schema_data.external_docs.as_ref() {
-        let mut property_stack = names_stack.to_vec();
-        property_stack.push(ModelName {
+        let mut current_names_stack = names_stack.to_vec();
+        current_names_stack.push(ModelName {
             base: String::from("externalDocs"),
             extended: external_docs.extensions.get(EXTENSION_FOR_NAME).cloned(),
         });
 
-        scripts::call_with_descriptor(
+        Script::SchemaExternalDocs.call_with_descriptor(
             out_path,
-            &(property_stack, external_docs, &external_docs.extensions),
-            SCRIPT_SCHEMA_EXTERNAL_DOCS,
+            &(
+                current_names_stack,
+                external_docs,
+                &external_docs.extensions,
+            ),
+            call_stack,
         )?;
     }
     Ok(())
@@ -804,51 +1071,64 @@ pub fn visit_spec_tags(
     out_path: &Path,
     tags: &Vec<Tag>,
     extensions: &IndexMap<String, serde_json::Value>,
+    call_stack: &CallStack,
 ) -> Result<()> {
-    scripts::call_with_descriptor(out_path, &(tags, extensions), SCRIPT_SPEC_TAGS_START)?;
-
-    tags.iter().try_for_each(|tag| {
-        visit_spec_tag_external_docs(out_path, &tag.external_docs)?;
-        scripts::call_with_descriptor(
-            out_path,
-            &(
-                &tag.name,
-                &tag.description,
-                &tag.external_docs,
-                &tag.extensions,
-            ),
-            SCRIPT_SPEC_TAG,
-        )
-    })?;
-
-    scripts::call_with_descriptor(out_path, &(tags, extensions), SCRIPT_SPEC_TAGS_END)?;
-
+    Script::SpecTagsStart
+        .call_with_descriptor(out_path, &(tags, extensions), call_stack)?
+        .and_then(|call_stack| {
+            tags.iter().try_for_each(|tag| {
+                visit_external_docs(out_path, &tag.external_docs, call_stack)?;
+                Script::SpecTag.call_with_descriptor(
+                    out_path,
+                    &(
+                        &tag.name,
+                        &tag.description,
+                        &tag.external_docs,
+                        &tag.extensions,
+                    ),
+                    call_stack,
+                )?;
+                Ok(())
+            })
+        })?;
+    Script::SpecTagsEnd.call_with_descriptor(out_path, &(tags, extensions), call_stack)?;
     Ok(())
 }
 
 pub fn visit_spec_security(
     out_path: &Path,
-    security: &Option<Vec<SecurityRequirement>>,
+    securities: &Option<Vec<SecurityRequirement>>,
     extensions: &IndexMap<String, serde_json::Value>,
+    call_stack: &CallStack,
 ) -> Result<()> {
-    if let Some(it) = security.as_ref() {
-        scripts::call_with_descriptor(out_path, &(it, extensions), SCRIPT_SPEC_SECURITIES_START)?;
-
-        it.iter().try_for_each(|sec_map| {
-            scripts::call_with_descriptor(out_path, &(sec_map, extensions), SCRIPT_SPEC_SECURITY)
-        })?;
-
-        scripts::call_with_descriptor(out_path, &(it, extensions), SCRIPT_SPEC_SECURITIES_END)?;
+    if let Some(it) = securities.as_ref() {
+        Script::SpecSecuritiesStart
+            .call_with_descriptor(out_path, &(it, extensions), call_stack)?
+            .and_then(|call_stack| {
+                it.iter().try_for_each(|sec_map| {
+                    Script::SpecSecurity.call_with_descriptor(
+                        out_path,
+                        &(sec_map, extensions),
+                        call_stack,
+                    )?;
+                    Ok(())
+                })
+            })?;
+        Script::SpecSecuritiesEnd.call_with_descriptor(out_path, &(it, extensions), call_stack)?;
     }
     Ok(())
 }
-
-pub fn visit_spec_external_docs(
+pub fn visit_external_docs(
     out_path: &Path,
     external_docs: &Option<ExternalDocumentation>,
+    call_stack: &CallStack,
 ) -> Result<()> {
     if let Some(it) = external_docs {
-        scripts::call_with_descriptor(out_path, &(it, &it.extensions), SCRIPT_SPEC_EXTERNAL_DOCS)?;
+        Script::ExternalDocs.call_with_descriptor(
+            out_path,
+            &(&it.description, &it.url, &it.extensions),
+            call_stack,
+        )?;
     }
     Ok(())
 }
@@ -858,76 +1138,40 @@ pub fn visit_spec_components(
     spec_path: &Path,
     spec_as_json: Arc<serde_json::Value>,
     components: &Option<Components>,
+    call_stack: &CallStack,
 ) -> Result<()> {
-    if let Some(it) = components {
+    if let Some(components) = components {
         let parsed_spec = ParsedSpec {
             path: spec_path.to_owned(),
             spec: spec_as_json,
         };
 
-        scripts::call_with_descriptor(out_path, &(&it.extensions), SCRIPT_SCHEMAS_START)?;
-
-        it.schemas
-            .iter()
-            .try_for_each(|(schema_name, schema_ref)| {
-                visit_schema(
-                    &parsed_spec,
-                    out_path,
-                    &mut [ModelName::new(schema_name.to_owned())],
-                    schema_ref,
-                )
+        Script::SchemasStart
+            .call_with_descriptor(out_path, &(&components.extensions), call_stack)?
+            .and_then(|it| {
+                components
+                    .schemas
+                    .iter()
+                    .try_for_each(|(schema_name, schema_ref)| {
+                        visit_schema(&parsed_spec, out_path, &[], schema_name, schema_ref, it)
+                    })
             })?;
+        Script::SchemasEnd.call_with_descriptor(out_path, &(&components.extensions), call_stack)?;
 
-        scripts::call_with_descriptor(out_path, &(&it.extensions), SCRIPT_SCHEMAS_END)?;
-
-        scripts::call_with_descriptor(out_path, &(&it.extensions), SCRIPT_RESPONSES_START)?;
-
-        it.responses
-            .iter()
-            .try_for_each(|(response_name, response_ref)| {
-                visit_response(
-                    &parsed_spec,
-                    out_path,
-                    &mut [ModelName::new(response_name.to_owned())],
-                    response_ref,
-                )
+        Script::ResponsesStart
+            .call_with_descriptor(out_path, &(&components.extensions), call_stack)?
+            .and_then(|it| {
+                components
+                    .responses
+                    .iter()
+                    .try_for_each(|(response_name, response_ref)| {
+                        visit_response(&parsed_spec, out_path, &[], response_name, response_ref, it)
+                    })
             })?;
-
-        scripts::call_with_descriptor(out_path, &(&it.extensions), SCRIPT_RESPONSES_END)?;
-    }
-    Ok(())
-}
-
-pub fn visit_spec_tag_external_docs(
-    out_path: &Path,
-    external_docs: &Option<ExternalDocumentation>,
-) -> Result<()> {
-    if let Some(it) = external_docs {
-        scripts::call_with_descriptor(
+        Script::ResponsesEnd.call_with_descriptor(
             out_path,
-            &(it, &it.extensions),
-            SCRIPT_SPEC_TAG_EXTERNAL_DOCS,
-        )?;
-    }
-    Ok(())
-}
-
-pub fn visit_schema_example(
-    out_path: &Path,
-    names_stack: &[ModelName],
-    schema_data: &SchemaData,
-) -> Result<()> {
-    if let Some(docs) = schema_data.example.as_ref() {
-        let mut property_stack = names_stack.to_vec();
-        property_stack.push(ModelName {
-            base: String::from("example"),
-            extended: None,
-        });
-
-        scripts::call_with_descriptor(
-            out_path,
-            &(property_stack, docs, &schema_data.extensions),
-            SCRIPT_SCHEMA_EXAMPLE,
+            &(&components.extensions),
+            call_stack,
         )?;
     }
     Ok(())
@@ -937,59 +1181,61 @@ pub fn visit_schema_default(
     out_path: &Path,
     names_stack: &[ModelName],
     schema_data: &SchemaData,
+    call_stack: &CallStack,
 ) -> Result<()> {
-    if let Some(docs) = schema_data.example.as_ref() {
-        let mut property_stack = names_stack.to_vec();
-        property_stack.push(ModelName {
+    if let Some(default) = schema_data.default.as_ref() {
+        let mut current_names_stack = names_stack.to_vec();
+        current_names_stack.push(ModelName {
             base: String::from("default"),
             extended: None,
         });
 
-        scripts::call_with_descriptor(
+        Script::SchemaDefault.call_with_descriptor(
             out_path,
-            &(property_stack, docs, &schema_data.extensions),
-            SCRIPT_SCHEMA_DEFAULT,
+            &(current_names_stack, default, &schema_data.extensions),
+            call_stack,
         )?;
     }
     Ok(())
 }
 
-pub fn visit_spec_start(out_path: &Path, openapi: &OpenAPI) -> Result<()> {
-    scripts::call_with_descriptor(
-        out_path,
-        &(&openapi.openapi, &openapi.extensions),
-        SCRIPT_SPEC_START,
-    )?;
+pub fn visit_spec_info(out_path: &Path, info: &Info, call_stack: &CallStack) -> Result<()> {
+    Script::SpecInfoStart
+        .call_with_descriptor(out_path, &(&info, &info.extensions), call_stack)?
+        .and_then(|call_stack| {
+            visit_spec_info_contact(out_path, &info.contact, call_stack)?;
+            visit_spec_info_license(out_path, &info.license, call_stack)
+        })?;
+    Script::SpecInfoEnd.call_with_descriptor(out_path, &(&info, &info.extensions), call_stack)?;
     Ok(())
 }
 
-pub fn visit_spec_end(out_path: &Path, openapi: &OpenAPI) -> Result<()> {
-    scripts::call_with_descriptor(
-        out_path,
-        &(&openapi.openapi, &openapi.extensions),
-        SCRIPT_SPEC_END,
-    )?;
-    Ok(())
-}
-
-pub fn visit_spec_info(out_path: &Path, info: &Info) -> Result<()> {
-    visit_spec_info_contact(out_path, &info.contact)?;
-    visit_spec_info_license(out_path, &info.license)?;
-
-    scripts::call_with_descriptor(out_path, &(&info, &info.extensions), SCRIPT_SPEC_INFO)?;
-    Ok(())
-}
-
-pub fn visit_spec_info_contact(out_path: &Path, contact: &Option<Contact>) -> Result<()> {
+pub fn visit_spec_info_contact(
+    out_path: &Path,
+    contact: &Option<Contact>,
+    call_stack: &CallStack,
+) -> Result<()> {
     if let Some(it) = contact {
-        scripts::call_with_descriptor(out_path, &(&it, &it.extensions), SCRIPT_SPEC_INFO_CONTACT)?;
+        Script::SpecInfoContact.call_with_descriptor(
+            out_path,
+            &(&it, &it.extensions),
+            call_stack,
+        )?;
     }
     Ok(())
 }
 
-pub fn visit_spec_info_license(out_path: &Path, contact: &Option<License>) -> Result<()> {
-    if let Some(it) = contact {
-        scripts::call_with_descriptor(out_path, &(&it, &it.extensions), SCRIPT_SPEC_INFO_LICENSE)?;
+pub fn visit_spec_info_license(
+    out_path: &Path,
+    license: &Option<License>,
+    call_stack: &CallStack,
+) -> Result<()> {
+    if let Some(it) = license {
+        Script::SpecInfoLicense.call_with_descriptor(
+            out_path,
+            &(&it, &it.extensions),
+            call_stack,
+        )?;
     }
     Ok(())
 }
@@ -998,40 +1244,121 @@ pub fn visit_spec_servers(
     out_path: &Path,
     servers: &Vec<Server>,
     extensions: &IndexMap<String, serde_json::Value>,
+    call_stack: &CallStack,
 ) -> Result<()> {
-    scripts::call_with_descriptor(out_path, &(servers, extensions), SCRIPT_SPEC_SERVERS_START)?;
-
-    servers.iter().try_for_each(|server| {
-        if let Some(variables) = server.variables.as_ref() {
-            variables.iter().try_for_each(|it| {
-                scripts::call_with_descriptor(
+    Script::SpecServersStart
+        .call_with_descriptor(out_path, &(servers, extensions), call_stack)?
+        .and_then(|call_stack| {
+            servers.iter().try_for_each(|server| {
+                Script::SpecServerStart
+                    .call_with_descriptor(
+                        out_path,
+                        &(
+                            &server.url,
+                            &server.description,
+                            &server.variables,
+                            &server.extensions,
+                        ),
+                        call_stack,
+                    )?
+                    .and_then(|call_stack| {
+                        if let Some(variables) = server.variables.as_ref() {
+                            variables.iter().try_for_each(|it| {
+                                Script::SpecServerVariable.call_with_descriptor(
+                                    out_path,
+                                    &(
+                                        &it.0,
+                                        &it.1.enumeration,
+                                        &it.1.default,
+                                        &it.1.description,
+                                        &it.1.extensions,
+                                    ),
+                                    call_stack,
+                                )?;
+                                Ok(())
+                            })?;
+                        }
+                        Ok(())
+                    })?;
+                Script::SpecServerEnd.call_with_descriptor(
                     out_path,
                     &(
-                        &it.0,
-                        &it.1.enumeration,
-                        &it.1.default,
-                        &it.1.description,
-                        &it.1.extensions,
+                        &server.url,
+                        &server.description,
+                        &server.variables,
+                        &server.extensions,
                     ),
-                    SCRIPT_SPEC_SERVER_VARIABLE,
-                )
-            })?;
-        }
-        scripts::call_with_descriptor(
-            out_path,
-            &(
-                &server.url,
-                &server.description,
-                &server.variables,
-                &server.extensions,
-            ),
-            SCRIPT_SPEC_SERVER,
-        )
-    })?;
-
-    scripts::call_with_descriptor(out_path, &(servers, extensions), SCRIPT_SPEC_SERVERS_END)?;
-
+                    call_stack,
+                )?;
+                Ok(())
+            })
+        })?;
+    Script::SpecServersEnd.call_with_descriptor(out_path, &(servers, extensions), call_stack)?;
     Ok(())
+}
+
+pub fn visit_object_property<T>(
+    parsed_spec: &ParsedSpec,
+    out_path: &Path,
+    names_stack: &[ModelName],
+    property_name: &str,
+    property_schema_ref: &ReferenceOr<T>,
+    extensions: &IndexMap<String, serde_json::Value>,
+    call_stack: &CallStack,
+) -> Result<()>
+where
+    T: DeserializeOwned + Send + Sync + AsSchemaRef + From<Schema> + 'static,
+{
+    match property_schema_ref {
+        ReferenceOr::Reference { reference } => {
+            visit_object_property(
+                parsed_spec,
+                out_path,
+                names_stack,
+                property_name,
+                references::resolve_reference::<T>(reference, parsed_spec)?,
+                extensions,
+                call_stack,
+            )?;
+            Ok(())
+        }
+        ReferenceOr::Item(schema) => {
+            let schema = schema.as_schema();
+
+            let mut current_names_stack = names_stack.to_vec();
+            current_names_stack.push(ModelName {
+                base: property_name.to_owned(),
+                extended: schema
+                    .schema_data
+                    .extensions
+                    .get(EXTENSION_FOR_NAME)
+                    .cloned(),
+            });
+
+            Script::ObjectPropertyStart
+                .call_with_descriptor(
+                    out_path,
+                    &(current_names_stack, schema, extensions),
+                    call_stack,
+                )?
+                .and_then(|call_stack| {
+                    visit_schema(
+                        parsed_spec,
+                        out_path,
+                        names_stack,
+                        property_name,
+                        property_schema_ref,
+                        call_stack,
+                    )
+                })?;
+            Script::ObjectPropertyEnd.call_with_descriptor(
+                out_path,
+                &(names_stack, property_name, schema, extensions),
+                call_stack,
+            )?;
+            Ok(())
+        }
+    }
 }
 
 pub fn visit_object(
@@ -1040,123 +1367,98 @@ pub fn visit_object(
     names_stack: &[ModelName],
     object_description: &ObjectType,
     extensions: &IndexMap<String, serde_json::Value>,
+    call_stack: &CallStack,
 ) -> Result<()> {
-    scripts::call_with_descriptor(
-        out_path,
-        &(names_stack, object_description, extensions),
-        SCRIPT_OBJECT_START,
-    )?;
+    Script::ObjectStart
+        .call_with_descriptor(
+            out_path,
+            &(names_stack, object_description, extensions),
+            call_stack,
+        )?
+        .and_then(|call_stack| {
+            object_description.properties.iter().try_for_each(
+                |(local_property_name, property_schema_ref)| -> Result<()> {
+                    visit_object_property(
+                        parsed_spec,
+                        out_path,
+                        names_stack,
+                        local_property_name,
+                        property_schema_ref,
+                        extensions,
+                        call_stack,
+                    )
+                },
+            )?;
 
-    object_description.properties.iter().try_for_each(
-        |(local_property_name, property_schema_ref)| -> Result<()> {
-            let property_extensions =
-                schema::get_extensions_with_schema_resolving(parsed_spec, property_schema_ref)?;
-
-            let mut property_stack = names_stack.to_vec();
-            property_stack.push(ModelName {
-                base: local_property_name.to_owned(),
-                extended: property_extensions.get(EXTENSION_FOR_NAME).cloned(),
+            let mut current_names_stack = names_stack.to_vec();
+            //AdditionalProperties it is just especial one property
+            current_names_stack.push(ModelName {
+                base: DEFAULT_OBJECT_ADDITIONAL_PROPERTIES.to_owned(),
+                // additionalProperties does not have schema, so extensions to it sent from object level
+                extended: extensions
+                    .get(EXTENSION_ANY_ADDITIONAL_PROPERTIES_NAME)
+                    .cloned(),
             });
 
-            scripts::call_with_descriptor(
-                out_path,
-                &(&property_stack, object_description, property_extensions),
-                SCRIPT_OBJECT_PROPERTY_START,
-            )?;
-
-            visit_schema(
-                parsed_spec,
-                out_path,
-                &mut property_stack,
-                property_schema_ref,
-            )?;
-
-            scripts::call_with_descriptor(
-                out_path,
-                &(&property_stack, object_description, property_extensions),
-                SCRIPT_OBJECT_PROPERTY_END,
-            )
-        },
-    )?;
-
-    if let Some(it) = object_description.additional_properties.as_ref() {
-        match it {
-            openapiv3::AdditionalProperties::Any(value) => {
-                let mut property_stack = names_stack.to_vec();
-                //AdditionalProperties it is just especial one property
-                property_stack.push(ModelName {
-                    base: DEFAULT_OBJECT_ADDITIONAL_PROPERTIES.to_owned(),
-                    // additionalProperties does not have schema, so extensions to it sent from object level
-                    extended: extensions
-                        .get(EXTENSION_ANY_ADDITIONAL_PROPERTIES_NAME)
-                        .cloned(),
-                });
-
-                scripts::call_with_descriptor(
-                    out_path,
-                    &(
-                        &property_stack,
-                        *value,
-                        object_description.min_properties,
-                        object_description.max_properties,
-                        extensions,
-                    ),
-                    SCRIPT_OBJECT_ADDITIONAL_PROPERTIES,
-                )?;
+            if let Some(it) = object_description.additional_properties.as_ref() {
+                match it {
+                    openapiv3::AdditionalProperties::Any(value) => {
+                        Script::ObjectAdditionalPropertiesAny.call_with_descriptor(
+                            out_path,
+                            &(
+                                &current_names_stack,
+                                *value,
+                                object_description.min_properties,
+                                object_description.max_properties,
+                                extensions,
+                            ),
+                            call_stack,
+                        )?;
+                    }
+                    openapiv3::AdditionalProperties::Schema(it) => {
+                        let schema_ref = it.as_ref();
+                        Script::ObjectAdditionalPropertiesStart
+                            .call_with_descriptor(
+                                out_path,
+                                &(
+                                    &current_names_stack,
+                                    schema_ref,
+                                    object_description.min_properties,
+                                    object_description.max_properties,
+                                    extensions,
+                                ),
+                                call_stack,
+                            )?
+                            .and_then(|call_stack| {
+                                visit_schema(
+                                    parsed_spec,
+                                    out_path,
+                                    names_stack,
+                                    DEFAULT_OBJECT_ADDITIONAL_PROPERTIES,
+                                    schema_ref,
+                                    call_stack,
+                                )
+                            })?;
+                        Script::ObjectAdditionalPropertiesEnd.call_with_descriptor(
+                            out_path,
+                            &(
+                                &current_names_stack,
+                                schema_ref,
+                                object_description.min_properties,
+                                object_description.max_properties,
+                                extensions,
+                            ),
+                            call_stack,
+                        )?;
+                    }
+                }
             }
-            openapiv3::AdditionalProperties::Schema(it) => {
-                let additional_properties_schema = it.as_ref();
-
-                let additional_properties_extensions =
-                    schema::get_extensions_with_schema_resolving(
-                        parsed_spec,
-                        additional_properties_schema,
-                    )?;
-
-                let mut property_stack = names_stack.to_vec();
-                //AdditionalProperties it is just especial one property
-                property_stack.push(ModelName {
-                    base: DEFAULT_OBJECT_ADDITIONAL_PROPERTIES.to_owned(),
-                    extended: additional_properties_extensions
-                        .get(EXTENSION_ANY_ADDITIONAL_PROPERTIES_NAME)
-                        .cloned(),
-                });
-
-                scripts::call_with_descriptor(
-                    out_path,
-                    &(
-                        &property_stack,
-                        object_description.min_properties,
-                        object_description.max_properties,
-                        additional_properties_extensions,
-                    ),
-                    SCRIPT_OBJECT_ADDITIONAL_PROPERTIES_START,
-                )?;
-
-                visit_schema(
-                    parsed_spec,
-                    out_path,
-                    &mut property_stack,
-                    additional_properties_schema,
-                )?;
-
-                scripts::call_with_descriptor(
-                    out_path,
-                    &(
-                        &property_stack,
-                        object_description.min_properties,
-                        object_description.max_properties,
-                        additional_properties_extensions,
-                    ),
-                    SCRIPT_OBJECT_ADDITIONAL_PROPERTIES_END,
-                )?;
-            }
-        }
-    }
-
-    scripts::call_with_descriptor(
+            Ok(())
+        })?;
+    Script::ObjectEnd.call_with_descriptor(
         out_path,
         &(names_stack, object_description, extensions),
-        SCRIPT_OBJECT_END,
-    )
+        call_stack,
+    )?;
+    Ok(())
 }
