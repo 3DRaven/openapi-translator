@@ -252,39 +252,26 @@
 --- @field any AnySchema Generic schema allowing any structure.
 
 --- Enum representing different data types in a schema.
---- @class Type
---- Represents a string data type with specific attributes.
---- @field String StringType
---- Represents a number data type, including floating-point numbers.
---- @field Number NumberType
---- Represents an integer data type with its constraints.
---- @field Integer IntegerType
---- Represents an object data type with properties and structure.
---- @field Object ObjectType
---- Represents an array data type with items of a specified type.
---- @field Array ArrayType
---- Represents a boolean data type, true or false.
---- @field Boolean BooleanType
+--- @alias Type
+--- | '"string"'    # Represents a string data type with specific attributes.
+--- | '"number"'    # Represents a number data type, including floating-point numbers.
+--- | '"integer"'   # Represents an integer data type with its constraints.
+--- | '"object"'    # Represents an object data type with properties and structure.
+--- | '"array"'     # Represents an array data type with items of a specified type.
+--- | '"boolean"'   # Represents a boolean data type, true or false.
 
 --- Represents different number formats.
---- @class NumberFormat
---- Floating-point format for numbers.
---- @field Float NumberFormat
---- Double precision format for numbers.
---- @field Double NumberFormat
+--- @alias NumberFormat
+--- | '"float"'   # Floating-point format for numbers.
+--- | '"double"'  # Double precision format for numbers.
 
 --- Represents different string formats.
---- @class StringFormat
---- Date format for strings.
---- @field date StringFormat
---- Date and time format for strings.
---- @field date_time StringFormat
---- Password format, used for secret fields.
---- @field password StringFormat
---- Byte format, representing base64 encoded data.
---- @field byte StringFormat
---- Binary format, representing raw binary data.
---- @field binary StringFormat
+--- @alias StringFormat
+--- | '"date"'       # Date format for strings.
+--- | '"date-time"'  # Date and time format for strings.
+--- | '"password"'   # Password format, used for secret fields.
+--- | '"byte"'       # Byte format, representing base64 encoded data.
+--- | '"binary"'     # Binary format, representing raw binary data.
 
 --- Represents a string data type with additional validation attributes.
 --- @class StringType
@@ -305,13 +292,11 @@
 --- @field enumeration number[] Possible values for the number.
 
 --- Represents different integer formats.
---- @class IntegerFormat
---- Integer format for 32-bit integers.
---- @field Int32 IntegerFormat
---- Integer format for 64-bit integers.
---- @field Int64 IntegerFormat
---- Represents an integer data type with additional validation attributes.
+--- @alias IntegerFormat
+--- | '"int32"'  # Integer format for 32-bit integers.
+--- | '"int64"'  # Integer format for 64-bit integers.
 
+--- Represents an integer data type with additional validation attributes.
 --- @class IntegerType
 --- @field format IntegerFormat Format of the integer.
 --- @field multiple_of number Optional requirement for the integer to be a multiple of this value.
