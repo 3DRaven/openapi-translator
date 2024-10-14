@@ -36,6 +36,14 @@ pub enum Script {
     ResponseHeadersStart,
     #[serde(rename = "RESPONSE_HEADERS_END")]
     ResponseHeadersEnd,
+    #[serde(rename = "RESPONSE_CONTENT_START")]
+    ResponseContentStart,
+    #[serde(rename = "RESPONSE_CONTENT_END")]
+    ResponseContentEnd,
+    #[serde(rename = "RESPONSE_LINKS_START")]
+    ResponseLinksStart,
+    #[serde(rename = "RESPONSE_LINKS_END")]
+    ResponseLinksEnd,
     #[serde(rename = "HEADERS_START")]
     HeadersStart,
     #[serde(rename = "HEADERS_END")]
@@ -50,6 +58,12 @@ pub enum Script {
     ExamplesStart,
     #[serde(rename = "EXAMPLES_END")]
     ExamplesEnd,
+    #[serde(rename = "GENERIC_PARAMETERS_START")]
+    GenericParametersStart,
+    #[serde(rename = "GENERIC_PARAMETER")]
+    GenericParameter,
+    #[serde(rename = "GENERIC_PARAMETERS_END")]
+    GenericParametersEnd,
     #[serde(rename = "PARAMETER_SCHEMA_OR_CONTENT_START")]
     ParameterSchemaOrContentStart,
     #[serde(rename = "PARAMETER_SCHEMA_OR_CONTENT_END")]
@@ -58,8 +72,14 @@ pub enum Script {
     MediaTypeStart,
     #[serde(rename = "MEDIA_TYPE_END")]
     MediaTypeEnd,
+    #[serde(rename = "LINK_START")]
+    LinkStart,
+    #[serde(rename = "LINK_END")]
+    LinkEnd,
     #[serde(rename = "MEDIA_TYPE_EXAMPLE")]
     GenericExample,
+    #[serde(rename = "GENERIC_REQUEST_BODY")]
+    GenericRequestBody,
     #[serde(rename = "ENCODING_START")]
     EncodingStart,
     #[serde(rename = "ENCODING_END")]
@@ -102,12 +122,12 @@ pub enum Script {
 
     #[serde(rename = "SPEC_SERVERS_START")]
     SpecServersStart,
-    #[serde(rename = "SPEC_SERVER_START")]
-    SpecServerStart,
-    #[serde(rename = "SPEC_SERVER_END")]
-    SpecServerEnd,
-    #[serde(rename = "SPEC_SERVER_VARIABLE")]
-    SpecServerVariable,
+    #[serde(rename = "SERVER_START")]
+    ServerStart,
+    #[serde(rename = "SERVER_END")]
+    ServerEnd,
+    #[serde(rename = "SERVER_VARIABLE")]
+    ServerVariable,
     #[serde(rename = "SPEC_SERVERS_END")]
     SpecServersEnd,
 
@@ -363,9 +383,9 @@ impl From<&Script> for &'static str {
             Script::SpecTagsStart => "visitors/tags/spec_tags_start",
 
             Script::SpecServersStart => "visitors/servers/spec_servers_start",
-            Script::SpecServerStart => "visitors/servers/spec_server_start",
-            Script::SpecServerEnd => "visitors/servers/spec_server_end",
-            Script::SpecServerVariable => "visitors/servers/spec_server_variable",
+            Script::ServerStart => "visitors/common/server/server_start",
+            Script::ServerEnd => "visitors/common/server/server_end",
+            Script::ServerVariable => "visitors/common/server/server_variable",
             Script::SpecServersEnd => "visitors/servers/spec_servers_end",
 
             Script::SpecInfoStart => "visitors/info/spec_info_start",
@@ -434,6 +454,16 @@ impl From<&Script> for &'static str {
             Script::ObjectPropertiesEnd => {
                 "visitors/components/schemas/kind/type/object/object_properties_end"
             }
+            Script::ResponseContentStart => "visitors/components/responses/response_content_start",
+            Script::ResponseContentEnd => "visitors/components/responses/response_content_end",
+            Script::LinkStart => "visitors/common/link/link_start",
+            Script::LinkEnd => "visitors/common/link/link_end",
+            Script::GenericRequestBody => "visitors/common/generic_request_body/request_body",
+            Script::GenericParametersStart => "visitors/common/parameters/parameters_start",
+            Script::GenericParametersEnd => "visitors/common/parameters/parameters_end",
+            Script::GenericParameter => "visitors/common/parameters/parameter",
+            Script::ResponseLinksStart => "visitors/components/responses/response_links_start",
+            Script::ResponseLinksEnd => "visitors/components/responses/response_links_end",
         }
     }
 }

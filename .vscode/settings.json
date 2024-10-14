@@ -175,7 +175,17 @@
         "hasSpecifiedParentsInCallChain",
         "visitObjectPropertiesStart",
         "visitAdditionalPropertyEnd",
-        "visitObjectPropertiesEnd"
+        "visitObjectPropertiesEnd",
+        "visitResponseContentStart",
+        "visitResponseContentEnd",
+        "visitLinkStart",
+        "visitLinkEnd",
+        "visitGenericRequestBody",
+        "visitParametersStart",
+        "visitServerStart",
+        "visitServerEnd",
+        "visitResponseLinksStart",
+        "visitResponseLinksEnd"
     ],
     "terminal.integrated.scrollback": 16777216,
     "references.preferredLocation": "view",

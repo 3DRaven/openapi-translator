@@ -10,9 +10,9 @@ use indexmap::IndexMap;
 use log::{error, info};
 use openapiv3::{
     AnySchema, ArrayType, BooleanType, Components, Contact, Discriminator, Encoding, Example,
-    ExternalDocumentation, Header, Info, IntegerType, License, MediaType, NumberType, ObjectType,
-    OpenAPI, ParameterSchemaOrContent, ReferenceOr, Response, Schema, SecurityRequirement, Server,
-    StringType, Tag,
+    ExternalDocumentation, Header, Info, IntegerType, License, Link, MediaType, NumberType,
+    ObjectType, OpenAPI, ParameterSchemaOrContent, ReferenceOr, Response, Schema,
+    SecurityRequirement, Server, StringType, Tag,
 };
 use serde::de::DeserializeOwned;
 
@@ -401,7 +401,6 @@ pub fn visit_response(
                     call_stack,
                 )?
                 .and_then(|call_stack| {
-                    //TODO: cover all other fields
                     Script::ResponseHeadersStart
                         .call_with_descriptor(
                             out_path,
@@ -429,6 +428,56 @@ pub fn visit_response(
                             &response.headers,
                             &response_extensions,
                         ),
+                        call_stack,
+                    )?;
+
+                    Script::ResponseContentStart
+                        .call_with_descriptor(
+                            out_path,
+                            &(
+                                &current_names_stack,
+                                &response.content,
+                                &response_extensions,
+                            ),
+                            call_stack,
+                        )?
+                        .and_then(|call_stack| {
+                            visit_media_types(
+                                parsed_spec,
+                                out_path,
+                                names_stack,
+                                &response.content,
+                                call_stack,
+                            )
+                        })?;
+                    Script::ResponseContentEnd.call_with_descriptor(
+                        out_path,
+                        &(
+                            &current_names_stack,
+                            &response.content,
+                            &response_extensions,
+                        ),
+                        call_stack,
+                    )?;
+
+                    Script::ResponseLinksStart
+                        .call_with_descriptor(
+                            out_path,
+                            &(&current_names_stack, &response.links, &response_extensions),
+                            call_stack,
+                        )?
+                        .and_then(|call_stack| {
+                            visit_links(
+                                parsed_spec,
+                                out_path,
+                                names_stack,
+                                &response.links,
+                                call_stack,
+                            )
+                        })?;
+                    Script::ResponseLinksEnd.call_with_descriptor(
+                        out_path,
+                        &(&current_names_stack, &response.links, &response_extensions),
                         call_stack,
                     )?;
                     Ok(())
@@ -673,6 +722,45 @@ pub fn visit_generic_example(
     Ok(())
 }
 
+pub fn visit_generic_parameter(
+    out_path: &Path,
+    names_stack: &[ModelName],
+    parameter_name: &str,
+    parameter: &serde_json::Value,
+    extensions: &IndexMap<String, serde_json::Value>,
+    call_stack: &CallStack,
+) -> Result<()> {
+    let mut current_names_stack = names_stack.to_vec();
+    current_names_stack.push(ModelName {
+        base: parameter_name.to_owned(),
+        extended: extensions.get(EXTENSION_FOR_NAME).cloned(),
+    });
+
+    Script::GenericParameter.call_with_descriptor(
+        out_path,
+        &(&current_names_stack, parameter, extensions),
+        call_stack,
+    )?;
+    Ok(())
+}
+
+pub fn visit_generic_request_body(
+    out_path: &Path,
+    names_stack: &[ModelName],
+    body: &Option<serde_json::Value>,
+    extensions: &IndexMap<String, serde_json::Value>,
+    call_stack: &CallStack,
+) -> Result<()> {
+    if let Some(body_json) = body {
+        Script::GenericRequestBody.call_with_descriptor(
+            out_path,
+            &(&names_stack, body_json, extensions),
+            call_stack,
+        )?;
+    }
+    Ok(())
+}
+
 pub fn visit_media_type_encodings(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
@@ -783,6 +871,7 @@ pub fn visit_parameter_schema_or_content(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
     names_stack: &[ModelName],
+    parameter_name: &str,
     parameter_schema_or_content: &ParameterSchemaOrContent,
     extensions: &IndexMap<String, serde_json::Value>,
     call_stack: &CallStack,
@@ -796,32 +885,17 @@ pub fn visit_parameter_schema_or_content(
         .and_then(|call_stack| {
             match parameter_schema_or_content {
                 ParameterSchemaOrContent::Schema(schema_ref) => {
-                    //We usually call a separate script for each case, but since the schemas are complex and nested,
-                    //we use the parent type in scripts to determine that this call is made from a visitor for the
-                    //format in the example, in order not to duplicate a large amount of code.
                     visit_schema(
                         parsed_spec,
                         out_path,
                         names_stack,
-                        "format",
+                        parameter_name,
                         schema_ref,
                         call_stack,
                     )?;
                 }
                 ParameterSchemaOrContent::Content(media_types) => {
-                    media_types.iter().try_for_each(|media_type| {
-                        //We usually call a separate script for each case, but since the MediaType are complex,
-                        //we use the parent type in scripts to determine that this call is made from a visitor for the
-                        //format in the example, in order not to duplicate a large amount of code.
-                        visit_media_type(
-                            parsed_spec,
-                            out_path,
-                            names_stack,
-                            media_type.0,
-                            media_type.1,
-                            call_stack,
-                        )
-                    })?;
+                    visit_media_types(parsed_spec, out_path, names_stack, media_types, call_stack)?;
                 }
             }
             Ok(())
@@ -831,6 +905,108 @@ pub fn visit_parameter_schema_or_content(
         &(&names_stack, parameter_schema_or_content, extensions),
         call_stack,
     )?;
+    Ok(())
+}
+
+pub fn visit_media_types(
+    parsed_spec: &ParsedSpec,
+    out_path: &Path,
+    names_stack: &[ModelName],
+    media_types: &IndexMap<String, MediaType>,
+    call_stack: &CallStack,
+) -> Result<()> {
+    media_types.iter().try_for_each(|media_type| {
+        visit_media_type(
+            parsed_spec,
+            out_path,
+            names_stack,
+            media_type.0,
+            media_type.1,
+            call_stack,
+        )
+    })
+}
+
+pub fn visit_links(
+    parsed_spec: &ParsedSpec,
+    out_path: &Path,
+    names_stack: &[ModelName],
+    links: &IndexMap<String, ReferenceOr<Link>>,
+    call_stack: &CallStack,
+) -> Result<()> {
+    links.iter().try_for_each(|link| {
+        visit_link(
+            parsed_spec,
+            out_path,
+            names_stack,
+            link.0,
+            link.1,
+            call_stack,
+        )
+    })
+}
+
+pub fn visit_link(
+    parsed_spec: &ParsedSpec,
+    out_path: &Path,
+    names_stack: &[ModelName],
+    link_name: &str,
+    link: &ReferenceOr<Link>,
+    call_stack: &CallStack,
+) -> Result<()> {
+    match link {
+        ReferenceOr::Reference { reference } => {
+            visit_link(
+                parsed_spec,
+                out_path,
+                names_stack,
+                link_name,
+                references::resolve_reference::<Link>(reference, parsed_spec)?,
+                call_stack,
+            )?;
+        }
+        ReferenceOr::Item(link) => {
+            let mut current_names_stack = names_stack.to_vec();
+            current_names_stack.push(ModelName {
+                base: link_name.to_owned(),
+                extended: link.extensions.get(EXTENSION_FOR_NAME).cloned(),
+            });
+
+            Script::LinkStart
+                .call_with_descriptor(
+                    out_path,
+                    &(&current_names_stack, link, &link.extensions),
+                    call_stack,
+                )?
+                .and_then(|call_stack| {
+                    visit_generic_request_body(
+                        out_path,
+                        &current_names_stack,
+                        &link.request_body,
+                        &link.extensions,
+                        call_stack,
+                    )?;
+
+                    visit_generic_parameters(
+                        out_path,
+                        &current_names_stack,
+                        &link.parameters,
+                        &link.extensions,
+                        call_stack,
+                    )?;
+
+                    if let Some(server) = &link.server {
+                        visit_server(out_path, server, call_stack)?;
+                    }
+                    Ok(())
+                })?;
+            Script::LinkEnd.call_with_descriptor(
+                out_path,
+                &(&current_names_stack, link, &link.extensions),
+                call_stack,
+            )?;
+        }
+    }
     Ok(())
 }
 
@@ -926,6 +1102,42 @@ pub fn visit_examples(
     Ok(())
 }
 
+pub fn visit_generic_parameters(
+    out_path: &Path,
+    names_stack: &[ModelName],
+    parameters: &IndexMap<String, serde_json::Value>,
+    extensions: &IndexMap<String, serde_json::Value>,
+    call_stack: &CallStack,
+) -> Result<()> {
+    if !parameters.is_empty() {
+        Script::GenericParametersStart
+            .call_with_descriptor(
+                out_path,
+                &(&names_stack, parameters, extensions),
+                call_stack,
+            )?
+            .and_then(|call_stack| {
+                parameters.iter().try_for_each(|it| {
+                    visit_generic_parameter(
+                        out_path,
+                        names_stack,
+                        it.0,
+                        it.1,
+                        extensions,
+                        call_stack,
+                    )?;
+                    Ok(())
+                })
+            })?;
+        Script::GenericParametersEnd.call_with_descriptor(
+            out_path,
+            &(&names_stack, parameters, extensions),
+            call_stack,
+        )?;
+    }
+    Ok(())
+}
+
 pub fn visit_header(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
@@ -963,6 +1175,7 @@ pub fn visit_header(
                         parsed_spec,
                         out_path,
                         &current_names_stack,
+                        "format",
                         &header.format,
                         &header.extensions,
                         call_stack,
@@ -1210,6 +1423,25 @@ pub fn visit_spec_info_license(
     }
     Ok(())
 }
+pub fn visit_server(out_path: &Path, server: &Server, call_stack: &CallStack) -> Result<()> {
+    Script::ServerStart
+        .call_with_descriptor(out_path, &(&server, &server.extensions), call_stack)?
+        .and_then(|call_stack| {
+            if let Some(variables) = server.variables.as_ref() {
+                variables.iter().try_for_each(|it| {
+                    Script::ServerVariable.call_with_descriptor(
+                        out_path,
+                        &(&server.url, &it.0, &it.1, &it.1.extensions),
+                        call_stack,
+                    )?;
+                    Ok(())
+                })?;
+            }
+            Ok(())
+        })?;
+    Script::ServerEnd.call_with_descriptor(out_path, &(&server, &server.extensions), call_stack)?;
+    Ok(())
+}
 
 pub fn visit_spec_servers(
     out_path: &Path,
@@ -1222,26 +1454,7 @@ pub fn visit_spec_servers(
             .call_with_descriptor(out_path, &(servers, extensions), call_stack)?
             .and_then(|call_stack| {
                 servers.iter().try_for_each(|server| {
-                    Script::SpecServerStart
-                        .call_with_descriptor(out_path, &(&server, &server.extensions), call_stack)?
-                        .and_then(|call_stack| {
-                            if let Some(variables) = server.variables.as_ref() {
-                                variables.iter().try_for_each(|it| {
-                                    Script::SpecServerVariable.call_with_descriptor(
-                                        out_path,
-                                        &(&server.url, &it.0, &it.1, &it.1.extensions),
-                                        call_stack,
-                                    )?;
-                                    Ok(())
-                                })?;
-                            }
-                            Ok(())
-                        })?;
-                    Script::SpecServerEnd.call_with_descriptor(
-                        out_path,
-                        &(&server, &server.extensions),
-                        call_stack,
-                    )?;
+                    visit_server(out_path, server, call_stack)?;
                     Ok(())
                 })
             })?;
