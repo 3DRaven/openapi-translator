@@ -28,6 +28,14 @@ pub enum Script {
     ResponsesStart,
     #[serde(rename = "RESPONSES_END")]
     ResponsesEnd,
+    #[serde(rename = "QUERY_PARAMETER_START")]
+    QueryParameterStart,
+    #[serde(rename = "QUERY_PARAMETER_END")]
+    QueryParameterEnd,
+    #[serde(rename = "PARAMETERS_START")]
+    ParametersStart,
+    #[serde(rename = "PARAMETERS_END")]
+    ParametersEnd,
     #[serde(rename = "RESPONSE_START")]
     ResponseStart,
     #[serde(rename = "RESPONSE_END")]
@@ -459,11 +467,19 @@ impl From<&Script> for &'static str {
             Script::LinkStart => "visitors/common/link/link_start",
             Script::LinkEnd => "visitors/common/link/link_end",
             Script::GenericRequestBody => "visitors/common/generic_request_body/request_body",
-            Script::GenericParametersStart => "visitors/common/parameters/parameters_start",
-            Script::GenericParametersEnd => "visitors/common/parameters/parameters_end",
-            Script::GenericParameter => "visitors/common/parameters/parameter",
+            Script::GenericParametersStart => "visitors/common/generic_parameters/parameters_start",
+            Script::GenericParametersEnd => "visitors/common/generic_parameters/parameters_end",
+            Script::GenericParameter => "visitors/common/generic_parameters/parameter",
             Script::ResponseLinksStart => "visitors/components/responses/response_links_start",
             Script::ResponseLinksEnd => "visitors/components/responses/response_links_end",
+            Script::ParametersStart => "visitors/common/parameters/parameters_start",
+            Script::ParametersEnd => "visitors/common/parameters/parameters_end",
+            Script::QueryParameterStart => {
+                "visitors/common/parameters/query_parameter/query_parameter_start"
+            }
+            Script::QueryParameterEnd => {
+                "visitors/common/parameters/query_parameter/query_parameter_end"
+            }
         }
     }
 }

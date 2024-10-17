@@ -185,7 +185,13 @@
         "visitServerStart",
         "visitServerEnd",
         "visitResponseLinksStart",
-        "visitResponseLinksEnd"
+        "visitResponseLinksEnd",
+        "visitGenericParametersStart",
+        "visitGenericParametersEnd",
+        "visitGenericParameter",
+        "visitParametersEnd",
+        "visitQueryParameterStart",
+        "visitQueryParameterEnd"
     ],
     "terminal.integrated.scrollback": 16777216,
     "references.preferredLocation": "view",

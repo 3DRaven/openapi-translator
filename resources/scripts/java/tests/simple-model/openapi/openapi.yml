@@ -17,12 +17,6 @@ paths:
 
 components:
   schemas:
-    StringSchema:
-      type: string
-      maxLength: 100
-      minLength: 1
-      pattern: '^[a-zA-Z]+$'
-      example: "exampleString"
     ObjectSchema:
       type: object
       properties:

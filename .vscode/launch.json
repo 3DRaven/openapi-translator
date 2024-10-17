@@ -25,17 +25,6 @@
                 // "-n",
                 // "cycled-refs",
                 // "-n",
-
-
-
-
-
-
-
-
-
-
-                
                 // "hard"
             ],
             "cwd": "${workspaceRoot}",

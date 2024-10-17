@@ -1,4 +1,4 @@
---- This visitor is invoked before processing parameters
+--- This visitor is invoked before processing parameters (not just generic json, but model Parameters)
 --- @param namesStack ModelName[] # chain of model names from root to this point
 --- @param parameters table<string, table> # Represents the headers parameter, which is a map from strings to references or items.
 --- @param extensions table # table with free form with "x-" OpenAPI extensions for this level of spec

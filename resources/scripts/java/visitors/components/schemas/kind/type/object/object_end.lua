@@ -1,3 +1,22 @@
+local function getCollectedCode(currentModelName)
+    -- this object must to save self model
+    local model = global_context:getModel("visitObjectEnd", currentModelName)
+    if model == nil then
+        print("Model [" ..
+            currentModelName .. "] not found in global_context by [visitObjectEnd], generated empty object")
+        return { WriteOperation.new_append(string.format("public class %s {\n\n}\n", currentModelName),
+            currentModelName) }
+    else
+        return concatTables(
+            model.includes,
+            { WriteOperation.new_append(string.format("public class %s {\n\n", currentModelName),
+                currentModelName) },
+            model.properties,
+            model.methods,
+            { WriteOperation.new_append("\n}\n", currentModelName) })
+    end
+end
+
 --- This visitor is invoked after all the content inside a schema of type object has been processed.
 --- Returns a code of the end of an object based on whether it's required.
 --- @param namesStack ModelName[] # chain of model names from root to this point
@@ -28,23 +47,7 @@ function visitObjectEnd(namesStack, parentType, objectDescriptor, extensions, ca
 
             global_context:addProperties("visitObjectEnd", parentModelName,
                 { WriteOperation.new_append(code, parentModelName) })
-
-            -- this object must to save self model
-            local model = global_context:getModel("visitObjectEnd", currentModelName)
-            if model == nil then
-                print("Model [" ..
-                    currentModelName .. "] not found in global_context by [visitObjectEnd], generated empty object")
-                return { WriteOperation.new_append(string.format("public class %s {\n\n}\n", currentModelName),
-                    currentModelName) }
-            else
-                return concatTables(
-                    model.includes,
-                    { WriteOperation.new_append(string.format("public class %s {\n\n", currentModelName),
-                        currentModelName) },
-                    model.properties,
-                    model.methods,
-                    { WriteOperation.new_append("\n}\n", currentModelName) })
-            end
+            return getCollectedCode(currentModelName)
         elseif parentType == ParentType.ARRAY or parentType == ParentType.ADDITIONAL then --we already saved model name of this object as lastChildrenModel name
         elseif parentType == ParentType.ALL_OF then
             --- If the parent is allOf, we need to place all created properties and other of this object into the parent.
@@ -57,6 +60,8 @@ function visitObjectEnd(namesStack, parentType, objectDescriptor, extensions, ca
         else
             error("Unknown parent type for object")
         end
+    else
+        return getCollectedCode(currentModelName)
     end
 
     return {}
