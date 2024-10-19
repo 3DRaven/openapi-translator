@@ -36,6 +36,18 @@ pub enum Script {
     QueryParameterStart,
     #[serde(rename = "QUERY_PARAMETER_END")]
     QueryParameterEnd,
+    #[serde(rename = "HEADER_PARAMETER_START")]
+    HeaderParameterStart,
+    #[serde(rename = "HEADER_PARAMETER_END")]
+    HeaderParameterEnd,
+    #[serde(rename = "PATH_PARAMETER_START")]
+    PathParameterStart,
+    #[serde(rename = "PATH_PARAMETER_END")]
+    PathParameterEnd,
+    #[serde(rename = "COOKIE_PARAMETER_START")]
+    CookieParameterStart,
+    #[serde(rename = "COOKIE_PARAMETER_END")]
+    CookieParameterEnd,
     #[serde(rename = "PARAMETERS_START")]
     ParametersStart,
     #[serde(rename = "PARAMETERS_END")]
@@ -486,6 +498,24 @@ impl From<&Script> for &'static str {
             }
             Script::ParameterDataStart => "visitors/common/parameter_data/parameter_data_start",
             Script::ParameterDataEnd => "visitors/common/parameter_data/parameter_data_end",
+            Script::HeaderParameterStart => {
+                "visitors/common/parameters/header_parameter/header_parameter_start"
+            }
+            Script::HeaderParameterEnd => {
+                "visitors/common/parameters/header_parameter/header_parameter_end"
+            }
+            Script::PathParameterStart => {
+                "visitors/common/parameters/path_parameter/path_parameter_start"
+            }
+            Script::PathParameterEnd => {
+                "visitors/common/parameters/path_parameter/path_parameter_end"
+            }
+            Script::CookieParameterStart => {
+                "visitors/common/parameters/cookie_parameter/cookie_parameter_start"
+            }
+            Script::CookieParameterEnd => {
+                "visitors/common/parameters/cookie_parameter/cookie_parameter_end"
+            }
         }
     }
 }

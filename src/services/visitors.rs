@@ -1357,7 +1357,6 @@ pub fn visit_parameters(
                 parameters
                     .iter()
                     .try_for_each(|(parameter_name, parameter_ref)| {
-                        //TODO: тут все поля покрыть
                         visit_parameter(
                             parsed_spec,
                             out_path,
@@ -1412,18 +1411,39 @@ pub fn visit_parameter(
                     call_stack,
                 )?;
             }
-            Parameter::Header {
-                parameter_data,
-                style,
-            } => todo!(),
-            Parameter::Path {
-                parameter_data,
-                style,
-            } => todo!(),
-            Parameter::Cookie {
-                parameter_data,
-                style,
-            } => todo!(),
+            Parameter::Header { .. } => {
+                visit_header_parameter(
+                    parsed_spec,
+                    out_path,
+                    names_stack,
+                    parameter_name,
+                    parameter,
+                    extensions,
+                    call_stack,
+                )?;
+            }
+            Parameter::Path { .. } => {
+                visit_path_parameter(
+                    parsed_spec,
+                    out_path,
+                    names_stack,
+                    parameter_name,
+                    parameter,
+                    extensions,
+                    call_stack,
+                )?;
+            }
+            Parameter::Cookie { .. } => {
+                visit_cookie_parameter(
+                    parsed_spec,
+                    out_path,
+                    names_stack,
+                    parameter_name,
+                    parameter,
+                    extensions,
+                    call_stack,
+                )?;
+            }
         },
     }
     Ok(())
@@ -1517,6 +1537,135 @@ pub fn visit_query_parameter(
         Ok(())
     } else {
         Err(anyhow!("Not a Query parameter"))
+    }
+}
+
+pub fn visit_header_parameter(
+    parsed_spec: &ParsedSpec,
+    out_path: &Path,
+    names_stack: &[ModelName],
+    parameter_name: &str,
+    parameter: &Parameter,
+    extensions: &IndexMap<String, serde_json::Value>,
+    call_stack: &CallStack,
+) -> Result<()> {
+    if let Parameter::Header { parameter_data, .. } = parameter {
+        let mut current_names_stack = names_stack.to_vec();
+        current_names_stack.push(ModelName {
+            base: parameter_name.to_owned(),
+            extended: extensions.get(EXTENSION_FOR_NAME).cloned(),
+        });
+
+        Script::HeaderParameterStart
+            .call_with_descriptor(
+                out_path,
+                &(&current_names_stack, &parameter, &extensions),
+                call_stack,
+            )?
+            .and_then(|call_stack| {
+                visit_parameter_data(
+                    parsed_spec,
+                    out_path,
+                    &current_names_stack,
+                    parameter_data,
+                    call_stack,
+                )?;
+                Ok(())
+            })?;
+        Script::HeaderParameterEnd.call_with_descriptor(
+            out_path,
+            &(&current_names_stack, &parameter, &extensions),
+            call_stack,
+        )?;
+        Ok(())
+    } else {
+        Err(anyhow!("Not a Header parameter"))
+    }
+}
+
+pub fn visit_path_parameter(
+    parsed_spec: &ParsedSpec,
+    out_path: &Path,
+    names_stack: &[ModelName],
+    parameter_name: &str,
+    parameter: &Parameter,
+    extensions: &IndexMap<String, serde_json::Value>,
+    call_stack: &CallStack,
+) -> Result<()> {
+    if let Parameter::Path { parameter_data, .. } = parameter {
+        let mut current_names_stack = names_stack.to_vec();
+        current_names_stack.push(ModelName {
+            base: parameter_name.to_owned(),
+            extended: extensions.get(EXTENSION_FOR_NAME).cloned(),
+        });
+
+        Script::PathParameterStart
+            .call_with_descriptor(
+                out_path,
+                &(&current_names_stack, &parameter, &extensions),
+                call_stack,
+            )?
+            .and_then(|call_stack| {
+                visit_parameter_data(
+                    parsed_spec,
+                    out_path,
+                    &current_names_stack,
+                    parameter_data,
+                    call_stack,
+                )?;
+                Ok(())
+            })?;
+        Script::PathParameterEnd.call_with_descriptor(
+            out_path,
+            &(&current_names_stack, &parameter, &extensions),
+            call_stack,
+        )?;
+        Ok(())
+    } else {
+        Err(anyhow!("Not a Path parameter"))
+    }
+}
+
+pub fn visit_cookie_parameter(
+    parsed_spec: &ParsedSpec,
+    out_path: &Path,
+    names_stack: &[ModelName],
+    parameter_name: &str,
+    parameter: &Parameter,
+    extensions: &IndexMap<String, serde_json::Value>,
+    call_stack: &CallStack,
+) -> Result<()> {
+    if let Parameter::Cookie { parameter_data, .. } = parameter {
+        let mut current_names_stack = names_stack.to_vec();
+        current_names_stack.push(ModelName {
+            base: parameter_name.to_owned(),
+            extended: extensions.get(EXTENSION_FOR_NAME).cloned(),
+        });
+
+        Script::CookieParameterStart
+            .call_with_descriptor(
+                out_path,
+                &(&current_names_stack, &parameter, &extensions),
+                call_stack,
+            )?
+            .and_then(|call_stack| {
+                visit_parameter_data(
+                    parsed_spec,
+                    out_path,
+                    &current_names_stack,
+                    parameter_data,
+                    call_stack,
+                )?;
+                Ok(())
+            })?;
+        Script::CookieParameterEnd.call_with_descriptor(
+            out_path,
+            &(&current_names_stack, &parameter, &extensions),
+            call_stack,
+        )?;
+        Ok(())
+    } else {
+        Err(anyhow!("Not a Cookie parameter"))
     }
 }
 

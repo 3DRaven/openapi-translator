@@ -191,7 +191,15 @@
         "visitGenericParameter",
         "visitParametersEnd",
         "visitQueryParameterStart",
-        "visitQueryParameterEnd"
+        "visitQueryParameterEnd",
+        "visitParameterDataStart",
+        "visitParameterDataEnd",
+        "visitPathParameterStart",
+        "visitPathParameterEnd",
+        "visitHeaderParameterStart",
+        "visitHeaderParameterEnd",
+        "visitCookieParameterEnd",
+        "visitCookieParameterStart"
     ],
     "terminal.integrated.scrollback": 16777216,
     "references.preferredLocation": "view",

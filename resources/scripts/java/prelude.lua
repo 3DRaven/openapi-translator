@@ -2,6 +2,79 @@
 --- start working.
 
 --- TYPES -----------------------------------------------------------------------------------------------
+--- The description of incoming types is automatically generated based on the Rust structures.
+--- They represent an approximate content of the structures; for example, since Lua does not have Enums,
+--- a string will be used in place of fields.
+
+--- Enum for representing different header styles as defined by various specifications.
+--- @class HeaderStyle
+--- Simple style parameters defined by RFC6570.
+--- @field Simple string
+
+--- Enum for representing different path styles as defined by various specifications.
+--- @class PathStyle
+--- Path-style parameters defined by RFC6570.
+--- @field Matrix string
+--- Label style parameters defined by RFC6570.
+--- @field Label string
+--- Simple style parameters defined by RFC6570.
+--- @field Simple string
+
+--- Enum for representing different cookie styles as defined by various specifications.
+--- @class CookieStyle
+--- Form style parameters defined by RFC6570.
+--- @field Form string
+
+--- Query parameters that are appended to the URL.
+--- @class QueryParameter
+--- @field parameter_data ParameterData Flattened parameter data.
+--- @field allow_reserved boolean Determines whether the parameter value SHOULD allow reserved characters as defined by RFC3986 to be included without percent-encoding. Applies only to query parameters.
+--- @field style QueryStyle Describes how the parameter value will be serialized depending on its type.
+--- @field allow_empty_value boolean|nil Sets the ability to pass empty-valued parameters. Valid only for query parameters.
+
+--- Header parameters expected as part of the request.
+--- @class HeaderParameter
+--- @field parameter_data ParameterData Flattened parameter data.
+--- @field style HeaderStyle Describes how the parameter value will be serialized depending on its type.
+
+--- Path parameters used together with Path Templating.
+--- @class PathParameter
+--- @field parameter_data ParameterData Flattened parameter data.
+--- @field style PathStyle Describes how the parameter value will be serialized depending on its type.
+
+--- Cookie parameters used to pass specific cookie values to the API.
+--- @class CookieParameter
+--- @field parameter_data ParameterData Flattened parameter data.
+--- @field style CookieStyle Describes how the parameter value will be serialized depending on its type.
+
+
+--- Describes a single operation parameter.
+---
+--- A unique parameter is defined by a combination of a name and location.
+--- @class ParameterData
+--- @field name string REQUIRED. The name of the parameter. Parameter names are case sensitive.
+--- If `in` is "path", the name field MUST correspond to the associated path
+--- segment from the path field in the Paths Object. See Path Templating for
+--- further information.
+--- If `in` is "header" and the name field is "Accept", "Content-Type" or
+--- "Authorization", the parameter definition SHALL be ignored.
+--- For all other cases, the name corresponds to the parameter name
+--- used by the `in` property.
+--- @field description string|nil A brief description of the parameter. This could
+--- contain examples of use. CommonMark syntax MAY be
+--- used for rich text representation.
+--- @field required boolean Determines whether this parameter is mandatory.
+--- If the parameter location is "path", this property
+--- is REQUIRED and its value MUST be true. Otherwise,
+--- the property MAY be included and its default value
+--- is false.
+--- @field deprecated boolean|nil Specifies that a parameter is deprecated and SHOULD
+--- be transitioned out of usage.
+--- @field format ParameterSchemaOrContent|string The format of the parameter as defined by the schema or content.
+--- @field example table|nil An example of the parameter usage in JSON.
+--- @field examples table<string, ReferenceOr<Example>>|nil Multiple examples of the parameter usage.
+--- @field explode boolean|nil Whether or not the parameter should be exploded.
+--- @field extensions table<string, any> Inline extensions to this object.
 
 --- Represents an ExternalDocumentation Object that allows referencing an external resource for extended documentation.
 ---@class ExternalDocumentation
@@ -161,10 +234,6 @@
 ---@class ReferenceOr<T>
 ---@field reference string # The reference string, applicable if it is a reference.
 ---@field item any
-
---- Represents the style of a header parameter.
----@class HeaderStyle
----@field Simple string # Simple style parameters defined by RFC6570.
 
 --- Defines the schema or content representation for a parameter.
 ---@class ParameterSchemaOrContent
