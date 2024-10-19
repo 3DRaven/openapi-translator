@@ -11,8 +11,8 @@ use log::{error, info};
 use openapiv3::{
     AnySchema, ArrayType, BooleanType, Components, Contact, Discriminator, Encoding, Example,
     ExternalDocumentation, Header, Info, IntegerType, License, Link, MediaType, NumberType,
-    ObjectType, OpenAPI, Parameter, ParameterData, ParameterSchemaOrContent, QueryStyle,
-    ReferenceOr, Response, Schema, SecurityRequirement, Server, StringType, Tag,
+    ObjectType, OpenAPI, Parameter, ParameterData, ParameterSchemaOrContent, ReferenceOr, Response,
+    Schema, SecurityRequirement, Server, StringType, Tag,
 };
 use serde::de::DeserializeOwned;
 
@@ -1433,15 +1433,47 @@ pub fn visit_parameter_data(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
     names_stack: &[ModelName],
-    parameter_name: &str,
     parameter_data: &ParameterData,
-    allow_reserved: &bool,
-    style: &QueryStyle,
-    allow_empty_value: &Option<bool>,
-    extensions: &IndexMap<String, serde_json::Value>,
     call_stack: &CallStack,
 ) -> Result<()> {
-    //TODO: implement
+    Script::ParameterDataStart
+        .call_with_descriptor(
+            out_path,
+            &(&names_stack, &parameter_data, &parameter_data.extensions),
+            call_stack,
+        )?
+        .and_then(|call_stack| {
+            visit_parameter_schema_or_content(
+                parsed_spec,
+                out_path,
+                names_stack,
+                "format",
+                &parameter_data.format,
+                &parameter_data.extensions,
+                call_stack,
+            )?;
+            visit_generic_example(
+                out_path,
+                names_stack,
+                &parameter_data.example,
+                &parameter_data.extensions,
+                call_stack,
+            )?;
+            visit_examples(
+                parsed_spec,
+                out_path,
+                names_stack,
+                &parameter_data.examples,
+                &parameter_data.extensions,
+                call_stack,
+            )?;
+            Ok(())
+        })?;
+    Script::ParameterDataEnd.call_with_descriptor(
+        out_path,
+        &(&names_stack, &parameter_data, &parameter_data.extensions),
+        call_stack,
+    )?;
     Ok(())
 }
 
@@ -1454,57 +1486,32 @@ pub fn visit_query_parameter(
     extensions: &IndexMap<String, serde_json::Value>,
     call_stack: &CallStack,
 ) -> Result<()> {
-    if let Parameter::Query {
-        parameter_data,
-        allow_reserved,
-        style,
-        allow_empty_value,
-    } = parameter
-    {
+    if let Parameter::Query { parameter_data, .. } = parameter {
         let mut current_names_stack = names_stack.to_vec();
         current_names_stack.push(ModelName {
             base: parameter_name.to_owned(),
-            extended: parameter_data.extensions.get(EXTENSION_FOR_NAME).cloned(),
+            extended: extensions.get(EXTENSION_FOR_NAME).cloned(),
         });
 
         Script::QueryParameterStart
             .call_with_descriptor(
                 out_path,
-                &(
-                    &current_names_stack,
-                    parameter_data,
-                    allow_reserved,
-                    style,
-                    allow_empty_value,
-                    &parameter_data.extensions,
-                ),
+                &(&current_names_stack, &parameter, &extensions),
                 call_stack,
             )?
             .and_then(|call_stack| {
                 visit_parameter_data(
                     parsed_spec,
                     out_path,
-                    names_stack,
-                    parameter_name,
+                    &current_names_stack,
                     parameter_data,
-                    allow_reserved,
-                    style,
-                    allow_empty_value,
-                    extensions,
                     call_stack,
                 )?;
                 Ok(())
             })?;
         Script::QueryParameterEnd.call_with_descriptor(
             out_path,
-            &(
-                &current_names_stack,
-                parameter_data,
-                allow_reserved,
-                style,
-                allow_empty_value,
-                &parameter_data.extensions,
-            ),
+            &(&current_names_stack, &parameter, &extensions),
             call_stack,
         )?;
         Ok(())

@@ -28,6 +28,10 @@ pub enum Script {
     ResponsesStart,
     #[serde(rename = "RESPONSES_END")]
     ResponsesEnd,
+    #[serde(rename = "PARAMETER_DATA_START")]
+    ParameterDataStart,
+    #[serde(rename = "PARAMETER_DATA_END")]
+    ParameterDataEnd,
     #[serde(rename = "QUERY_PARAMETER_START")]
     QueryParameterStart,
     #[serde(rename = "QUERY_PARAMETER_END")]
@@ -480,6 +484,8 @@ impl From<&Script> for &'static str {
             Script::QueryParameterEnd => {
                 "visitors/common/parameters/query_parameter/query_parameter_end"
             }
+            Script::ParameterDataStart => "visitors/common/parameter_data/parameter_data_start",
+            Script::ParameterDataEnd => "visitors/common/parameter_data/parameter_data_end",
         }
     }
 }
