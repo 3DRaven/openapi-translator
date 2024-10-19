@@ -11,8 +11,8 @@ use log::{error, info};
 use openapiv3::{
     AnySchema, ArrayType, BooleanType, Components, Contact, Discriminator, Encoding, Example,
     ExternalDocumentation, Header, Info, IntegerType, License, Link, MediaType, NumberType,
-    ObjectType, OpenAPI, Parameter, ParameterData, ParameterSchemaOrContent, ReferenceOr, Response,
-    Schema, SecurityRequirement, Server, StringType, Tag,
+    ObjectType, OpenAPI, Parameter, ParameterData, ParameterSchemaOrContent, ReferenceOr,
+    RequestBody, Response, Schema, SecurityRequirement, Server, StringType, Tag,
 };
 use serde::de::DeserializeOwned;
 
@@ -867,6 +867,65 @@ pub fn visit_example(
     Ok(())
 }
 
+pub fn visit_request_body(
+    parsed_spec: &ParsedSpec,
+    out_path: &Path,
+    names_stack: &[ModelName],
+    request_body_name: &str,
+    example_ref: &ReferenceOr<RequestBody>,
+    call_stack: &CallStack,
+) -> Result<()> {
+    match example_ref {
+        ReferenceOr::Reference { reference } => {
+            visit_request_body(
+                parsed_spec,
+                out_path,
+                names_stack,
+                request_body_name,
+                references::resolve_reference::<RequestBody>(reference, parsed_spec)?,
+                call_stack,
+            )?;
+        }
+        ReferenceOr::Item(request_body) => {
+            let mut current_names_stack = names_stack.to_vec();
+            current_names_stack.push(ModelName {
+                base: request_body_name.to_owned(),
+                extended: request_body.extensions.get(EXTENSION_FOR_NAME).cloned(),
+            });
+
+            Script::RequestBodyStart
+                .call_with_descriptor(
+                    out_path,
+                    &(
+                        &current_names_stack,
+                        &request_body,
+                        &request_body.extensions,
+                    ),
+                    call_stack,
+                )?
+                .and_then(|call_stack| {
+                    visit_media_types(
+                        parsed_spec,
+                        out_path,
+                        &current_names_stack,
+                        &request_body.content,
+                        call_stack,
+                    )
+                })?;
+            Script::RequestBodyEnd.call_with_descriptor(
+                out_path,
+                &(
+                    &current_names_stack,
+                    &request_body,
+                    &request_body.extensions,
+                ),
+                call_stack,
+            )?;
+        }
+    }
+    Ok(())
+}
+
 pub fn visit_parameter_schema_or_content(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
@@ -1096,6 +1155,35 @@ pub fn visit_examples(
         Script::ExamplesEnd.call_with_descriptor(
             out_path,
             &(&names_stack, examples, extensions),
+            call_stack,
+        )?;
+    }
+    Ok(())
+}
+
+pub fn visit_request_bodies(
+    parsed_spec: &ParsedSpec,
+    out_path: &Path,
+    names_stack: &[ModelName],
+    request_bodies: &IndexMap<String, ReferenceOr<RequestBody>>,
+    extensions: &IndexMap<String, serde_json::Value>,
+    call_stack: &CallStack,
+) -> Result<()> {
+    if !request_bodies.is_empty() {
+        Script::RequestBodiesStart
+            .call_with_descriptor(
+                out_path,
+                &(&names_stack, &request_bodies, extensions),
+                call_stack,
+            )?
+            .and_then(|call_stack| {
+                request_bodies.iter().try_for_each(|it| {
+                    visit_request_body(parsed_spec, out_path, names_stack, it.0, it.1, call_stack)
+                })
+            })?;
+        Script::RequestBodiesEnd.call_with_descriptor(
+            out_path,
+            &(&names_stack, &request_bodies, extensions),
             call_stack,
         )?;
     }
@@ -1702,6 +1790,24 @@ pub fn visit_spec_components(
             &parsed_spec,
             out_path,
             &components.parameters,
+            &components.extensions,
+            call_stack,
+        )?;
+
+        visit_examples(
+            &parsed_spec,
+            out_path,
+            &[],
+            &components.examples,
+            &components.extensions,
+            call_stack,
+        )?;
+
+        visit_request_bodies(
+            &parsed_spec,
+            out_path,
+            &[],
+            &components.request_bodies,
             &components.extensions,
             call_stack,
         )?;

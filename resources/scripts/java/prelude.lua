@@ -6,6 +6,14 @@
 --- They represent an approximate content of the structures; for example, since Lua does not have Enums,
 --- a string will be used in place of fields.
 
+--- Describes a single request body.
+--- @class RequestBody
+--- @field description string|nil A brief description of the request body. This could contain examples of use. CommonMark syntax MAY be used for rich text representation.
+--- @field content table<string, MediaType> REQUIRED. The content of the request body. The key is a media type or media type range and the value describes it. For requests that match multiple keys, only the most specific key is applicable (e.g., text/plain overrides text/*).
+--- @field required boolean Determines if the request body is required in the request. Defaults to false.
+--- @field extensions table<string, any> Inline extensions to this object.
+
+
 --- Enum for representing different header styles as defined by various specifications.
 --- @class HeaderStyle
 --- Simple style parameters defined by RFC6570.

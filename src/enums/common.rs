@@ -76,12 +76,20 @@ pub enum Script {
     HeaderStart,
     #[serde(rename = "HEADER_END")]
     HeaderEnd,
+    #[serde(rename = "REQUEST_BODY_START")]
+    RequestBodyStart,
+    #[serde(rename = "REQUEST_BODY_END")]
+    RequestBodyEnd,
     #[serde(rename = "EXAMPLES_EXAMPLE")]
     ExamplesExample,
     #[serde(rename = "EXAMPLES_START")]
     ExamplesStart,
     #[serde(rename = "EXAMPLES_END")]
     ExamplesEnd,
+    #[serde(rename = "REQUEST_BODIES_START")]
+    RequestBodiesStart,
+    #[serde(rename = "REQUEST_BODIES_END")]
+    RequestBodiesEnd,
     #[serde(rename = "GENERIC_PARAMETERS_START")]
     GenericParametersStart,
     #[serde(rename = "GENERIC_PARAMETER")]
@@ -516,6 +524,10 @@ impl From<&Script> for &'static str {
             Script::CookieParameterEnd => {
                 "visitors/common/parameters/cookie_parameter/cookie_parameter_end"
             }
+            Script::RequestBodiesStart => "visitors/components/request_bodies/request_bodies_start",
+            Script::RequestBodiesEnd => "visitors/components/request_bodies/request_bodies_end",
+            Script::RequestBodyStart => "visitors/components/request_bodies/request_body_start",
+            Script::RequestBodyEnd => "visitors/components/request_bodies/request_body_end",
         }
     }
 }
