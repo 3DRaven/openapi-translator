@@ -6,6 +6,75 @@
 --- They represent an approximate content of the structures; for example, since Lua does not have Enums,
 --- a string will be used in place of fields.
 
+--- Represents an API Key security scheme.
+--- @class APIKeySecurityScheme
+--- @field location string The location of the API key. Valid values are "query", "header", or "cookie".
+--- @field name string The name of the header, query, or cookie parameter to be used.
+--- @field description string|nil A short description for the security scheme. CommonMark syntax MAY be used for rich text representation.
+--- @field extensions table<string, any> Inline extensions to this object.
+
+--- Represents an HTTP security scheme.
+--- @class HTTPSecurityScheme
+--- @field scheme string The name of the HTTP Authorization scheme to be used in the Authorization header as defined in RFC7235.
+--- @field bearer_format string|nil Optional format for bearer tokens.
+--- @field description string|nil A short description for the security scheme. CommonMark syntax MAY be used for rich text representation.
+--- @field extensions table<string, any> Inline extensions to this object.
+
+--- Represents an OAuth2 security scheme.
+--- @class OAuth2SecurityScheme
+--- @field flows OAuth2Flows An object containing configuration information for supported flow types.
+--- @field description string|nil A short description for the security scheme. CommonMark syntax MAY be used for rich text representation.
+--- @field extensions table<string, any> Inline extensions to this object.
+
+--- Represents an OpenID Connect security scheme.
+--- @class OpenIDConnectSecurityScheme
+--- @field open_id_connect_url string OpenId Connect URL to discover OAuth2 configuration values.
+--- @field description string|nil A short description for the security scheme. CommonMark syntax MAY be used for rich text representation.
+--- @field extensions table<string, any> Inline extensions to this object.
+
+--- APIKeyLocation class enumerates valid locations for API keys.
+--- @class APIKeyLocation
+--- @field Query string Represents API key location in query parameters.
+--- @field Header string Represents API key location in headers.
+--- @field Cookie string Represents API key location in cookies.
+
+--- OAuth2Flows class contains configuration for OAuth2 flow types.
+--- @class OAuth2Flows
+--- @field implicit ImplicitOAuth2Flow|nil Configuration for the OAuth Implicit flow.
+--- @field password PasswordOAuth2Flow|nil Configuration for the OAuth Resource Owner Password flow.
+--- @field client_credentials ClientCredentialsOAuth2Flow|nil Configuration for the OAuth Client Credentials flow.
+--- @field authorization_code AuthorizationCodeOAuth2Flow|nil Configuration for the OAuth Authorization Code flow.
+--- @field extensions table<string, any> Inline extensions to this object.
+
+--- Represents the configuration for the OAuth Implicit flow.
+--- @class ImplicitOAuth2Flow
+--- @field authorization_url string The authorization URL for this flow.
+--- @field refresh_url string|nil The URL for obtaining refresh tokens.
+--- @field scopes table<string, string> Available scopes for the OAuth2 security scheme.
+--- @field extensions table<string, any> Inline extensions to this object.
+
+--- Represents the configuration for the OAuth Password flow.
+--- @class PasswordOAuth2Flow
+--- @field token_url string The token URL for this flow.
+--- @field refresh_url string|nil The URL for obtaining refresh tokens.
+--- @field scopes table<string, string> Available scopes for the OAuth2 security scheme.
+--- @field extensions table<string, any> Inline extensions to this object.
+
+--- Represents the configuration for the OAuth Client Credentials flow.
+--- @class ClientCredentialsOAuth2Flow
+--- @field token_url string The token URL for this flow.
+--- @field refresh_url string|nil The URL for obtaining refresh tokens.
+--- @field scopes table<string, string> Available scopes for the OAuth2 security scheme.
+--- @field extensions table<string, any> Inline extensions to this object.
+
+--- Represents the configuration for the OAuth Authorization Code flow.
+--- @class AuthorizationCodeOAuth2Flow
+--- @field authorization_url string The authorization URL for this flow.
+--- @field token_url string The token URL for this flow.
+--- @field refresh_url string|nil The URL for obtaining refresh tokens.
+--- @field scopes table<string, string> Available scopes for the OAuth2 security scheme.
+--- @field extensions table<string, any> Inline extensions to this object.
+
 --- Describes a single request body.
 --- @class RequestBody
 --- @field description string|nil A brief description of the request body. This could contain examples of use. CommonMark syntax MAY be used for rich text representation.

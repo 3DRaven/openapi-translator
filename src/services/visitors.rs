@@ -9,10 +9,12 @@ use diffy::create_patch;
 use indexmap::IndexMap;
 use log::{error, info};
 use openapiv3::{
-    AnySchema, ArrayType, BooleanType, Components, Contact, Discriminator, Encoding, Example,
-    ExternalDocumentation, Header, Info, IntegerType, License, Link, MediaType, NumberType,
-    ObjectType, OpenAPI, Parameter, ParameterData, ParameterSchemaOrContent, ReferenceOr,
-    RequestBody, Response, Schema, SecurityRequirement, Server, StringType, Tag,
+    AnySchema, ArrayType, AuthorizationCodeOAuth2Flow, BooleanType, ClientCredentialsOAuth2Flow,
+    Components, Contact, Discriminator, Encoding, Example, ExternalDocumentation, Header,
+    ImplicitOAuth2Flow, Info, IntegerType, License, Link, MediaType, NumberType, OAuth2Flows,
+    ObjectType, OpenAPI, Parameter, ParameterData, ParameterSchemaOrContent, PasswordOAuth2Flow,
+    ReferenceOr, RequestBody, Response, Schema, SecurityRequirement, SecurityScheme, Server,
+    StringType, Tag,
 };
 use serde::de::DeserializeOwned;
 
@@ -1296,6 +1298,67 @@ pub fn visit_header(
     Ok(())
 }
 
+pub fn visit_security_scheme(
+    parsed_spec: &ParsedSpec,
+    out_path: &Path,
+    names_stack: &[ModelName],
+    scheme_name: &str,
+    security_scheme: &ReferenceOr<SecurityScheme>,
+    call_stack: &CallStack,
+) -> Result<()> {
+    match security_scheme {
+        ReferenceOr::Reference { reference } => {
+            visit_security_scheme(
+                parsed_spec,
+                out_path,
+                names_stack,
+                scheme_name,
+                references::resolve_reference::<SecurityScheme>(reference, parsed_spec)?,
+                call_stack,
+            )?;
+        }
+        ReferenceOr::Item(security_scheme) => match security_scheme {
+            SecurityScheme::APIKey { .. } => {
+                visit_security_scheme_apikey(
+                    out_path,
+                    names_stack,
+                    scheme_name,
+                    security_scheme,
+                    call_stack,
+                )?;
+            }
+            SecurityScheme::HTTP { .. } => {
+                visit_security_scheme_http(
+                    out_path,
+                    names_stack,
+                    scheme_name,
+                    security_scheme,
+                    call_stack,
+                )?;
+            }
+            SecurityScheme::OAuth2 { .. } => {
+                visit_security_scheme_oauth2(
+                    out_path,
+                    names_stack,
+                    scheme_name,
+                    security_scheme,
+                    call_stack,
+                )?;
+            }
+            SecurityScheme::OpenIDConnect { .. } => {
+                visit_security_scheme_openid_connect(
+                    out_path,
+                    names_stack,
+                    scheme_name,
+                    security_scheme,
+                    call_stack,
+                )?;
+            }
+        },
+    }
+    Ok(())
+}
+
 pub fn visit_headers(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
@@ -1315,6 +1378,42 @@ pub fn visit_headers(
         Script::HeadersEnd.call_with_descriptor(
             out_path,
             &(names_stack, headers, extensions),
+            call_stack,
+        )?;
+    }
+    Ok(())
+}
+
+pub fn visit_security_schemes(
+    parsed_spec: &ParsedSpec,
+    out_path: &Path,
+    names_stack: &[ModelName],
+    security_schemes: &IndexMap<String, ReferenceOr<SecurityScheme>>,
+    extensions: &IndexMap<String, serde_json::Value>,
+    call_stack: &CallStack,
+) -> Result<()> {
+    if !security_schemes.is_empty() {
+        Script::SecuritySchemesStart
+            .call_with_descriptor(
+                out_path,
+                &(names_stack, &security_schemes, extensions),
+                call_stack,
+            )?
+            .and_then(|call_stack| {
+                security_schemes.iter().try_for_each(|it| {
+                    visit_security_scheme(
+                        parsed_spec,
+                        out_path,
+                        names_stack,
+                        it.0,
+                        it.1,
+                        call_stack,
+                    )
+                })
+            })?;
+        Script::SecuritySchemesEnd.call_with_descriptor(
+            out_path,
+            &(names_stack, &security_schemes, extensions),
             call_stack,
         )?;
     }
@@ -1535,6 +1634,229 @@ pub fn visit_parameter(
         },
     }
     Ok(())
+}
+
+pub fn visit_security_scheme_http(
+    out_path: &Path,
+    names_stack: &[ModelName],
+    scheme_name: &str,
+    http: &SecurityScheme,
+    call_stack: &CallStack,
+) -> Result<()> {
+    if let SecurityScheme::HTTP { extensions, .. } = http {
+        let mut current_names_stack = names_stack.to_vec();
+        current_names_stack.push(ModelName {
+            base: scheme_name.to_owned(),
+            extended: extensions.get(EXTENSION_FOR_NAME).cloned(),
+        });
+        Script::SecuritySchemeHttp.call_with_descriptor(
+            out_path,
+            &(&current_names_stack, &http, &extensions),
+            call_stack,
+        )?;
+        Ok(())
+    } else {
+        Err(anyhow!("Not a SecurityScheme.HTTP"))
+    }
+}
+
+pub fn visit_security_scheme_oauth2(
+    out_path: &Path,
+    names_stack: &[ModelName],
+    scheme_name: &str,
+    oauth2: &SecurityScheme,
+    call_stack: &CallStack,
+) -> Result<()> {
+    if let SecurityScheme::OAuth2 {
+        flows, extensions, ..
+    } = oauth2
+    {
+        let mut current_names_stack = names_stack.to_vec();
+        current_names_stack.push(ModelName {
+            base: scheme_name.to_owned(),
+            extended: extensions.get(EXTENSION_FOR_NAME).cloned(),
+        });
+        Script::SecuritySchemeOAuth2Start
+            .call_with_descriptor(
+                out_path,
+                &(&current_names_stack, oauth2, extensions),
+                call_stack,
+            )?
+            .and_then(|call_stack| {
+                visit_security_scheme_oauth2_flows(
+                    out_path,
+                    &current_names_stack,
+                    flows,
+                    call_stack,
+                )
+            })?;
+        Script::SecuritySchemeOAuth2End.call_with_descriptor(
+            out_path,
+            &(&current_names_stack, oauth2, extensions),
+            call_stack,
+        )?;
+        Ok(())
+    } else {
+        Err(anyhow!("Not a SecurityScheme.OAuth2"))
+    }
+}
+
+pub fn visit_security_scheme_oauth2_flows(
+    out_path: &Path,
+    names_stack: &[ModelName],
+    flows: &OAuth2Flows,
+    call_stack: &CallStack,
+) -> Result<()> {
+    Script::SecuritySchemeOAuth2FlowsStart
+        .call_with_descriptor(
+            out_path,
+            &(&names_stack, &flows, &flows.extensions),
+            call_stack,
+        )?
+        .and_then(|call_stack| {
+            visit_security_scheme_oauth2_flows_implicit(
+                out_path,
+                names_stack,
+                &flows.implicit,
+                call_stack,
+            )?;
+            visit_security_scheme_oauth2_flows_password(
+                out_path,
+                names_stack,
+                &flows.password,
+                call_stack,
+            )?;
+            visit_security_scheme_oauth2_flows_client_credentials(
+                out_path,
+                names_stack,
+                &flows.client_credentials,
+                call_stack,
+            )?;
+            visit_security_scheme_oauth2_flows_authorization_code(
+                out_path,
+                names_stack,
+                &flows.authorization_code,
+                call_stack,
+            )
+        })?;
+    Script::SecuritySchemeOAuth2FlowsEnd.call_with_descriptor(
+        out_path,
+        &(&names_stack, &flows, &flows.extensions),
+        call_stack,
+    )?;
+    Ok(())
+}
+
+pub fn visit_security_scheme_oauth2_flows_implicit(
+    out_path: &Path,
+    names_stack: &[ModelName],
+    flow: &Option<ImplicitOAuth2Flow>,
+    call_stack: &CallStack,
+) -> Result<()> {
+    if let Some(flow) = flow {
+        Script::SecuritySchemeOAuth2FlowImplicit.call_with_descriptor(
+            out_path,
+            &(&names_stack, &flow, &flow.extensions),
+            call_stack,
+        )?;
+    }
+    Ok(())
+}
+
+pub fn visit_security_scheme_oauth2_flows_password(
+    out_path: &Path,
+    names_stack: &[ModelName],
+    flow: &Option<PasswordOAuth2Flow>,
+    call_stack: &CallStack,
+) -> Result<()> {
+    if let Some(flow) = flow {
+        Script::SecuritySchemeOAuth2FlowPassword.call_with_descriptor(
+            out_path,
+            &(&names_stack, &flow, &flow.extensions),
+            call_stack,
+        )?;
+    }
+    Ok(())
+}
+
+pub fn visit_security_scheme_oauth2_flows_client_credentials(
+    out_path: &Path,
+    names_stack: &[ModelName],
+    flow: &Option<ClientCredentialsOAuth2Flow>,
+    call_stack: &CallStack,
+) -> Result<()> {
+    if let Some(flow) = flow {
+        Script::SecuritySchemeOAuth2FlowClientCredentials.call_with_descriptor(
+            out_path,
+            &(&names_stack, &flow, &flow.extensions),
+            call_stack,
+        )?;
+    }
+    Ok(())
+}
+
+pub fn visit_security_scheme_oauth2_flows_authorization_code(
+    out_path: &Path,
+    names_stack: &[ModelName],
+    flow: &Option<AuthorizationCodeOAuth2Flow>,
+    call_stack: &CallStack,
+) -> Result<()> {
+    if let Some(flow) = flow {
+        Script::SecuritySchemeOAuth2FlowAuthorizationCode.call_with_descriptor(
+            out_path,
+            &(&names_stack, &flow, &flow.extensions),
+            call_stack,
+        )?;
+    }
+    Ok(())
+}
+
+pub fn visit_security_scheme_apikey(
+    out_path: &Path,
+    names_stack: &[ModelName],
+    scheme_name: &str,
+    api_key: &SecurityScheme,
+    call_stack: &CallStack,
+) -> Result<()> {
+    if let SecurityScheme::APIKey { extensions, .. } = api_key {
+        let mut current_names_stack = names_stack.to_vec();
+        current_names_stack.push(ModelName {
+            base: scheme_name.to_owned(),
+            extended: extensions.get(EXTENSION_FOR_NAME).cloned(),
+        });
+        Script::SecuritySchemeApiKey.call_with_descriptor(
+            out_path,
+            &(&current_names_stack, &api_key, &extensions),
+            call_stack,
+        )?;
+        Ok(())
+    } else {
+        Err(anyhow!("Not a SecurityScheme.APIKey"))
+    }
+}
+
+pub fn visit_security_scheme_openid_connect(
+    out_path: &Path,
+    names_stack: &[ModelName],
+    scheme_name: &str,
+    openid_connect: &SecurityScheme,
+    call_stack: &CallStack,
+) -> Result<()> {
+    if let SecurityScheme::OpenIDConnect { extensions, .. } = openid_connect {
+        let mut current_names_stack = names_stack.to_vec();
+        current_names_stack.push(ModelName {
+            base: scheme_name.to_owned(),
+            extended: extensions.get(EXTENSION_FOR_NAME).cloned(),
+        });
+        Script::SecuritySchemeOpenIdConnect.call_with_descriptor(
+            out_path,
+            &(&current_names_stack, &openid_connect, &extensions),
+            call_stack,
+        )?;
+        Ok(())
+    } else {
+        Err(anyhow!("Not a SecurityScheme.OpenIDConnect"))
+    }
 }
 
 pub fn visit_parameter_data(
@@ -1808,6 +2130,24 @@ pub fn visit_spec_components(
             out_path,
             &[],
             &components.request_bodies,
+            &components.extensions,
+            call_stack,
+        )?;
+
+        visit_headers(
+            &parsed_spec,
+            out_path,
+            &[],
+            &components.headers,
+            &components.extensions,
+            call_stack,
+        )?;
+
+        visit_security_schemes(
+            &parsed_spec,
+            out_path,
+            &[],
+            &components.security_schemes,
             &components.extensions,
             call_stack,
         )?;

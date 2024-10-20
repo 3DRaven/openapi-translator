@@ -32,6 +32,28 @@ pub enum Script {
     ParameterDataStart,
     #[serde(rename = "PARAMETER_DATA_END")]
     ParameterDataEnd,
+    #[serde(rename = "SECURITY_SCHEME_API_KEY")]
+    SecuritySchemeApiKey,
+    #[serde(rename = "SECURITY_SCHEME_OPENID_CONNECT")]
+    SecuritySchemeOpenIdConnect,
+    #[serde(rename = "SECURITY_SCHEME_OAUTH2_FLOW_IMPLICIT")]
+    SecuritySchemeOAuth2FlowImplicit,
+    #[serde(rename = "SECURITY_SCHEME_OAUTH2_FLOW_PASSWORD")]
+    SecuritySchemeOAuth2FlowPassword,
+    #[serde(rename = "SECURITY_SCHEME_OAUTH2_FLOW_CLIENT_CREDENTIALS")]
+    SecuritySchemeOAuth2FlowClientCredentials,
+    #[serde(rename = "SECURITY_SCHEME_OAUTH2_FLOW_AUTHORIZATION_CODE")]
+    SecuritySchemeOAuth2FlowAuthorizationCode,
+    #[serde(rename = "SECURITY_SCHEME_HTTP")]
+    SecuritySchemeHttp,
+    #[serde(rename = "SECURITY_SCHEME_OAUTH2_START")]
+    SecuritySchemeOAuth2Start,
+    #[serde(rename = "SECURITY_SCHEME_OAUTH2_END")]
+    SecuritySchemeOAuth2End,
+    #[serde(rename = "SECURITY_SCHEME_OAUTH2_FLOWS_START")]
+    SecuritySchemeOAuth2FlowsStart,
+    #[serde(rename = "SECURITY_SCHEME_OAUTH2_FLOWS_END")]
+    SecuritySchemeOAuth2FlowsEnd,
     #[serde(rename = "QUERY_PARAMETER_START")]
     QueryParameterStart,
     #[serde(rename = "QUERY_PARAMETER_END")]
@@ -72,6 +94,10 @@ pub enum Script {
     HeadersStart,
     #[serde(rename = "HEADERS_END")]
     HeadersEnd,
+    #[serde(rename = "SECURITY_SCHEMES_START")]
+    SecuritySchemesStart,
+    #[serde(rename = "SECURITY_SCHEMES_END")]
+    SecuritySchemesEnd,
     #[serde(rename = "HEADER_START")]
     HeaderStart,
     #[serde(rename = "HEADER_END")]
@@ -528,6 +554,39 @@ impl From<&Script> for &'static str {
             Script::RequestBodiesEnd => "visitors/components/request_bodies/request_bodies_end",
             Script::RequestBodyStart => "visitors/components/request_bodies/request_body_start",
             Script::RequestBodyEnd => "visitors/components/request_bodies/request_body_end",
+            Script::SecuritySchemesStart => {
+                "visitors/components/security_schemes/security_schemes_start"
+            }
+            Script::SecuritySchemesEnd => {
+                "visitors/components/security_schemes/security_schemes_end"
+            }
+            Script::SecuritySchemeApiKey => "visitors/components/security_schemes/api_key",
+            Script::SecuritySchemeHttp => "visitors/components/security_schemes/http",
+            Script::SecuritySchemeOAuth2Start => {
+                "visitors/components/security_schemes/oauth2_start"
+            }
+            Script::SecuritySchemeOAuth2End => "visitors/components/security_schemes/oauth2_end",
+            Script::SecuritySchemeOAuth2FlowsStart => {
+                "visitors/components/security_schemes/oauth2_flows_start"
+            }
+            Script::SecuritySchemeOAuth2FlowsEnd => {
+                "visitors/components/security_schemes/oauth2_flows_end"
+            }
+            Script::SecuritySchemeOAuth2FlowImplicit => {
+                "visitors/components/security_schemes/oauth2_flow_implicit"
+            }
+            Script::SecuritySchemeOAuth2FlowPassword => {
+                "visitors/components/security_schemes/oauth2_flow_password"
+            }
+            Script::SecuritySchemeOAuth2FlowClientCredentials => {
+                "visitors/components/security_schemes/oauth2_flow_client_credentials"
+            }
+            Script::SecuritySchemeOAuth2FlowAuthorizationCode => {
+                "visitors/components/security_schemes/oauth2_flow_authorization_code"
+            }
+            Script::SecuritySchemeOpenIdConnect => {
+                "visitors/components/security_schemes/openid_connect"
+            }
         }
     }
 }
