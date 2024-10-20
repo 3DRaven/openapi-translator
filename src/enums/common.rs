@@ -78,18 +78,14 @@ pub enum Script {
     ResponseStart,
     #[serde(rename = "RESPONSE_END")]
     ResponseEnd,
-    #[serde(rename = "RESPONSE_HEADERS_START")]
-    ResponseHeadersStart,
-    #[serde(rename = "RESPONSE_HEADERS_END")]
-    ResponseHeadersEnd,
-    #[serde(rename = "RESPONSE_CONTENT_START")]
-    ResponseContentStart,
-    #[serde(rename = "RESPONSE_CONTENT_END")]
-    ResponseContentEnd,
-    #[serde(rename = "RESPONSE_LINKS_START")]
-    ResponseLinksStart,
-    #[serde(rename = "RESPONSE_LINKS_END")]
-    ResponseLinksEnd,
+    #[serde(rename = "MEDIA_TYPES_START")]
+    MediaTypesStart,
+    #[serde(rename = "MEDIA_TYPES_END")]
+    MediaTypesEnd,
+    #[serde(rename = "LINKS_START")]
+    LinksStart,
+    #[serde(rename = "LINKS_END")]
+    LinksEnd,
     #[serde(rename = "HEADERS_START")]
     HeadersStart,
     #[serde(rename = "HEADERS_END")]
@@ -418,8 +414,8 @@ impl From<&Script> for &'static str {
             Script::ParameterSchemaOrContentEnd => {
                 "visitors/common/parameter_schema_or_content/parameter_schema_or_content_end"
             }
-            Script::MediaTypeStart => "visitors/common/media_type/media_type_start",
-            Script::MediaTypeEnd => "visitors/common/media_type/media_type_end",
+            Script::MediaTypeStart => "visitors/common/media_types/media_type/media_type_start",
+            Script::MediaTypeEnd => "visitors/common/media_types/media_type/media_type_end",
             Script::EncodingStart => "visitors/common/media_type/encoding/encoding_start",
             Script::EncodingEnd => "visitors/common/media_type/encoding/encoding_end",
 
@@ -504,24 +500,22 @@ impl From<&Script> for &'static str {
             Script::GenericExample => "visitors/common/generic_example/example",
             Script::EncodingsStart => "visitors/common/media_type/media_type_encodings_start",
             Script::EncodingsEnd => "visitors/common/media_type/media_type_encodings_end",
-            Script::ResponseHeadersStart => "visitors/components/responses/response_headers_start",
-            Script::ResponseHeadersEnd => "visitors/components/responses/response_headers_end",
             Script::ObjectPropertiesStart => {
                 "visitors/components/schemas/kind/type/object/object_properties_start"
             }
             Script::ObjectPropertiesEnd => {
                 "visitors/components/schemas/kind/type/object/object_properties_end"
             }
-            Script::ResponseContentStart => "visitors/components/responses/response_content_start",
-            Script::ResponseContentEnd => "visitors/components/responses/response_content_end",
-            Script::LinkStart => "visitors/common/link/link_start",
-            Script::LinkEnd => "visitors/common/link/link_end",
+            Script::MediaTypesStart => "visitors/common/media_types/media_types_start",
+            Script::MediaTypesEnd => "visitors/common/media_types/media_types_end",
+            Script::LinkStart => "visitors/common/links/link/link_start",
+            Script::LinkEnd => "visitors/common/links/link/link_end",
             Script::GenericRequestBody => "visitors/common/generic_request_body/request_body",
             Script::GenericParametersStart => "visitors/common/generic_parameters/parameters_start",
             Script::GenericParametersEnd => "visitors/common/generic_parameters/parameters_end",
             Script::GenericParameter => "visitors/common/generic_parameters/parameter",
-            Script::ResponseLinksStart => "visitors/components/responses/response_links_start",
-            Script::ResponseLinksEnd => "visitors/components/responses/response_links_end",
+            Script::LinksStart => "visitors/common/links/links_start",
+            Script::LinksEnd => "visitors/common/links/links_end",
             Script::ParametersStart => "visitors/common/parameters/parameters_start",
             Script::ParametersEnd => "visitors/common/parameters/parameters_end",
             Script::QueryParameterStart => {

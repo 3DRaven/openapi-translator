@@ -1,11 +1,11 @@
---- This visitor is invoked after processing response content
+--- This visitor is invoked after processing links
 --- @param namesStack ModelName[] # chain of model names from root to this point
---- @param content table<string, MediaType> Maps a header name to its definition
+--- @param links table<string, Link> Maps a header name to its definition
 --- @param extensions table # table with free form with "x-" OpenAPI extensions for this level of spec
 --- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
-function visitResponseContentEnd(namesStack, content, extensions, callsStack)
+function visitLinksEnd(namesStack, links, extensions, callsStack)
     return {}
 end
 
-return functionCallAndLog("visitResponseContentEnd", visitResponseContentEnd)
+return functionCallAndLog("visitLinksEnd", visitLinksEnd)

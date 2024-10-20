@@ -403,83 +403,30 @@ pub fn visit_response(
                     call_stack,
                 )?
                 .and_then(|call_stack| {
-                    Script::ResponseHeadersStart
-                        .call_with_descriptor(
-                            out_path,
-                            &(
-                                &current_names_stack,
-                                &response.headers,
-                                &response_extensions,
-                            ),
-                            call_stack,
-                        )?
-                        .and_then(|call_stack| {
-                            visit_headers(
-                                parsed_spec,
-                                out_path,
-                                &current_names_stack,
-                                &response.headers,
-                                response_extensions,
-                                call_stack,
-                            )
-                        })?;
-                    Script::ResponseHeadersEnd.call_with_descriptor(
+                    visit_headers(
+                        parsed_spec,
                         out_path,
-                        &(
-                            &current_names_stack,
-                            &response.headers,
-                            &response_extensions,
-                        ),
+                        &current_names_stack,
+                        &response.headers,
+                        response_extensions,
                         call_stack,
                     )?;
 
-                    Script::ResponseContentStart
-                        .call_with_descriptor(
-                            out_path,
-                            &(
-                                &current_names_stack,
-                                &response.content,
-                                &response_extensions,
-                            ),
-                            call_stack,
-                        )?
-                        .and_then(|call_stack| {
-                            visit_media_types(
-                                parsed_spec,
-                                out_path,
-                                names_stack,
-                                &response.content,
-                                call_stack,
-                            )
-                        })?;
-                    Script::ResponseContentEnd.call_with_descriptor(
+                    visit_media_types(
+                        parsed_spec,
                         out_path,
-                        &(
-                            &current_names_stack,
-                            &response.content,
-                            &response_extensions,
-                        ),
+                        names_stack,
+                        &response.content,
+                        response_extensions,
                         call_stack,
                     )?;
 
-                    Script::ResponseLinksStart
-                        .call_with_descriptor(
-                            out_path,
-                            &(&current_names_stack, &response.links, &response_extensions),
-                            call_stack,
-                        )?
-                        .and_then(|call_stack| {
-                            visit_links(
-                                parsed_spec,
-                                out_path,
-                                names_stack,
-                                &response.links,
-                                call_stack,
-                            )
-                        })?;
-                    Script::ResponseLinksEnd.call_with_descriptor(
+                    visit_links(
+                        parsed_spec,
                         out_path,
-                        &(&current_names_stack, &response.links, &response_extensions),
+                        names_stack,
+                        &response.links,
+                        response_extensions,
                         call_stack,
                     )?;
                     Ok(())
@@ -911,6 +858,7 @@ pub fn visit_request_body(
                         out_path,
                         &current_names_stack,
                         &request_body.content,
+                        &request_body.extensions,
                         call_stack,
                     )
                 })?;
@@ -956,7 +904,14 @@ pub fn visit_parameter_schema_or_content(
                     )?;
                 }
                 ParameterSchemaOrContent::Content(media_types) => {
-                    visit_media_types(parsed_spec, out_path, names_stack, media_types, call_stack)?;
+                    visit_media_types(
+                        parsed_spec,
+                        out_path,
+                        names_stack,
+                        media_types,
+                        extensions,
+                        call_stack,
+                    )?;
                 }
             }
             Ok(())
@@ -974,18 +929,33 @@ pub fn visit_media_types(
     out_path: &Path,
     names_stack: &[ModelName],
     media_types: &IndexMap<String, MediaType>,
+    extensions: &IndexMap<String, serde_json::Value>,
     call_stack: &CallStack,
 ) -> Result<()> {
-    media_types.iter().try_for_each(|media_type| {
-        visit_media_type(
-            parsed_spec,
+    Script::MediaTypesStart
+        .call_with_descriptor(
             out_path,
-            names_stack,
-            media_type.0,
-            media_type.1,
+            &(&names_stack, &media_types, &extensions),
             call_stack,
-        )
-    })
+        )?
+        .and_then(|call_stack| {
+            media_types.iter().try_for_each(|media_type| {
+                visit_media_type(
+                    parsed_spec,
+                    out_path,
+                    names_stack,
+                    media_type.0,
+                    media_type.1,
+                    call_stack,
+                )
+            })
+        })?;
+    Script::MediaTypesEnd.call_with_descriptor(
+        out_path,
+        &(&names_stack, &media_types, &extensions),
+        call_stack,
+    )?;
+    Ok(())
 }
 
 pub fn visit_links(
@@ -993,18 +963,29 @@ pub fn visit_links(
     out_path: &Path,
     names_stack: &[ModelName],
     links: &IndexMap<String, ReferenceOr<Link>>,
+    extensions: &IndexMap<String, serde_json::Value>,
     call_stack: &CallStack,
 ) -> Result<()> {
-    links.iter().try_for_each(|link| {
-        visit_link(
-            parsed_spec,
-            out_path,
-            names_stack,
-            link.0,
-            link.1,
-            call_stack,
-        )
-    })
+    Script::LinksStart
+        .call_with_descriptor(out_path, &(&names_stack, &links, &extensions), call_stack)?
+        .and_then(|call_stack| {
+            links.iter().try_for_each(|link| {
+                visit_link(
+                    parsed_spec,
+                    out_path,
+                    names_stack,
+                    link.0,
+                    link.1,
+                    call_stack,
+                )
+            })
+        })?;
+    Script::LinksEnd.call_with_descriptor(
+        out_path,
+        &(&names_stack, &links, &extensions),
+        call_stack,
+    )?;
+    Ok(())
 }
 
 pub fn visit_link(
@@ -2148,6 +2129,15 @@ pub fn visit_spec_components(
             out_path,
             &[],
             &components.security_schemes,
+            &components.extensions,
+            call_stack,
+        )?;
+
+        visit_links(
+            &parsed_spec,
+            out_path,
+            &[],
+            &components.links,
             &components.extensions,
             call_stack,
         )?;

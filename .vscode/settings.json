@@ -220,7 +220,11 @@
         "visitSecuritySchemeEnd",
         "visitSecuritySchemeStart",
         "visitSecuritySchemesEnd",
-        "visitSecuritySchemesStart"
+        "visitSecuritySchemesStart",
+        "visitLinksStart",
+        "visitLinksEnd",
+        "visitMediaTypesStart",
+        "visitMediaTypesEnd"
     ],
     "terminal.integrated.scrollback": 16777216,
     "references.preferredLocation": "view",
