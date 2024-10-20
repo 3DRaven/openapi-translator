@@ -130,6 +130,10 @@ pub enum Script {
     LinkStart,
     #[serde(rename = "LINK_END")]
     LinkEnd,
+    #[serde(rename = "COMPONENTS_START")]
+    ComponentsStart,
+    #[serde(rename = "COMPONENTS_END")]
+    ComponentsEnd,
     #[serde(rename = "MEDIA_TYPE_EXAMPLE")]
     GenericExample,
     #[serde(rename = "GENERIC_REQUEST_BODY")]
@@ -581,6 +585,8 @@ impl From<&Script> for &'static str {
             Script::SecuritySchemeOpenIdConnect => {
                 "visitors/components/security_schemes/openid_connect"
             }
+            Script::ComponentsStart => "visitors/components/components_start",
+            Script::ComponentsEnd => "visitors/components/components_end",
         }
     }
 }

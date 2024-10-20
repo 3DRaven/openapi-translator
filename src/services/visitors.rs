@@ -2068,77 +2068,90 @@ pub fn visit_spec_components(
     call_stack: &CallStack,
 ) -> Result<()> {
     if let Some(components) = components {
-        let parsed_spec = ParsedSpec {
-            path: spec_path.to_owned(),
-            spec: spec_as_json,
-        };
+        Script::ComponentsStart
+            .call_with_descriptor(
+                out_path,
+                &(&[] as &[ModelName], components, &components.extensions),
+                call_stack,
+            )?
+            .and_then(|call_stack| {
+                let parsed_spec = ParsedSpec {
+                    path: spec_path.to_owned(),
+                    spec: spec_as_json,
+                };
 
-        visit_schemas(
-            &parsed_spec,
-            out_path,
-            &components.schemas,
-            &components.extensions,
-            call_stack,
-        )?;
+                visit_schemas(
+                    &parsed_spec,
+                    out_path,
+                    &components.schemas,
+                    &components.extensions,
+                    call_stack,
+                )?;
 
-        visit_responses(
-            &parsed_spec,
-            out_path,
-            &components.responses,
-            &components.extensions,
-            call_stack,
-        )?;
+                visit_responses(
+                    &parsed_spec,
+                    out_path,
+                    &components.responses,
+                    &components.extensions,
+                    call_stack,
+                )?;
 
-        visit_parameters(
-            &parsed_spec,
-            out_path,
-            &components.parameters,
-            &components.extensions,
-            call_stack,
-        )?;
+                visit_parameters(
+                    &parsed_spec,
+                    out_path,
+                    &components.parameters,
+                    &components.extensions,
+                    call_stack,
+                )?;
 
-        visit_examples(
-            &parsed_spec,
-            out_path,
-            &[],
-            &components.examples,
-            &components.extensions,
-            call_stack,
-        )?;
+                visit_examples(
+                    &parsed_spec,
+                    out_path,
+                    &[],
+                    &components.examples,
+                    &components.extensions,
+                    call_stack,
+                )?;
 
-        visit_request_bodies(
-            &parsed_spec,
-            out_path,
-            &[],
-            &components.request_bodies,
-            &components.extensions,
-            call_stack,
-        )?;
+                visit_request_bodies(
+                    &parsed_spec,
+                    out_path,
+                    &[],
+                    &components.request_bodies,
+                    &components.extensions,
+                    call_stack,
+                )?;
 
-        visit_headers(
-            &parsed_spec,
-            out_path,
-            &[],
-            &components.headers,
-            &components.extensions,
-            call_stack,
-        )?;
+                visit_headers(
+                    &parsed_spec,
+                    out_path,
+                    &[],
+                    &components.headers,
+                    &components.extensions,
+                    call_stack,
+                )?;
 
-        visit_security_schemes(
-            &parsed_spec,
-            out_path,
-            &[],
-            &components.security_schemes,
-            &components.extensions,
-            call_stack,
-        )?;
+                visit_security_schemes(
+                    &parsed_spec,
+                    out_path,
+                    &[],
+                    &components.security_schemes,
+                    &components.extensions,
+                    call_stack,
+                )?;
 
-        visit_links(
-            &parsed_spec,
+                visit_links(
+                    &parsed_spec,
+                    out_path,
+                    &[],
+                    &components.links,
+                    &components.extensions,
+                    call_stack,
+                )
+            })?;
+        Script::ComponentsEnd.call_with_descriptor(
             out_path,
-            &[],
-            &components.links,
-            &components.extensions,
+            &(&[] as &[ModelName], components, &components.extensions),
             call_stack,
         )?;
     }
