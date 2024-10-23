@@ -9,12 +9,12 @@ use diffy::create_patch;
 use indexmap::IndexMap;
 use log::{error, info};
 use openapiv3::{
-    AnySchema, ArrayType, AuthorizationCodeOAuth2Flow, BooleanType, ClientCredentialsOAuth2Flow,
-    Components, Contact, Discriminator, Encoding, Example, ExternalDocumentation, Header,
-    ImplicitOAuth2Flow, Info, IntegerType, License, Link, MediaType, NumberType, OAuth2Flows,
-    ObjectType, OpenAPI, Parameter, ParameterData, ParameterSchemaOrContent, PasswordOAuth2Flow,
-    ReferenceOr, RequestBody, Response, Schema, SecurityRequirement, SecurityScheme, Server,
-    StringType, Tag,
+    AnySchema, ArrayType, AuthorizationCodeOAuth2Flow, BooleanType, Callback,
+    ClientCredentialsOAuth2Flow, Components, Contact, Discriminator, Encoding, Example,
+    ExternalDocumentation, Header, ImplicitOAuth2Flow, Info, IntegerType, License, Link, MediaType,
+    NumberType, OAuth2Flows, ObjectType, OpenAPI, Parameter, ParameterData,
+    ParameterSchemaOrContent, PasswordOAuth2Flow, PathItem, ReferenceOr, RequestBody, Response,
+    Schema, SecurityRequirement, SecurityScheme, Server, StringType, Tag,
 };
 use serde::de::DeserializeOwned;
 
@@ -80,7 +80,7 @@ pub fn visit_command(command: &Commands) -> Result<()> {
             )?
             .and_then(|call_stack| {
                 visit_spec_info(out_path, &openapi.info, call_stack)?;
-                visit_spec_servers(out_path, &openapi.servers, &openapi.extensions, call_stack)?;
+                visit_servers(out_path, &openapi.servers, &openapi.extensions, call_stack)?;
                 visit_spec_security(out_path, &openapi.security, &openapi.extensions, call_stack)?;
                 visit_spec_tags(out_path, &openapi.tags, &openapi.extensions, call_stack)?;
                 visit_external_docs(out_path, &openapi.external_docs, call_stack)?;
@@ -958,6 +958,43 @@ pub fn visit_media_types(
     Ok(())
 }
 
+pub fn visit_operation_callbacks(
+    parsed_spec: &ParsedSpec,
+    out_path: &Path,
+    names_stack: &[ModelName],
+    operation_callbacks: &IndexMap<String, ReferenceOr<Callback>>,
+    extensions: &IndexMap<String, serde_json::Value>,
+    call_stack: &CallStack,
+) -> Result<()> {
+    if !operation_callbacks.is_empty() {
+        Script::AsyncCallbacksStart
+            .call_with_descriptor(
+                out_path,
+                &(&names_stack, &operation_callbacks, &extensions),
+                call_stack,
+            )?
+            .and_then(|call_stack| {
+                operation_callbacks.iter().try_for_each(|callbacks| {
+                    visit_callbacks(
+                        parsed_spec,
+                        out_path,
+                        names_stack,
+                        callbacks.0,
+                        callbacks.1,
+                        extensions,
+                        call_stack,
+                    )
+                })
+            })?;
+        Script::AsyncCallbacksEnd.call_with_descriptor(
+            out_path,
+            &(&names_stack, &operation_callbacks, &extensions),
+            call_stack,
+        )?;
+    }
+    Ok(())
+}
+
 pub fn visit_links(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
@@ -1045,6 +1082,55 @@ pub fn visit_link(
             Script::LinkEnd.call_with_descriptor(
                 out_path,
                 &(&current_names_stack, link, &link.extensions),
+                call_stack,
+            )?;
+        }
+    }
+    Ok(())
+}
+
+pub fn visit_callbacks(
+    parsed_spec: &ParsedSpec,
+    out_path: &Path,
+    names_stack: &[ModelName],
+    callbacks_name: &str,
+    callbacks: &ReferenceOr<Callback>,
+    extensions: &IndexMap<String, serde_json::Value>,
+    call_stack: &CallStack,
+) -> Result<()> {
+    match callbacks {
+        ReferenceOr::Reference { reference } => {
+            visit_callbacks(
+                parsed_spec,
+                out_path,
+                names_stack,
+                callbacks_name,
+                references::resolve_reference::<Callback>(reference, parsed_spec)?,
+                extensions,
+                call_stack,
+            )?;
+        }
+        ReferenceOr::Item(callback) => {
+            let mut current_names_stack = names_stack.to_vec();
+            current_names_stack.push(ModelName {
+                base: callbacks_name.to_owned(),
+                extended: extensions.get(EXTENSION_FOR_NAME).cloned(),
+            });
+
+            Script::AsyncCallbackStart
+                .call_with_descriptor(
+                    out_path,
+                    &(&current_names_stack, callback, &extensions),
+                    call_stack,
+                )?
+                .and_then(|call_stack| {
+                    callback.iter().try_for_each(|it| {
+                        visit_path_item(parsed_spec, out_path, names_stack, it.0, it.1, call_stack)
+                    })
+                })?;
+            Script::AsyncCallbackEnd.call_with_descriptor(
+                out_path,
+                &(&current_names_stack, callback, &extensions),
                 call_stack,
             )?;
         }
@@ -2017,6 +2103,56 @@ pub fn visit_path_parameter(
     }
 }
 
+pub fn visit_path_item(
+    parsed_spec: &ParsedSpec,
+    out_path: &Path,
+    names_stack: &[ModelName],
+    path_item_name: &str,
+    path_item: &PathItem,
+    call_stack: &CallStack,
+) -> Result<()> {
+    let mut current_names_stack = names_stack.to_vec();
+    current_names_stack.push(ModelName {
+        base: path_item_name.to_owned(),
+        extended: path_item.extensions.get(EXTENSION_FOR_NAME).cloned(),
+    });
+
+    Script::PathItemStart
+        .call_with_descriptor(
+            out_path,
+            &(&current_names_stack, &path_item, &path_item.extensions),
+            call_stack,
+        )?
+        .and_then(|call_stack| {
+            visit_servers(
+                out_path,
+                &path_item.servers,
+                &path_item.extensions,
+                call_stack,
+            )?;
+            //Not so effective, but used existing visitor
+            visit_parameters(
+                parsed_spec,
+                out_path,
+                &path_item
+                    .parameters
+                    .iter()
+                    .enumerate()
+                    .map(|(index, value)| (index.to_string(), value.clone()))
+                    .collect::<IndexMap<String, ReferenceOr<Parameter>>>(),
+                &path_item.extensions,
+                call_stack,
+            )?;
+            Ok(())
+        })?;
+    Script::PathItemEnd.call_with_descriptor(
+        out_path,
+        &(&current_names_stack, &path_item, &path_item.extensions),
+        call_stack,
+    )?;
+    Ok(())
+}
+
 pub fn visit_cookie_parameter(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
@@ -2147,6 +2283,15 @@ pub fn visit_spec_components(
                     &components.links,
                     &components.extensions,
                     call_stack,
+                )?;
+
+                visit_operation_callbacks(
+                    &parsed_spec,
+                    out_path,
+                    &[],
+                    &components.callbacks,
+                    &components.extensions,
+                    call_stack,
                 )
             })?;
         Script::ComponentsEnd.call_with_descriptor(
@@ -2241,14 +2386,14 @@ pub fn visit_server(out_path: &Path, server: &Server, call_stack: &CallStack) ->
     Ok(())
 }
 
-pub fn visit_spec_servers(
+pub fn visit_servers(
     out_path: &Path,
     servers: &Vec<Server>,
     extensions: &IndexMap<String, serde_json::Value>,
     call_stack: &CallStack,
 ) -> Result<()> {
     if !servers.is_empty() {
-        Script::SpecServersStart
+        Script::ServersStart
             .call_with_descriptor(out_path, &(servers, extensions), call_stack)?
             .and_then(|call_stack| {
                 servers.iter().try_for_each(|server| {
@@ -2256,11 +2401,7 @@ pub fn visit_spec_servers(
                     Ok(())
                 })
             })?;
-        Script::SpecServersEnd.call_with_descriptor(
-            out_path,
-            &(servers, extensions),
-            call_stack,
-        )?;
+        Script::ServersEnd.call_with_descriptor(out_path, &(servers, extensions), call_stack)?;
     }
     Ok(())
 }

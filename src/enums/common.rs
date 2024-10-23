@@ -66,6 +66,10 @@ pub enum Script {
     PathParameterStart,
     #[serde(rename = "PATH_PARAMETER_END")]
     PathParameterEnd,
+    #[serde(rename = "PATH_ITEM_START")]
+    PathItemStart,
+    #[serde(rename = "PATH_ITEM_END")]
+    PathItemEnd,
     #[serde(rename = "COOKIE_PARAMETER_START")]
     CookieParameterStart,
     #[serde(rename = "COOKIE_PARAMETER_END")]
@@ -86,6 +90,14 @@ pub enum Script {
     LinksStart,
     #[serde(rename = "LINKS_END")]
     LinksEnd,
+    #[serde(rename = "ASYNC_CALLBACKS_START")]
+    AsyncCallbacksStart,
+    #[serde(rename = "ASYNC_CALLBACKS_END")]
+    AsyncCallbacksEnd,
+    #[serde(rename = "ASYNC_CALLBACK_START")]
+    AsyncCallbackStart,
+    #[serde(rename = "ASYNC_CALLBACK_END")]
+    AsyncCallbackEnd,
     #[serde(rename = "HEADERS_START")]
     HeadersStart,
     #[serde(rename = "HEADERS_END")]
@@ -177,18 +189,16 @@ pub enum Script {
     SpecTagsEnd,
     #[serde(rename = "SPEC_TAGS_START")]
     SpecTagsStart,
-
     #[serde(rename = "SPEC_SERVERS_START")]
-    SpecServersStart,
+    ServersStart,
+    #[serde(rename = "SPEC_SERVERS_END")]
+    ServersEnd,
     #[serde(rename = "SERVER_START")]
     ServerStart,
     #[serde(rename = "SERVER_END")]
     ServerEnd,
     #[serde(rename = "SERVER_VARIABLE")]
     ServerVariable,
-    #[serde(rename = "SPEC_SERVERS_END")]
-    SpecServersEnd,
-
     #[serde(rename = "SPEC_INFO_START")]
     SpecInfoStart,
     #[serde(rename = "SPEC_INFO_END")]
@@ -440,12 +450,11 @@ impl From<&Script> for &'static str {
             Script::SpecTagsEnd => "visitors/tags/spec_tags_end",
             Script::SpecTagsStart => "visitors/tags/spec_tags_start",
 
-            Script::SpecServersStart => "visitors/servers/spec_servers_start",
-            Script::ServerStart => "visitors/common/server/server_start",
-            Script::ServerEnd => "visitors/common/server/server_end",
-            Script::ServerVariable => "visitors/common/server/server_variable",
-            Script::SpecServersEnd => "visitors/servers/spec_servers_end",
-
+            Script::ServersStart => "visitors/common/servers/servers_start",
+            Script::ServersEnd => "visitors/common/servers/servers_end",
+            Script::ServerStart => "visitors/common/servers/server/server_start",
+            Script::ServerEnd => "visitors/common/servers/server/server_end",
+            Script::ServerVariable => "visitors/common/servers/server/server_variable",
             Script::SpecInfoStart => "visitors/info/spec_info_start",
             Script::SpecInfoEnd => "visitors/info/spec_info_end",
 
@@ -587,6 +596,14 @@ impl From<&Script> for &'static str {
             }
             Script::ComponentsStart => "visitors/components/components_start",
             Script::ComponentsEnd => "visitors/components/components_end",
+            Script::AsyncCallbacksStart => {
+                "visitors/components/async_callbacks/async_callbacks_start"
+            }
+            Script::AsyncCallbacksEnd => "visitors/components/async_callbacks/async_callbacks_end",
+            Script::AsyncCallbackStart => "visitors/common/async_callback/async_callback_start",
+            Script::AsyncCallbackEnd => "visitors/common/async_callback/async_callback_end",
+            Script::PathItemStart => "visitors/common/path_item/path_item_start",
+            Script::PathItemEnd => "visitors/common/path_item/path_item_end",
         }
     }
 }

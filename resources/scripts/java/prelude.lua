@@ -6,6 +6,73 @@
 --- They represent an approximate content of the structures; for example, since Lua does not have Enums,
 --- a string will be used in place of fields.
 
+--- A table that maps strings to PathItems, representing callback paths.
+---@alias Callback table<string, PathItem>
+
+--- An alias for a table representing security requirements.
+--- The keys of the table are security scheme names (strings), and the values are arrays (tables) of required scope strings.
+--- @alias SecurityRequirement table<string, string[]>
+
+--- An alias for a table representing operation callbacks.
+--- The keys of the table are callback names or identifiers (strings), and the values are either references to Callback objects or the Callback objects themselves.
+---@alias OperationCallbacks table<string, ReferenceOr<Callback>>
+
+--- Describes the operations available on a single path.
+--- A Path Item MAY be empty, due to ACL constraints.
+--- The path itself is still exposed to the documentation
+--- viewer but they will not know which operations and
+--- parameters are available.
+---@class PathItem
+---@field summary string|nil # An optional, string summary, intended to apply to all operations in this path.
+---@field description string|nil # An optional, string description, intended to apply to all operations in this path. CommonMark syntax MAY be used for rich text representation.
+---@field get Operation|nil # A definition of a GET operation on this path.
+---@field put Operation|nil # A definition of a PUT operation on this path.
+---@field post Operation|nil # A definition of a POST operation on this path.
+---@field delete Operation|nil # A definition of a DELETE operation on this path.
+---@field options Operation|nil # A definition of an OPTIONS operation on this path.
+---@field head Operation|nil # A definition of a HEAD operation on this path.
+---@field patch Operation|nil # A definition of a PATCH operation on this path.
+---@field trace Operation|nil # A definition of a TRACE operation on this path.
+---@field servers Server[] # An alternative server array to service all operations in this path.
+---@field parameters ReferenceOr<QueryParameter|PathParameter|HeaderParameter>[] # A list of parameters that are applicable for all the operations described under this path.
+---@field extensions table<string, any> # Inline extensions to this object.
+
+--- Holds the relative paths to the individual endpoints and
+--- their operations. The path is appended to the URL from the
+--- Server Object in order to construct the full URL. The Paths
+--- MAY be empty, due to ACL constraints.
+---@class Paths
+---@field paths table<string, ReferenceOr<PathItem>> # A map of PathItems or references to them.
+---@field extensions table<string, any> # Inline extensions to this object.
+
+--- Describes a single API operation on a path.
+---@class Operation
+---@field tags string[] # A list of tags for API documentation control.
+---@field summary string|nil # A short summary of what the operation does.
+---@field description string|nil # A verbose explanation of the operation behavior. CommonMark syntax MAY be used for rich text representation.
+---@field external_docs ExternalDocumentation|nil # Additional external documentation for this operation.
+---@field operation_id string|nil # Unique string used to identify the operation.
+---@field parameters ReferenceOr<QueryParameter|HeaderParameter|PathParameter>[] # A list of parameters that are applicable for this operation.
+---@field request_body ReferenceOr<RequestBody>|nil # The request body applicable for this operation.
+---@field responses Responses # REQUIRED. The list of possible responses as they are returned from executing this operation.
+---@field callbacks table<string, Callback> # A map of possible out-of-band callbacks related to the parent operation.
+---@field deprecated boolean # Declares this operation to be deprecated. Default value is false.
+---@field security SecurityRequirement[]|nil # A declaration of which security mechanisms can be used for this operation.
+---@field servers Server[] # An alternative server array to service this operation.
+---@field extensions table<string, any> # Inline extensions to this object.
+
+--- A container for the expected responses of an operation. The container maps
+--- an HTTP response code to the expected response.
+---@class Responses
+---@field default ReferenceOr<Response>|nil # The documentation of responses other than the ones declared for specific HTTP response codes.
+---@field responses table<StatusCode, ReferenceOr<Response>> # Maps HTTP status codes to their expected responses.
+---@field extensions table<string, any> # Inline extensions to this object.
+
+--- Represents an HTTP status code or a range of HTTP status codes.
+---@class StatusCode
+---@field Code fun(value: number): StatusCode # Represents a specific HTTP status code.
+---@field Range fun(value: number): StatusCode # Represents a range of HTTP status codes.
+
 --- Represents an API Key security scheme.
 --- @class APIKeySecurityScheme
 --- @field location string The location of the API key. Valid values are "query", "header", or "cookie".
