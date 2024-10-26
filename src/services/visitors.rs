@@ -13,8 +13,8 @@ use openapiv3::{
     ClientCredentialsOAuth2Flow, Components, Contact, Discriminator, Encoding, Example,
     ExternalDocumentation, Header, ImplicitOAuth2Flow, Info, IntegerType, License, Link, MediaType,
     NumberType, OAuth2Flows, ObjectType, OpenAPI, Operation, Parameter, ParameterData,
-    ParameterSchemaOrContent, PasswordOAuth2Flow, PathItem, ReferenceOr, RequestBody, Response,
-    Responses, Schema, SecurityRequirement, SecurityScheme, Server, StringType, Tag,
+    ParameterSchemaOrContent, PasswordOAuth2Flow, PathItem, Paths, ReferenceOr, RequestBody,
+    Response, Responses, Schema, SecurityRequirement, SecurityScheme, Server, StringType, Tag,
 };
 use serde::de::DeserializeOwned;
 
@@ -72,6 +72,11 @@ pub fn visit_command(command: &Commands) -> Result<()> {
 
         let call_stack = &cli::set_global_lua_parameters(&openapi)?;
 
+        let parsed_spec = ParsedSpec {
+            path: spec_path.to_owned(),
+            spec: Arc::new(spec_as_json),
+        };
+
         Script::SpecStart
             .call_with_descriptor(
                 out_path,
@@ -81,6 +86,7 @@ pub fn visit_command(command: &Commands) -> Result<()> {
             .and_then(|call_stack| {
                 visit_spec_info(out_path, &openapi.info, call_stack)?;
                 visit_servers(out_path, &openapi.servers, &openapi.extensions, call_stack)?;
+                visit_paths(&parsed_spec, out_path, &openapi.paths, call_stack)?;
                 visit_security_requirements(
                     out_path,
                     &openapi.security,
@@ -89,13 +95,7 @@ pub fn visit_command(command: &Commands) -> Result<()> {
                 )?;
                 visit_spec_tags(out_path, &openapi.tags, &openapi.extensions, call_stack)?;
                 visit_external_docs(out_path, &openapi.external_docs, call_stack)?;
-                visit_spec_components(
-                    out_path,
-                    spec_path,
-                    Arc::new(spec_as_json),
-                    &openapi.components,
-                    call_stack,
-                )?;
+                visit_spec_components(&parsed_spec, out_path, &openapi.components, call_stack)?;
                 Ok(())
             })?;
 
@@ -1684,6 +1684,56 @@ pub fn visit_parameters(
     Ok(())
 }
 
+pub fn visit_paths(
+    parsed_spec: &ParsedSpec,
+    out_path: &Path,
+    paths: &Paths,
+    call_stack: &CallStack,
+) -> Result<()> {
+    Script::PathsStart
+        .call_with_descriptor(out_path, &(&paths, &paths.extensions), call_stack)?
+        .and_then(|call_stack| {
+            paths.paths.iter().try_for_each(|it| {
+                visit_path_item_ref(parsed_spec, out_path, &[], it.0, it.1, call_stack)
+            })
+        })?;
+    Script::PathsEnd.call_with_descriptor(out_path, &(&paths, &paths.extensions), call_stack)?;
+    Ok(())
+}
+
+pub fn visit_path_item_ref(
+    parsed_spec: &ParsedSpec,
+    out_path: &Path,
+    names_stack: &[ModelName],
+    path_item_name: &str,
+    path_item_ref: &ReferenceOr<PathItem>,
+    call_stack: &CallStack,
+) -> Result<()> {
+    match path_item_ref {
+        ReferenceOr::Reference { reference } => {
+            visit_path_item_ref(
+                parsed_spec,
+                out_path,
+                names_stack,
+                path_item_name,
+                references::resolve_reference::<PathItem>(reference, parsed_spec)?,
+                call_stack,
+            )?;
+        }
+        ReferenceOr::Item(path_item) => {
+            visit_path_item(
+                parsed_spec,
+                out_path,
+                names_stack,
+                path_item_name,
+                path_item,
+                call_stack,
+            )?;
+        }
+    }
+    Ok(())
+}
+
 pub fn visit_parameter(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
@@ -2439,9 +2489,8 @@ pub fn visit_cookie_parameter(
 }
 
 pub fn visit_spec_components(
+    parsed_spec: &ParsedSpec,
     out_path: &Path,
-    spec_path: &Path,
-    spec_as_json: Arc<serde_json::Value>,
     components: &Option<Components>,
     call_stack: &CallStack,
 ) -> Result<()> {
@@ -2453,13 +2502,8 @@ pub fn visit_spec_components(
                 call_stack,
             )?
             .and_then(|call_stack| {
-                let parsed_spec = ParsedSpec {
-                    path: spec_path.to_owned(),
-                    spec: spec_as_json,
-                };
-
                 visit_schemas(
-                    &parsed_spec,
+                    parsed_spec,
                     out_path,
                     &components.schemas,
                     &components.extensions,
@@ -2467,7 +2511,7 @@ pub fn visit_spec_components(
                 )?;
 
                 visit_components_responses(
-                    &parsed_spec,
+                    parsed_spec,
                     out_path,
                     &components.responses,
                     &components.extensions,
@@ -2475,7 +2519,7 @@ pub fn visit_spec_components(
                 )?;
 
                 visit_parameters(
-                    &parsed_spec,
+                    parsed_spec,
                     out_path,
                     &components.parameters,
                     &components.extensions,
@@ -2483,7 +2527,7 @@ pub fn visit_spec_components(
                 )?;
 
                 visit_examples(
-                    &parsed_spec,
+                    parsed_spec,
                     out_path,
                     &[],
                     &components.examples,
@@ -2492,7 +2536,7 @@ pub fn visit_spec_components(
                 )?;
 
                 visit_request_bodies(
-                    &parsed_spec,
+                    parsed_spec,
                     out_path,
                     &[],
                     &components.request_bodies,
@@ -2501,7 +2545,7 @@ pub fn visit_spec_components(
                 )?;
 
                 visit_headers(
-                    &parsed_spec,
+                    parsed_spec,
                     out_path,
                     &[],
                     &components.headers,
@@ -2510,7 +2554,7 @@ pub fn visit_spec_components(
                 )?;
 
                 visit_security_schemes(
-                    &parsed_spec,
+                    parsed_spec,
                     out_path,
                     &[],
                     &components.security_schemes,
@@ -2519,7 +2563,7 @@ pub fn visit_spec_components(
                 )?;
 
                 visit_links(
-                    &parsed_spec,
+                    parsed_spec,
                     out_path,
                     &[],
                     &components.links,
@@ -2528,7 +2572,7 @@ pub fn visit_spec_components(
                 )?;
 
                 visit_callbacks(
-                    &parsed_spec,
+                    parsed_spec,
                     out_path,
                     &[],
                     &components.callbacks,

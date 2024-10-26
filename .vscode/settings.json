@@ -259,7 +259,9 @@
         "visitSecurityRequirementStart",
         "visitSecurityRequirementsStart",
         "visitSecurityRequirementsEnd",
-        "visitSecurityRequirement"
+        "visitSecurityRequirement",
+        "visitPathsStart",
+        "visitPathsEnd"
     ],
     "terminal.integrated.scrollback": 16777216,
     "references.preferredLocation": "view",

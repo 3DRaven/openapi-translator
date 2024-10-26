@@ -114,6 +114,10 @@ pub enum Script {
     ParametersStart,
     #[serde(rename = "PARAMETERS_END")]
     ParametersEnd,
+    #[serde(rename = "PATHS_START")]
+    PathsStart,
+    #[serde(rename = "PATHS_END")]
+    PathsEnd,
     #[serde(rename = "RESPONSE_START")]
     ResponseStart,
     #[serde(rename = "RESPONSE_END")]
@@ -665,6 +669,8 @@ impl From<&Script> for &'static str {
             Script::GetOperationEnd => "visitors/common/operation/get_operation_end",
             Script::DeleteOperationStart => "visitors/common/operation/delete_operation_start",
             Script::DeleteOperationEnd => "visitors/common/operation/delete_operation_end",
+            Script::PathsStart => "visitors/paths/paths_start",
+            Script::PathsEnd => "visitors/paths/paths_end",
         }
     }
 }
