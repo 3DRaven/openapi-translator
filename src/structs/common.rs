@@ -5,6 +5,11 @@ use serde::{ser::SerializeSeq, Deserialize, Serialize, Serializer};
 use crate::enums::common::{Script, WriteMode};
 use anyhow::Result;
 
+pub struct BracketScripts {
+    pub start: Script,
+    pub end: Script,
+}
+
 pub struct ParsedSpec {
     pub path: PathBuf,
     pub spec: Arc<serde_json::Value>,

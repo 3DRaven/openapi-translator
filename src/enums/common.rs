@@ -24,10 +24,14 @@ pub enum WriteMode {
 pub enum Script {
     #[serde(rename = "PRELUDE")]
     Prelude,
-    #[serde(rename = "RESPONSES_START")]
-    ResponsesStart,
-    #[serde(rename = "RESPONSES_END")]
-    ResponsesEnd,
+    #[serde(rename = "OPERATION_RESPONSES_START")]
+    OperationResponsesStart,
+    #[serde(rename = "OPERATION_RESPONSES_END")]
+    OperationResponsesEnd,
+    #[serde(rename = "COMPONENTS_RESPONSES_START")]
+    ComponentsResponsesStart,
+    #[serde(rename = "COMPONENTS_RESPONSES_END")]
+    ComponentsResponsesEnd,
     #[serde(rename = "PARAMETER_DATA_START")]
     ParameterDataStart,
     #[serde(rename = "PARAMETER_DATA_END")]
@@ -70,6 +74,38 @@ pub enum Script {
     PathItemStart,
     #[serde(rename = "PATH_ITEM_END")]
     PathItemEnd,
+    #[serde(rename = "TRACE_OPERATION_START")]
+    TraceOperationStart,
+    #[serde(rename = "TRACE_OPERATION_END")]
+    TraceOperationEnd,
+    #[serde(rename = "PUT_OPERATION_START")]
+    PutOperationStart,
+    #[serde(rename = "PUT_OPERATION_END")]
+    PutOperationEnd,
+    #[serde(rename = "POST_OPERATION_START")]
+    PostOperationStart,
+    #[serde(rename = "POST_OPERATION_END")]
+    PostOperationEnd,
+    #[serde(rename = "PATCH_OPERATION_START")]
+    PatchOperationStart,
+    #[serde(rename = "PATCH_OPERATION_END")]
+    PatchOperationEnd,
+    #[serde(rename = "OPTIONS_OPERATION_START")]
+    OptionsOperationStart,
+    #[serde(rename = "OPTIONS_OPERATION_END")]
+    OptionsOperationEnd,
+    #[serde(rename = "HEAD_OPERATION_START")]
+    HeadOperationStart,
+    #[serde(rename = "HEAD_OPERATION_END")]
+    HeadOperationEnd,
+    #[serde(rename = "GET_OPERATION_START")]
+    GetOperationStart,
+    #[serde(rename = "GET_OPERATION_END")]
+    GetOperationEnd,
+    #[serde(rename = "DELETE_OPERATION_START")]
+    DeleteOperationStart,
+    #[serde(rename = "DELETE_OPERATION_END")]
+    DeleteOperationEnd,
     #[serde(rename = "COOKIE_PARAMETER_START")]
     CookieParameterStart,
     #[serde(rename = "COOKIE_PARAMETER_END")]
@@ -208,13 +244,12 @@ pub enum Script {
     #[serde(rename = "SPEC_INFO_LICENSE")]
     SpecInfoLicense,
 
-    #[serde(rename = "SPEC_SECURITIES_START")]
-    SpecSecuritiesStart,
-    #[serde(rename = "SPEC_SECURITY")]
-    SpecSecurity,
-    #[serde(rename = "SPEC_SECURITIES_END")]
-    SpecSecuritiesEnd,
-
+    #[serde(rename = "SECURITY_REQUIREMENTS_START")]
+    SecurityRequirementsStart,
+    #[serde(rename = "SECURITY_REQUIREMENT")]
+    SecurityRequirement,
+    #[serde(rename = "SECURITY_REQUIREMENTS_END")]
+    SecurityRequirementsEnd,
     #[serde(rename = "OBJECT_START")]
     ObjectStart,
     #[serde(rename = "OBJECT_PROPERTY_START")]
@@ -411,8 +446,8 @@ impl From<&Script> for &'static str {
     fn from(script: &Script) -> &'static str {
         match script {
             Script::Prelude => "prelude",
-            Script::ResponsesStart => "visitors/components/responses/responses_start",
-            Script::ResponsesEnd => "visitors/components/responses/responses_end",
+            Script::ComponentsResponsesStart => "visitors/components/responses/responses_start",
+            Script::ComponentsResponsesEnd => "visitors/components/responses/responses_end",
             Script::ResponseStart => "visitors/components/responses/response_start",
             Script::ResponseEnd => "visitors/components/responses/response_end",
             Script::HeadersStart => "visitors/common/headers/headers_start",
@@ -461,9 +496,15 @@ impl From<&Script> for &'static str {
             Script::SpecInfoContact => "visitors/info/spec_info_contact",
             Script::SpecInfoLicense => "visitors/info/spec_info_license",
 
-            Script::SpecSecuritiesStart => "visitors/securities/spec_securities_start",
-            Script::SpecSecurity => "visitors/securities/spec_security",
-            Script::SpecSecuritiesEnd => "visitors/securities/spec_securities_end",
+            Script::SecurityRequirementsStart => {
+                "visitors/common/security_requirements/security_requirements_start"
+            }
+            Script::SecurityRequirement => {
+                "visitors/common/security_requirements/security_requirement"
+            }
+            Script::SecurityRequirementsEnd => {
+                "visitors/common/security_requirements/security_requirements_end"
+            }
 
             Script::ObjectStart => "visitors/components/schemas/kind/type/object/object_start",
             Script::ObjectEnd => "visitors/components/schemas/kind/type/object/object_end",
@@ -604,6 +645,26 @@ impl From<&Script> for &'static str {
             Script::AsyncCallbackEnd => "visitors/common/async_callback/async_callback_end",
             Script::PathItemStart => "visitors/common/path_item/path_item_start",
             Script::PathItemEnd => "visitors/common/path_item/path_item_end",
+            Script::OperationResponsesStart => {
+                "visitors/common/operation/responses/responses_start"
+            }
+            Script::OperationResponsesEnd => "visitors/common/operation/responses/responses_end",
+            Script::TraceOperationStart => "visitors/common/operation/trace_operation_start",
+            Script::TraceOperationEnd => "visitors/common/operation/trace_operation_end",
+            Script::PutOperationStart => "visitors/common/operation/put_operation_start",
+            Script::PutOperationEnd => "visitors/common/operation/put_operation_end",
+            Script::PostOperationStart => "visitors/common/operation/post_operation_start",
+            Script::PostOperationEnd => "visitors/common/operation/post_operation_end",
+            Script::PatchOperationStart => "visitors/common/operation/patch_operation_start",
+            Script::PatchOperationEnd => "visitors/common/operation/patch_operation_end",
+            Script::OptionsOperationStart => "visitors/common/operation/options_operation_start",
+            Script::OptionsOperationEnd => "visitors/common/operation/options_operation_end",
+            Script::HeadOperationStart => "visitors/common/operation/head_operation_start",
+            Script::HeadOperationEnd => "visitors/common/operation/head_operation_end",
+            Script::GetOperationStart => "visitors/common/operation/get_operation_start",
+            Script::GetOperationEnd => "visitors/common/operation/get_operation_end",
+            Script::DeleteOperationStart => "visitors/common/operation/delete_operation_start",
+            Script::DeleteOperationEnd => "visitors/common/operation/delete_operation_end",
         }
     }
 }

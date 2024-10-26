@@ -12,9 +12,9 @@ use openapiv3::{
     AnySchema, ArrayType, AuthorizationCodeOAuth2Flow, BooleanType, Callback,
     ClientCredentialsOAuth2Flow, Components, Contact, Discriminator, Encoding, Example,
     ExternalDocumentation, Header, ImplicitOAuth2Flow, Info, IntegerType, License, Link, MediaType,
-    NumberType, OAuth2Flows, ObjectType, OpenAPI, Parameter, ParameterData,
+    NumberType, OAuth2Flows, ObjectType, OpenAPI, Operation, Parameter, ParameterData,
     ParameterSchemaOrContent, PasswordOAuth2Flow, PathItem, ReferenceOr, RequestBody, Response,
-    Schema, SecurityRequirement, SecurityScheme, Server, StringType, Tag,
+    Responses, Schema, SecurityRequirement, SecurityScheme, Server, StringType, Tag,
 };
 use serde::de::DeserializeOwned;
 
@@ -25,7 +25,7 @@ use crate::{
         EXTENSION_FOR_NAME,
     },
     services::references,
-    structs::common::{CallStack, ModelName, ParsedSpec},
+    structs::common::{BracketScripts, CallStack, ModelName, ParsedSpec},
     traits::common::AsSchemaRef,
     Commands,
 };
@@ -81,7 +81,12 @@ pub fn visit_command(command: &Commands) -> Result<()> {
             .and_then(|call_stack| {
                 visit_spec_info(out_path, &openapi.info, call_stack)?;
                 visit_servers(out_path, &openapi.servers, &openapi.extensions, call_stack)?;
-                visit_spec_security(out_path, &openapi.security, &openapi.extensions, call_stack)?;
+                visit_security_requirements(
+                    out_path,
+                    &openapi.security,
+                    &openapi.extensions,
+                    call_stack,
+                )?;
                 visit_spec_tags(out_path, &openapi.tags, &openapi.extensions, call_stack)?;
                 visit_external_docs(out_path, &openapi.external_docs, call_stack)?;
                 visit_spec_components(
@@ -958,7 +963,7 @@ pub fn visit_media_types(
     Ok(())
 }
 
-pub fn visit_operation_callbacks(
+pub fn visit_callbacks(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
     names_stack: &[ModelName],
@@ -975,7 +980,7 @@ pub fn visit_operation_callbacks(
             )?
             .and_then(|call_stack| {
                 operation_callbacks.iter().try_for_each(|callbacks| {
-                    visit_callbacks(
+                    visit_callback(
                         parsed_spec,
                         out_path,
                         names_stack,
@@ -1089,7 +1094,7 @@ pub fn visit_link(
     Ok(())
 }
 
-pub fn visit_callbacks(
+pub fn visit_callback(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
     names_stack: &[ModelName],
@@ -1100,7 +1105,7 @@ pub fn visit_callbacks(
 ) -> Result<()> {
     match callbacks {
         ReferenceOr::Reference { reference } => {
-            visit_callbacks(
+            visit_callback(
                 parsed_spec,
                 out_path,
                 names_stack,
@@ -1512,7 +1517,7 @@ pub fn visit_spec_tags(
     Ok(())
 }
 
-pub fn visit_spec_security(
+pub fn visit_security_requirements(
     out_path: &Path,
     securities: &Option<Vec<SecurityRequirement>>,
     extensions: &IndexMap<String, serde_json::Value>,
@@ -1520,11 +1525,11 @@ pub fn visit_spec_security(
 ) -> Result<()> {
     if let Some(it) = securities.as_ref() {
         if !it.is_empty() {
-            Script::SpecSecuritiesStart
+            Script::SecurityRequirementsStart
                 .call_with_descriptor(out_path, &(it, extensions), call_stack)?
                 .and_then(|call_stack| {
                     it.iter().try_for_each(|sec_map| {
-                        Script::SpecSecurity.call_with_descriptor(
+                        Script::SecurityRequirement.call_with_descriptor(
                             out_path,
                             &(sec_map, extensions),
                             call_stack,
@@ -1532,7 +1537,7 @@ pub fn visit_spec_security(
                         Ok(())
                     })
                 })?;
-            Script::SpecSecuritiesEnd.call_with_descriptor(
+            Script::SecurityRequirementsEnd.call_with_descriptor(
                 out_path,
                 &(it, extensions),
                 call_stack,
@@ -1575,7 +1580,7 @@ pub fn visit_schemas(
     Ok(())
 }
 
-pub fn visit_responses(
+pub fn visit_components_responses(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
     responses: &IndexMap<String, ReferenceOr<Response>>,
@@ -1583,7 +1588,7 @@ pub fn visit_responses(
     call_stack: &CallStack,
 ) -> Result<()> {
     if !responses.is_empty() {
-        Script::ResponsesStart
+        Script::ComponentsResponsesStart
             .call_with_descriptor(out_path, &(&extensions), call_stack)?
             .and_then(|it| {
                 responses
@@ -1592,8 +1597,55 @@ pub fn visit_responses(
                         visit_response(parsed_spec, out_path, &[], response_name, response_ref, it)
                     })
             })?;
-        Script::ResponsesEnd.call_with_descriptor(out_path, &(&extensions), call_stack)?;
+        Script::ComponentsResponsesEnd.call_with_descriptor(
+            out_path,
+            &(&extensions),
+            call_stack,
+        )?;
     }
+    Ok(())
+}
+
+pub fn visit_operation_responses(
+    parsed_spec: &ParsedSpec,
+    out_path: &Path,
+    names_stack: &[ModelName],
+    responses: &Responses,
+    call_stack: &CallStack,
+) -> Result<()> {
+    Script::OperationResponsesStart
+        .call_with_descriptor(out_path, &(&responses, &responses.extensions), call_stack)?
+        .and_then(|call_stack| {
+            if let Some(response) = &responses.default {
+                visit_response(
+                    parsed_spec,
+                    out_path,
+                    names_stack,
+                    "default",
+                    response,
+                    call_stack,
+                )?;
+            }
+
+            responses
+                .responses
+                .iter()
+                .try_for_each(|(status, response_ref)| {
+                    visit_response(
+                        parsed_spec,
+                        out_path,
+                        names_stack,
+                        &status.to_string(),
+                        response_ref,
+                        call_stack,
+                    )
+                })
+        })?;
+    Script::OperationResponsesEnd.call_with_descriptor(
+        out_path,
+        &(&responses, &responses.extensions),
+        call_stack,
+    )?;
     Ok(())
 }
 
@@ -2124,6 +2176,102 @@ pub fn visit_path_item(
             call_stack,
         )?
         .and_then(|call_stack| {
+            visit_operation(
+                parsed_spec,
+                out_path,
+                names_stack,
+                "trace",
+                &path_item.trace,
+                &BracketScripts {
+                    start: Script::TraceOperationStart,
+                    end: Script::TraceOperationEnd,
+                },
+                call_stack,
+            )?;
+            visit_operation(
+                parsed_spec,
+                out_path,
+                names_stack,
+                "put",
+                &path_item.put,
+                &BracketScripts {
+                    start: Script::PutOperationStart,
+                    end: Script::PutOperationEnd,
+                },
+                call_stack,
+            )?;
+            visit_operation(
+                parsed_spec,
+                out_path,
+                names_stack,
+                "post",
+                &path_item.post,
+                &BracketScripts {
+                    start: Script::PostOperationStart,
+                    end: Script::PostOperationEnd,
+                },
+                call_stack,
+            )?;
+            visit_operation(
+                parsed_spec,
+                out_path,
+                names_stack,
+                "patch",
+                &path_item.patch,
+                &BracketScripts {
+                    start: Script::PatchOperationStart,
+                    end: Script::PatchOperationEnd,
+                },
+                call_stack,
+            )?;
+            visit_operation(
+                parsed_spec,
+                out_path,
+                names_stack,
+                "options",
+                &path_item.options,
+                &BracketScripts {
+                    start: Script::OptionsOperationStart,
+                    end: Script::OptionsOperationEnd,
+                },
+                call_stack,
+            )?;
+            visit_operation(
+                parsed_spec,
+                out_path,
+                names_stack,
+                "head",
+                &path_item.head,
+                &BracketScripts {
+                    start: Script::HeadOperationStart,
+                    end: Script::HeadOperationEnd,
+                },
+                call_stack,
+            )?;
+            visit_operation(
+                parsed_spec,
+                out_path,
+                names_stack,
+                "get",
+                &path_item.get,
+                &BracketScripts {
+                    start: Script::GetOperationStart,
+                    end: Script::GetOperationEnd,
+                },
+                call_stack,
+            )?;
+            visit_operation(
+                parsed_spec,
+                out_path,
+                names_stack,
+                "delete",
+                &path_item.delete,
+                &BracketScripts {
+                    start: Script::DeleteOperationStart,
+                    end: Script::DeleteOperationEnd,
+                },
+                call_stack,
+            )?;
             visit_servers(
                 out_path,
                 &path_item.servers,
@@ -2150,6 +2298,100 @@ pub fn visit_path_item(
         &(&current_names_stack, &path_item, &path_item.extensions),
         call_stack,
     )?;
+    Ok(())
+}
+
+pub fn visit_operation(
+    parsed_spec: &ParsedSpec,
+    out_path: &Path,
+    names_stack: &[ModelName],
+    operation_name: &str,
+    operation: &Option<Operation>,
+    braced_scripts: &BracketScripts,
+    call_stack: &CallStack,
+) -> Result<()> {
+    if let Some(operation) = operation {
+        let mut current_names_stack = names_stack.to_vec();
+        current_names_stack.push(ModelName {
+            base: operation_name.to_owned(),
+            extended: operation.extensions.get(EXTENSION_FOR_NAME).cloned(),
+        });
+
+        braced_scripts
+            .start
+            .call_with_descriptor(
+                out_path,
+                &(&current_names_stack, &operation, &operation.extensions),
+                call_stack,
+            )?
+            .and_then(|call_stack| {
+                visit_external_docs(out_path, &operation.external_docs, call_stack)?;
+                visit_parameters(
+                    parsed_spec,
+                    out_path,
+                    &operation
+                        .parameters
+                        .iter()
+                        .enumerate()
+                        .map(|(index, value)| (index.to_string(), value.clone()))
+                        .collect::<IndexMap<String, ReferenceOr<Parameter>>>(),
+                    &operation.extensions,
+                    call_stack,
+                )?;
+
+                if let Some(request_body) = &operation.request_body {
+                    visit_request_body(
+                        parsed_spec,
+                        out_path,
+                        &current_names_stack,
+                        "request_body",
+                        request_body,
+                        call_stack,
+                    )?;
+                }
+
+                visit_operation_responses(
+                    parsed_spec,
+                    out_path,
+                    &current_names_stack,
+                    &operation.responses,
+                    call_stack,
+                )?;
+
+                let operation_callbacks: IndexMap<String, ReferenceOr<Callback>> = operation
+                    .callbacks
+                    .iter()
+                    .map(|(key, value)| (key.clone(), ReferenceOr::Item(value.clone())))
+                    .collect();
+
+                visit_callbacks(
+                    parsed_spec,
+                    out_path,
+                    names_stack,
+                    &operation_callbacks,
+                    &operation.extensions,
+                    call_stack,
+                )?;
+                visit_security_requirements(
+                    out_path,
+                    &operation.security,
+                    &operation.extensions,
+                    call_stack,
+                )?;
+                visit_servers(
+                    out_path,
+                    &operation.servers,
+                    &operation.extensions,
+                    call_stack,
+                )?;
+                Ok(())
+            })?;
+        braced_scripts.end.call_with_descriptor(
+            out_path,
+            &(&current_names_stack, &operation, &operation.extensions),
+            call_stack,
+        )?;
+    }
     Ok(())
 }
 
@@ -2224,7 +2466,7 @@ pub fn visit_spec_components(
                     call_stack,
                 )?;
 
-                visit_responses(
+                visit_components_responses(
                     &parsed_spec,
                     out_path,
                     &components.responses,
@@ -2285,7 +2527,7 @@ pub fn visit_spec_components(
                     call_stack,
                 )?;
 
-                visit_operation_callbacks(
+                visit_callbacks(
                     &parsed_spec,
                     out_path,
                     &[],
