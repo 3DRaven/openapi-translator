@@ -16,7 +16,6 @@ function visitObjectStart(namesStack, objectDescriptor, extensions, callsStack)
 end
 
 local function beforeDecorator(namesStack)
-    global_context:addParentType("visitObjectStart", ParentType.OBJECT)
 end
 
 return functionCallAndLog("visitObjectStart", visitObjectStart, beforeDecorator)

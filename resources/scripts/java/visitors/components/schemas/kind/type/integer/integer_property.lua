@@ -14,23 +14,17 @@ function visitIntegerProperty(namesStack, integerDescriptor, extensions, callsSt
         --- within the specification. So, we simply don't need to do anything in this case.
         print("Integer property without parent skipt")
     else
-        local parentType = global_context:getLastParentType("visitIntegerProperty")
-        if parentType == ParentType.OBJECT or
-            parentType == ParentType.ALL_OF then
+        if hasSpecifiedParentsInCallChain("visitIntegerProperty",
+                callsStack,
+                { Script.OBJECT_PROPERTY_START, Script.ALL_OF_START }) then
             local currentPropertyName = getCurrentPropertyNameMandatory(namesStack)
-            local required = global_context:isPropertyRequired("visitIntegerProperty", parentModelName,
-                currentPropertyName)
-            local requiredMarker = getRequiredMarker(required, "@NonNull ")
-
-            local code = string.format("    private %sInteger %s;\n", requiredMarker,
-                currentPropertyName);
-
-            global_context:addProperties("visitIntegerProperty", parentModelName,
-                { WriteOperation.new_append(code, parentModelName) })
-        elseif parentType == ParentType.ARRAY then
-        elseif parentType == ParentType.ADDITIONAL then
-        else
-            error("Unknown parent type for Integer")
+            generateSimplePropertyCode("visitIntegerProperty",
+                parentModelName,
+                currentPropertyName,
+                "Integer",
+                "@Nonnull",
+                "import javax.annotation.Nonnull;\n\n"
+            )
         end
     end
     return {}

@@ -9,8 +9,6 @@ function visitAnyOfEnd(namesStack, required, extensions, callsStack)
 end
 
 local function beforeDecorator(namesStack)
-    -- drop before main code because we need to know parent for this object if it exists, this object not a parent now
-    global_context:dropLastParentType("visitAnyOfEnd")
 end
 
 return functionCallAndLog("visitAnyOfEnd", visitAnyOfEnd, beforeDecorator)

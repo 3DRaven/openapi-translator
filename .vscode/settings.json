@@ -261,7 +261,8 @@
         "visitSecurityRequirementsEnd",
         "visitSecurityRequirement",
         "visitPathsStart",
-        "visitPathsEnd"
+        "visitPathsEnd",
+        "generateSimplePropertyCode"
     ],
     "terminal.integrated.scrollback": 16777216,
     "references.preferredLocation": "view",

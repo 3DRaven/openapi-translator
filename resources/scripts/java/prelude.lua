@@ -554,9 +554,6 @@ function GlobalContext:new()
     local instance = setmetatable({}, GlobalContext)
     --- @type table<string,Model>
     local models = {}
-    --- For parents who can send information about self type to childs
-    --- @type string[]
-    local parentsTypes = {}
     --- Children can send information to parents about they model name
     --- @type string[]
     local childrenModelNames = {}
@@ -589,38 +586,6 @@ function GlobalContext:new()
             "] for model [" .. modelName .. "] and property [" ..
             propertyName .. "] get required status as [" .. tostring(required) .. "]")
         return required
-    end
-
-    --- Method to add last parent type
-    --- @param setter string # The name of the script who set the value.
-    --- @param parentType string # Type of last parent
-    function GlobalContext:addParentType(setter, parentType)
-        table.insert(parentsTypes, parentType)
-        print("\nCONTEXT <- [" ..
-            setter ..
-            "] add last parent type as [" .. parentType .. "] full chain is [\n" .. tableToString(parentsTypes) .. "\n]")
-    end
-
-    --- Method to get last parent type
-    --- @param getter string # The name of the script who set the value.
-    --- @return string? # last parent type
-    function GlobalContext:getLastParentType(getter)
-        local lastParentType = parentsTypes[#parentsTypes]
-        print("\nCONTEXT -> [" ..
-            getter ..
-            "] get last parent type as [" ..
-            lastParentType .. "] full chain is [\n" .. tableToString(parentsTypes) .. "\n]")
-        return lastParentType
-    end
-
-    --- Method to drop last parent type
-    --- @param setter string # The name of the script who set the value.
-    function GlobalContext:dropLastParentType(setter)
-        local lastParentType = table.remove(parentsTypes)
-        print("\nCONTEXT <- [" ..
-            setter ..
-            "] drop last parent type as [" ..
-            lastParentType .. "] full chain after [\n" .. tableToString(parentsTypes) .. "\n]")
     end
 
     --- Method to add last child model name
@@ -972,25 +937,6 @@ function functionCallAndLog(funcName, mainFunc, beforeDecorator, afterDecorator)
     end
 end
 
---- Type of parent for children schemas
---- @class ParentType
---- @field ARRAY string # Parent for arrays items
---- @field OBJECT string # Parent for objects properties
---- @field ALL_OF string # Parent for allOf collections
---- @field ONE_OF string # Parent for oneOf collections
---- @field ANY_OF string # Parent for anyOf collections
---- @field NOT string # Parent for not property
---- @field ADDITIONAL string # Parent for additional properties
-ParentType = {}
-
-ParentType.ARRAY = "ARRAY"
-ParentType.OBJECT = "OBJECT"
-ParentType.ADDITIONAL = "ADDITIONAL"
-ParentType.ALL_OF = "ALL_OF"
-ParentType.ANY_OF = "ANY_OF"
-ParentType.ONE_OF = "ONE_OF"
-ParentType.NOT = "NOT"
-
 --- For WriteOperation it is mode of operation on disk
 --- @class WriteMode
 --- @field APPEND string # Add something at end of file, if file does not exists create it
@@ -1005,25 +951,93 @@ WriteMode.REMOVE = "REMOVE"
 --- Script is an element of the visitor call chain
 --- @class Script
 --- @field PRELUDE string
---- @field RESPONSES_START string
---- @field RESPONSES_END string
+--- @field OPERATION_RESPONSES_START string
+--- @field OPERATION_RESPONSES_END string
+--- @field COMPONENTS_RESPONSES_START string
+--- @field COMPONENTS_RESPONSES_END string
+--- @field PARAMETER_DATA_START string
+--- @field PARAMETER_DATA_END string
+--- @field SECURITY_SCHEME_API_KEY string
+--- @field SECURITY_SCHEME_OPENID_CONNECT string
+--- @field SECURITY_SCHEME_OAUTH2_FLOW_IMPLICIT string
+--- @field SECURITY_SCHEME_OAUTH2_FLOW_PASSWORD string
+--- @field SECURITY_SCHEME_OAUTH2_FLOW_CLIENT_CREDENTIALS string
+--- @field SECURITY_SCHEME_OAUTH2_FLOW_AUTHORIZATION_CODE string
+--- @field SECURITY_SCHEME_HTTP string
+--- @field SECURITY_SCHEME_OAUTH2_START string
+--- @field SECURITY_SCHEME_OAUTH2_END string
+--- @field SECURITY_SCHEME_OAUTH2_FLOWS_START string
+--- @field SECURITY_SCHEME_OAUTH2_FLOWS_END string
+--- @field QUERY_PARAMETER_START string
+--- @field QUERY_PARAMETER_END string
+--- @field HEADER_PARAMETER_START string
+--- @field HEADER_PARAMETER_END string
+--- @field PATH_PARAMETER_START string
+--- @field PATH_PARAMETER_END string
+--- @field PATH_ITEM_START string
+--- @field PATH_ITEM_END string
+--- @field TRACE_OPERATION_START string
+--- @field TRACE_OPERATION_END string
+--- @field PUT_OPERATION_START string
+--- @field PUT_OPERATION_END string
+--- @field POST_OPERATION_START string
+--- @field POST_OPERATION_END string
+--- @field PATCH_OPERATION_START string
+--- @field PATCH_OPERATION_END string
+--- @field OPTIONS_OPERATION_START string
+--- @field OPTIONS_OPERATION_END string
+--- @field HEAD_OPERATION_START string
+--- @field HEAD_OPERATION_END string
+--- @field GET_OPERATION_START string
+--- @field GET_OPERATION_END string
+--- @field DELETE_OPERATION_START string
+--- @field DELETE_OPERATION_END string
+--- @field COOKIE_PARAMETER_START string
+--- @field COOKIE_PARAMETER_END string
+--- @field PARAMETERS_START string
+--- @field PARAMETERS_END string
+--- @field PATHS_START string
+--- @field PATHS_END string
 --- @field RESPONSE_START string
 --- @field RESPONSE_END string
---- @field RESPONSE_HEADERS_START string
---- @field RESPONSE_HEADERS_END string
---- @field RESPONSE_HEADER_START string
---- @field RESPONSE_HEADER_END string
---- @field RESPONSE_HEADER_EXAMPLE string
---- @field RESPONSE_HEADER_EXAMPLES_EXAMPLE string
---- @field RESPONSE_HEADER_EXAMPLES_START string
---- @field RESPONSE_HEADER_EXAMPLES_END string
---- @field RESPONSE_HEADER_EXAMPLES_EXAMPLE_FORMAT_START string
---- @field RESPONSE_HEADER_EXAMPLES_EXAMPLE_FORMAT_END string
---- @field RESPONSE_HEADER_EXAMPLES_EXAMPLE_FORMAT_MEDIA_TYPE_START string
---- @field RESPONSE_HEADER_EXAMPLES_EXAMPLE_FORMAT_MEDIA_TYPE_END string
---- @field RESPONSE_HEADER_EXAMPLES_EXAMPLE_FORMAT_MEDIA_TYPE_EXAMPLE string
---- @field RESPONSE_HEADER_EXAMPLES_EXAMPLE_FORMAT_MEDIA_TYPE_ENCODING_START string
---- @field RESPONSE_HEADER_EXAMPLES_EXAMPLE_FORMAT_MEDIA_TYPE_ENCODING_END string
+--- @field MEDIA_TYPES_START string
+--- @field MEDIA_TYPES_END string
+--- @field LINKS_START string
+--- @field LINKS_END string
+--- @field ASYNC_CALLBACKS_START string
+--- @field ASYNC_CALLBACKS_END string
+--- @field ASYNC_CALLBACK_START string
+--- @field ASYNC_CALLBACK_END string
+--- @field HEADERS_START string
+--- @field HEADERS_END string
+--- @field SECURITY_SCHEMES_START string
+--- @field SECURITY_SCHEMES_END string
+--- @field HEADER_START string
+--- @field HEADER_END string
+--- @field REQUEST_BODY_START string
+--- @field REQUEST_BODY_END string
+--- @field EXAMPLES_EXAMPLE string
+--- @field EXAMPLES_START string
+--- @field EXAMPLES_END string
+--- @field REQUEST_BODIES_START string
+--- @field REQUEST_BODIES_END string
+--- @field GENERIC_PARAMETERS_START string
+--- @field GENERIC_PARAMETER string
+--- @field GENERIC_PARAMETERS_END string
+--- @field PARAMETER_SCHEMA_OR_CONTENT_START string
+--- @field PARAMETER_SCHEMA_OR_CONTENT_END string
+--- @field MEDIA_TYPE_START string
+--- @field MEDIA_TYPE_END string
+--- @field LINK_START string
+--- @field LINK_END string
+--- @field COMPONENTS_START string
+--- @field COMPONENTS_END string
+--- @field MEDIA_TYPE_EXAMPLE string
+--- @field GENERIC_REQUEST_BODY string
+--- @field ENCODING_START string
+--- @field ENCODING_END string
+--- @field ENCODINGS_START string
+--- @field ENCODINGS_END string
 --- @field SCHEMAS_START string
 --- @field SCHEMAS_END string
 --- @field SCHEMA_START string
@@ -1032,24 +1046,29 @@ WriteMode.REMOVE = "REMOVE"
 --- @field SCHEMA_EXAMPLE string
 --- @field SCHEMA_DEFAULT string
 --- @field SCHEMA_DISCRIMINATOR string
---- @field SPEC_EXTERNAL_DOCS string
 --- @field SPEC_START string
 --- @field SPEC_END string
---- @field SPEC_TAG_EXTERNAL_DOCS string
+--- @field EXTERNAL_DOCS string
 --- @field SPEC_TAG string
 --- @field SPEC_TAGS_END string
 --- @field SPEC_TAGS_START string
 --- @field SPEC_SERVERS_START string
---- @field SPEC_SERVER string
---- @field SPEC_SERVER_VARIABLE string
 --- @field SPEC_SERVERS_END string
---- @field SPEC_INFO string
+--- @field SERVER_START string
+--- @field SERVER_END string
+--- @field SERVER_VARIABLE string
+--- @field SPEC_INFO_START string
+--- @field SPEC_INFO_END string
 --- @field SPEC_INFO_CONTACT string
 --- @field SPEC_INFO_LICENSE string
---- @field SPEC_SECURITIES_START string
---- @field SPEC_SECURITY string
---- @field SPEC_SECURITIES_END string
+--- @field SECURITY_REQUIREMENTS_START string
+--- @field SECURITY_REQUIREMENT string
+--- @field SECURITY_REQUIREMENTS_END string
 --- @field OBJECT_START string
+--- @field OBJECT_PROPERTY_START string
+--- @field OBJECT_PROPERTY_END string
+--- @field OBJECT_PROPERTIES_START string
+--- @field OBJECT_PROPERTIES_END string
 --- @field OBJECT_END string
 --- @field ANY_SCHEMA string
 --- @field NOT_PROPERTY_START string
@@ -1072,29 +1091,93 @@ WriteMode.REMOVE = "REMOVE"
 Script = {}
 
 Script.PRELUDE = "PRELUDE"
-Script.RESPONSES_START = "RESPONSES_START"
-Script.RESPONSES_END = "RESPONSES_END"
+Script.OPERATION_RESPONSES_START = "OPERATION_RESPONSES_START"
+Script.OPERATION_RESPONSES_END = "OPERATION_RESPONSES_END"
+Script.COMPONENTS_RESPONSES_START = "COMPONENTS_RESPONSES_START"
+Script.COMPONENTS_RESPONSES_END = "COMPONENTS_RESPONSES_END"
+Script.PARAMETER_DATA_START = "PARAMETER_DATA_START"
+Script.PARAMETER_DATA_END = "PARAMETER_DATA_END"
+Script.SECURITY_SCHEME_API_KEY = "SECURITY_SCHEME_API_KEY"
+Script.SECURITY_SCHEME_OPENID_CONNECT = "SECURITY_SCHEME_OPENID_CONNECT"
+Script.SECURITY_SCHEME_OAUTH2_FLOW_IMPLICIT = "SECURITY_SCHEME_OAUTH2_FLOW_IMPLICIT"
+Script.SECURITY_SCHEME_OAUTH2_FLOW_PASSWORD = "SECURITY_SCHEME_OAUTH2_FLOW_PASSWORD"
+Script.SECURITY_SCHEME_OAUTH2_FLOW_CLIENT_CREDENTIALS = "SECURITY_SCHEME_OAUTH2_FLOW_CLIENT_CREDENTIALS"
+Script.SECURITY_SCHEME_OAUTH2_FLOW_AUTHORIZATION_CODE = "SECURITY_SCHEME_OAUTH2_FLOW_AUTHORIZATION_CODE"
+Script.SECURITY_SCHEME_HTTP = "SECURITY_SCHEME_HTTP"
+Script.SECURITY_SCHEME_OAUTH2_START = "SECURITY_SCHEME_OAUTH2_START"
+Script.SECURITY_SCHEME_OAUTH2_END = "SECURITY_SCHEME_OAUTH2_END"
+Script.SECURITY_SCHEME_OAUTH2_FLOWS_START = "SECURITY_SCHEME_OAUTH2_FLOWS_START"
+Script.SECURITY_SCHEME_OAUTH2_FLOWS_END = "SECURITY_SCHEME_OAUTH2_FLOWS_END"
+Script.QUERY_PARAMETER_START = "QUERY_PARAMETER_START"
+Script.QUERY_PARAMETER_END = "QUERY_PARAMETER_END"
+Script.HEADER_PARAMETER_START = "HEADER_PARAMETER_START"
+Script.HEADER_PARAMETER_END = "HEADER_PARAMETER_END"
+Script.PATH_PARAMETER_START = "PATH_PARAMETER_START"
+Script.PATH_PARAMETER_END = "PATH_PARAMETER_END"
+Script.PATH_ITEM_START = "PATH_ITEM_START"
+Script.PATH_ITEM_END = "PATH_ITEM_END"
+Script.TRACE_OPERATION_START = "TRACE_OPERATION_START"
+Script.TRACE_OPERATION_END = "TRACE_OPERATION_END"
+Script.PUT_OPERATION_START = "PUT_OPERATION_START"
+Script.PUT_OPERATION_END = "PUT_OPERATION_END"
+Script.POST_OPERATION_START = "POST_OPERATION_START"
+Script.POST_OPERATION_END = "POST_OPERATION_END"
+Script.PATCH_OPERATION_START = "PATCH_OPERATION_START"
+Script.PATCH_OPERATION_END = "PATCH_OPERATION_END"
+Script.OPTIONS_OPERATION_START = "OPTIONS_OPERATION_START"
+Script.OPTIONS_OPERATION_END = "OPTIONS_OPERATION_END"
+Script.HEAD_OPERATION_START = "HEAD_OPERATION_START"
+Script.HEAD_OPERATION_END = "HEAD_OPERATION_END"
+Script.GET_OPERATION_START = "GET_OPERATION_START"
+Script.GET_OPERATION_END = "GET_OPERATION_END"
+Script.DELETE_OPERATION_START = "DELETE_OPERATION_START"
+Script.DELETE_OPERATION_END = "DELETE_OPERATION_END"
+Script.COOKIE_PARAMETER_START = "COOKIE_PARAMETER_START"
+Script.COOKIE_PARAMETER_END = "COOKIE_PARAMETER_END"
+Script.PARAMETERS_START = "PARAMETERS_START"
+Script.PARAMETERS_END = "PARAMETERS_END"
+Script.PATHS_START = "PATHS_START"
+Script.PATHS_END = "PATHS_END"
 Script.RESPONSE_START = "RESPONSE_START"
 Script.RESPONSE_END = "RESPONSE_END"
-Script.RESPONSE_HEADERS_START = "RESPONSE_HEADERS_START"
-Script.RESPONSE_HEADERS_END = "RESPONSE_HEADERS_END"
-Script.RESPONSE_HEADER_START = "RESPONSE_HEADER_START"
-Script.RESPONSE_HEADER_END = "RESPONSE_HEADER_END"
-Script.RESPONSE_HEADER_EXAMPLE = "RESPONSE_HEADER_EXAMPLE"
-Script.RESPONSE_HEADER_EXAMPLES_EXAMPLE = "RESPONSE_HEADER_EXAMPLES_EXAMPLE"
-Script.RESPONSE_HEADER_EXAMPLES_START = "RESPONSE_HEADER_EXAMPLES_START"
-Script.RESPONSE_HEADER_EXAMPLES_END = "RESPONSE_HEADER_EXAMPLES_END"
-Script.RESPONSE_HEADER_EXAMPLES_EXAMPLE_FORMAT_START = "RESPONSE_HEADER_EXAMPLES_EXAMPLE_FORMAT_START"
-Script.RESPONSE_HEADER_EXAMPLES_EXAMPLE_FORMAT_END = "RESPONSE_HEADER_EXAMPLES_EXAMPLE_FORMAT_END"
-Script.RESPONSE_HEADER_EXAMPLES_EXAMPLE_FORMAT_MEDIA_TYPE_START =
-"RESPONSE_HEADER_EXAMPLES_EXAMPLE_FORMAT_MEDIA_TYPE_START"
-Script.RESPONSE_HEADER_EXAMPLES_EXAMPLE_FORMAT_MEDIA_TYPE_END = "RESPONSE_HEADER_EXAMPLES_EXAMPLE_FORMAT_MEDIA_TYPE_END"
-Script.RESPONSE_HEADER_EXAMPLES_EXAMPLE_FORMAT_MEDIA_TYPE_EXAMPLE =
-"RESPONSE_HEADER_EXAMPLES_EXAMPLE_FORMAT_MEDIA_TYPE_EXAMPLE"
-Script.RESPONSE_HEADER_EXAMPLES_EXAMPLE_FORMAT_MEDIA_TYPE_ENCODING_START =
-"RESPONSE_HEADER_EXAMPLES_EXAMPLE_FORMAT_MEDIA_TYPE_ENCODING_START"
-Script.RESPONSE_HEADER_EXAMPLES_EXAMPLE_FORMAT_MEDIA_TYPE_ENCODING_END =
-"RESPONSE_HEADER_EXAMPLES_EXAMPLE_FORMAT_MEDIA_TYPE_ENCODING_END"
+Script.MEDIA_TYPES_START = "MEDIA_TYPES_START"
+Script.MEDIA_TYPES_END = "MEDIA_TYPES_END"
+Script.LINKS_START = "LINKS_START"
+Script.LINKS_END = "LINKS_END"
+Script.ASYNC_CALLBACKS_START = "ASYNC_CALLBACKS_START"
+Script.ASYNC_CALLBACKS_END = "ASYNC_CALLBACKS_END"
+Script.ASYNC_CALLBACK_START = "ASYNC_CALLBACK_START"
+Script.ASYNC_CALLBACK_END = "ASYNC_CALLBACK_END"
+Script.HEADERS_START = "HEADERS_START"
+Script.HEADERS_END = "HEADERS_END"
+Script.SECURITY_SCHEMES_START = "SECURITY_SCHEMES_START"
+Script.SECURITY_SCHEMES_END = "SECURITY_SCHEMES_END"
+Script.HEADER_START = "HEADER_START"
+Script.HEADER_END = "HEADER_END"
+Script.REQUEST_BODY_START = "REQUEST_BODY_START"
+Script.REQUEST_BODY_END = "REQUEST_BODY_END"
+Script.EXAMPLES_EXAMPLE = "EXAMPLES_EXAMPLE"
+Script.EXAMPLES_START = "EXAMPLES_START"
+Script.EXAMPLES_END = "EXAMPLES_END"
+Script.REQUEST_BODIES_START = "REQUEST_BODIES_START"
+Script.REQUEST_BODIES_END = "REQUEST_BODIES_END"
+Script.GENERIC_PARAMETERS_START = "GENERIC_PARAMETERS_START"
+Script.GENERIC_PARAMETER = "GENERIC_PARAMETER"
+Script.GENERIC_PARAMETERS_END = "GENERIC_PARAMETERS_END"
+Script.PARAMETER_SCHEMA_OR_CONTENT_START = "PARAMETER_SCHEMA_OR_CONTENT_START"
+Script.PARAMETER_SCHEMA_OR_CONTENT_END = "PARAMETER_SCHEMA_OR_CONTENT_END"
+Script.MEDIA_TYPE_START = "MEDIA_TYPE_START"
+Script.MEDIA_TYPE_END = "MEDIA_TYPE_END"
+Script.LINK_START = "LINK_START"
+Script.LINK_END = "LINK_END"
+Script.COMPONENTS_START = "COMPONENTS_START"
+Script.COMPONENTS_END = "COMPONENTS_END"
+Script.MEDIA_TYPE_EXAMPLE = "MEDIA_TYPE_EXAMPLE"
+Script.GENERIC_REQUEST_BODY = "GENERIC_REQUEST_BODY"
+Script.ENCODING_START = "ENCODING_START"
+Script.ENCODING_END = "ENCODING_END"
+Script.ENCODINGS_START = "ENCODINGS_START"
+Script.ENCODINGS_END = "ENCODINGS_END"
 Script.SCHEMAS_START = "SCHEMAS_START"
 Script.SCHEMAS_END = "SCHEMAS_END"
 Script.SCHEMA_START = "SCHEMA_START"
@@ -1103,24 +1186,29 @@ Script.SCHEMA_EXTERNAL_DOCS = "SCHEMA_EXTERNAL_DOCS"
 Script.SCHEMA_EXAMPLE = "SCHEMA_EXAMPLE"
 Script.SCHEMA_DEFAULT = "SCHEMA_DEFAULT"
 Script.SCHEMA_DISCRIMINATOR = "SCHEMA_DISCRIMINATOR"
-Script.SPEC_EXTERNAL_DOCS = "SPEC_EXTERNAL_DOCS"
 Script.SPEC_START = "SPEC_START"
 Script.SPEC_END = "SPEC_END"
-Script.SPEC_TAG_EXTERNAL_DOCS = "SPEC_TAG_EXTERNAL_DOCS"
+Script.EXTERNAL_DOCS = "EXTERNAL_DOCS"
 Script.SPEC_TAG = "SPEC_TAG"
 Script.SPEC_TAGS_END = "SPEC_TAGS_END"
 Script.SPEC_TAGS_START = "SPEC_TAGS_START"
 Script.SPEC_SERVERS_START = "SPEC_SERVERS_START"
-Script.SPEC_SERVER = "SPEC_SERVER"
-Script.SPEC_SERVER_VARIABLE = "SPEC_SERVER_VARIABLE"
 Script.SPEC_SERVERS_END = "SPEC_SERVERS_END"
-Script.SPEC_INFO = "SPEC_INFO"
+Script.SERVER_START = "SERVER_START"
+Script.SERVER_END = "SERVER_END"
+Script.SERVER_VARIABLE = "SERVER_VARIABLE"
+Script.SPEC_INFO_START = "SPEC_INFO_START"
+Script.SPEC_INFO_END = "SPEC_INFO_END"
 Script.SPEC_INFO_CONTACT = "SPEC_INFO_CONTACT"
 Script.SPEC_INFO_LICENSE = "SPEC_INFO_LICENSE"
-Script.SPEC_SECURITIES_START = "SPEC_SECURITIES_START"
-Script.SPEC_SECURITY = "SPEC_SECURITY"
-Script.SPEC_SECURITIES_END = "SPEC_SECURITIES_END"
+Script.SECURITY_REQUIREMENTS_START = "SECURITY_REQUIREMENTS_START"
+Script.SECURITY_REQUIREMENT = "SECURITY_REQUIREMENT"
+Script.SECURITY_REQUIREMENTS_END = "SECURITY_REQUIREMENTS_END"
 Script.OBJECT_START = "OBJECT_START"
+Script.OBJECT_PROPERTY_START = "OBJECT_PROPERTY_START"
+Script.OBJECT_PROPERTY_END = "OBJECT_PROPERTY_END"
+Script.OBJECT_PROPERTIES_START = "OBJECT_PROPERTIES_START"
+Script.OBJECT_PROPERTIES_END = "OBJECT_PROPERTIES_END"
 Script.OBJECT_END = "OBJECT_END"
 Script.ANY_SCHEMA = "ANY_SCHEMA"
 Script.NOT_PROPERTY_START = "NOT_PROPERTY_START"
@@ -1492,18 +1580,6 @@ function formatAndTrimIndent(fmt, ...)
     return table.concat(lines, "\n")
 end
 
---- Returns a marker for property or model that it is required (as example @NonNull in java)
---- @param required boolean # Indicates if the property value (this object) is required
---- @param codeForMarker string # template for code for required marker
---- @return string # required marker text
-function getRequiredMarker(required, codeForMarker)
-    local requiredMarker = ""
-    if required then
-        requiredMarker = requiredMarker .. codeForMarker
-    end
-    return requiredMarker
-end
-
 --- Returns a concatenated table from multiple input tables
 --- @vararg table # tables to concatenate
 --- @return table # result concatenated table
@@ -1516,6 +1592,22 @@ function concatTables(...)
         end
     end
     return result
+end
+
+function generateSimplePropertyCode(generatorName, parentModelName, currentPropertyName, propertyTypeName, requiredMarker,
+                                    requiredImport)
+    if global_context:isPropertyRequired(generatorName, parentModelName,
+            currentPropertyName) then
+        global_context:addIncludes(generatorName, parentModelName,
+            { WriteOperation.new_append(requiredImport, parentModelName) })
+        local code = string.format("    private %s %s %s;\n", requiredMarker, propertyTypeName, currentPropertyName);
+        global_context:addProperties(generatorName, parentModelName,
+            { WriteOperation.new_append(code, parentModelName) })
+    else
+        local code = string.format("    private %s %s;\n", propertyTypeName, currentPropertyName);
+        global_context:addProperties(generatorName, parentModelName,
+            { WriteOperation.new_append(code, parentModelName) })
+    end
 end
 
 --- Global variable containing parameters passed by the translator to the Lua code either from the OpenAPI

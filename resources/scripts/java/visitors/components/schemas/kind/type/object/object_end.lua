@@ -20,12 +20,11 @@ end
 --- This visitor is invoked after all the content inside a schema of type object has been processed.
 --- Returns a code of the end of an object based on whether it's required.
 --- @param namesStack ModelName[] # chain of model names from root to this point
---- @param parentType ParentType # Type of parent for this property
 --- @param objectDescriptor ObjectType # object descriptor
 --- @param extensions table # table with free form with "x-" OpenAPI extensions for this level of spec
 --- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
-function visitObjectEnd(namesStack, parentType, objectDescriptor, extensions, callsStack)
+function visitObjectEnd(namesStack, objectDescriptor, extensions, callsStack)
     local currentModelName = getCurrentModelNameMandatory(namesStack)
 
     local parentModelName = getParentModelName(namesStack)
@@ -33,23 +32,21 @@ function visitObjectEnd(namesStack, parentType, objectDescriptor, extensions, ca
     if parentModelName ~= nil then
         -- this object must save it model name for parent if it exists
         global_context:addLastChildrenModelName("visitObjectEnd", getCurrentModelNameMandatory(namesStack))
-        -- it parent for this object
-        local parentType = global_context:getLastParentType("visitObjectEnd")
         -- For parent OBJECT we need to write property to it
-        if parentType == ParentType.OBJECT then
+        if hasSpecifiedParentsInCallChain("visitObjectEnd",
+                callsStack,
+                { Script.OBJECT_PROPERTY_START }) then
             local currentPropertyName = getCurrentPropertyNameMandatory(namesStack)
-            local required = global_context:isPropertyRequired("visitObjectEnd", parentModelName,
-                currentPropertyName)
-            local requiredMarker = getRequiredMarker(required, "@NonNull ")
+            generateSimplePropertyCode("visitObjectEnd",
+                parentModelName,
+                currentPropertyName,
+                currentModelName,
+                "@Nonnull",
+                "import javax.annotation.Nonnull;\n\n"
+            )
 
-            local code = string.format("    private %s%s %s;\n", requiredMarker, currentModelName,
-                currentPropertyName);
-
-            global_context:addProperties("visitObjectEnd", parentModelName,
-                { WriteOperation.new_append(code, parentModelName) })
             return getCollectedCode(currentModelName)
-        elseif parentType == ParentType.ARRAY or parentType == ParentType.ADDITIONAL then --we already saved model name of this object as lastChildrenModel name
-        elseif parentType == ParentType.ALL_OF then
+        elseif hasSpecifiedParentsInCallChain("visitObjectEnd", callsStack, { Script.ALL_OF_START }) then
             --- If the parent is allOf, we need to place all created properties and other of this object into the parent.
             local collectedProperties = global_context:getProperties("visitObjectEnd", currentModelName)
             global_context:adaptProperties("visitObjectEnd", parentModelName, collectedProperties)
@@ -57,8 +54,6 @@ function visitObjectEnd(namesStack, parentType, objectDescriptor, extensions, ca
             global_context:adaptIncludes("visitObjectEnd", parentModelName, collectedIncludes)
             local collectedMethods = global_context:getMethods("visitObjectEnd", currentModelName)
             global_context:adaptMethods("visitObjectEnd", parentModelName, collectedMethods)
-        else
-            error("Unknown parent type for object")
         end
     else
         return getCollectedCode(currentModelName)
@@ -68,8 +63,6 @@ function visitObjectEnd(namesStack, parentType, objectDescriptor, extensions, ca
 end
 
 local function beforeDecorator(namesStack)
-    -- drop before main code because we need to know parent for this object if it exists, this object not a parent now
-    global_context:dropLastParentType("visitObjectEnd")
 end
 
 

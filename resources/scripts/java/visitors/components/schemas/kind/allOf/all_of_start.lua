@@ -9,14 +9,11 @@ function visitAllOfStart(namesStack, required, extensions, callsStack)
     --- reference is encountered in the specification, the translator starts constructing the model
     --- from scratch. However, the actual text that the reference points to is read only once and cached.
     local currentModelName = getCurrentModelNameMandatory(namesStack)
-    printBreak()
-    print(currentModelName)
     global_context:dropModel("visitAllOfStart", currentModelName)
     return { WriteOperation.new_remove(currentModelName) }
 end
 
 local function beforeDecorator(namesStack)
-    global_context:addParentType("visitAllOfStart", ParentType.ALL_OF)
 end
 
 return functionCallAndLog("visitAllOfStart", visitAllOfStart, beforeDecorator)

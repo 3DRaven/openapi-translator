@@ -9,7 +9,6 @@ function visitOneOfStart(namesStack, required, extensions, callsStack)
 end
 
 local function beforeDecorator(namesStack)
-    global_context:addParentType("visitOneOfStart", ParentType.ONE_OF)
 end
 
 return functionCallAndLog("visitOneOfStart", visitOneOfStart, beforeDecorator)

@@ -10,6 +10,7 @@ use clap::{ArgAction, Parser, Subcommand};
 pub mod services {
     pub mod cli;
     pub mod code;
+    pub mod comparators;
     pub mod references;
     pub mod scripts;
     pub mod visitors;

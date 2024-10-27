@@ -17,15 +17,13 @@ function visitNumberProperty(namesStack, numberDescriptor, extensions, callsStac
         if hasSpecifiedParentsInCallChain("visitNumberProperty",
                 callsStack, { Script.OBJECT_START, Script.ALL_OF_START }) then
             local currentPropertyName = getCurrentPropertyNameMandatory(namesStack)
-            local required = global_context:isPropertyRequired("visitNumberProperty", parentModelName,
-                currentPropertyName)
-            local requiredMarker = getRequiredMarker(required, "@NonNull ")
-
-            local code = string.format("    private %sNumber %s;\n", requiredMarker,
-                currentPropertyName);
-
-            global_context:addProperties("visitNumberProperty", parentModelName,
-                { WriteOperation.new_append(code, parentModelName) })
+            generateSimplePropertyCode("visitObjectEnd",
+                parentModelName,
+                currentPropertyName,
+                "Number",
+                "@Nonnull",
+                "import javax.annotation.Nonnull;\n\n"
+            )
         else
             error("Unknown parent type for Number")
         end

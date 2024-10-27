@@ -41,8 +41,8 @@ function visitArrayPropertyEnd(namesStack, arrayDescriptor, extensions, callsSta
             global_context:dropLastChildrenModelName("visitArrayPropertyEnd")
             return { WriteOperation.new_append(code, currentModelName) }
         else -- if it is just property for object or additionalProperties we need to write some to parents
-            local parentType = global_context:getLastParentType("visitStringProperty")
-            if parentType == ParentType.OBJECT then
+            if hasSpecifiedParentsInCallChain("visitArrayPropertyEnd",
+                    callsStack, { Script.OBJECT_START }) then
                 -- Adding the import at the beginning of the parent model file
                 global_context:addIncludes("visitArrayPropertyEnd", parentModelName,
                     { WriteOperation.new_append("import java.util.List;\n\n", parentModelName) })
@@ -55,15 +55,14 @@ function visitArrayPropertyEnd(namesStack, arrayDescriptor, extensions, callsSta
 
                 -- last children didn't droped because on visitObjectPropertyEnd it will be dropped
                 -- global_context:dropLastChildrenModelName("visitArrayPropertyEnd")
-            elseif parentType == ParentType.ADDITIONAL or parentType == ParentType.ARRAY then
+            elseif hasSpecifiedParentsInCallChain("visitArrayPropertyEnd",
+                    callsStack, { Script.ARRAY_PROPERTY_START, Script.OBJECT_ADDITIONAL_PROPERTIES_START }) then
                 -- additionalProperties with array with List<lastChildrenModelName>
                 local code = string.format("List<%s>", lastChildrenModelName);
                 -- last children used and it can be forgotten
                 global_context:dropLastChildrenModelName("visitArrayPropertyEnd")
                 -- now for parent we child with model List<lastChildrenModelName>
                 global_context:addLastChildrenModelName("visitArrayPropertyEnd", code)
-            else
-                error("Unknown parent type for array")
             end
             return {}
         end
@@ -71,9 +70,6 @@ function visitArrayPropertyEnd(namesStack, arrayDescriptor, extensions, callsSta
 end
 
 local function beforeDecorator()
-    --- drop before main code because we need to know parent for this property if it exists,
-    --- this property not a parent now
-    global_context:dropLastParentType("visitArrayPropertyEnd")
 end
 
 return functionCallAndLog("visitArrayPropertyEnd", visitArrayPropertyEnd, beforeDecorator)

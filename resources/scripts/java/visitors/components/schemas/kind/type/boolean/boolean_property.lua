@@ -14,23 +14,17 @@ function visitBooleanProperty(namesStack, booleanDescriptor, extensions, callsSt
         --- within the specification. So, we simply don't need to do anything in this case.
         print("Boolean property without parent skipt")
     else
-        local parentType = global_context:getLastParentType("visitBooleanProperty")
-        if parentType == ParentType.OBJECT or
-            parentType == ParentType.ALL_OF then
+        if hasSpecifiedParentsInCallChain("visitBooleanProperty",
+                callsStack,
+                { Script.OBJECT_PROPERTY_START, Script.ALL_OF_START }) then
             local currentPropertyName = getCurrentPropertyNameMandatory(namesStack)
-            local required = global_context:isPropertyRequired("visitIntegerProperty", parentModelName,
-                currentPropertyName)
-            local requiredMarker = getRequiredMarker(required, "@NonNull ")
-
-            local code = string.format("    private %sBoolean %s;\n", requiredMarker,
-                currentPropertyName);
-
-            global_context:addProperties("visitBooleanProperty", parentModelName,
-                { WriteOperation.new_append(code, parentModelName) })
-        elseif parentType == ParentType.ARRAY then
-        elseif parentType == ParentType.ADDITIONAL then
-        else
-            error("Unknown parent type for Boolean")
+            generateSimplePropertyCode("visitObjectEnd",
+                parentModelName,
+                currentPropertyName,
+                "Boolean",
+                "@Nonnull",
+                "import javax.annotation.Nonnull;\n\n"
+            )
         end
     end
     return {}

@@ -17,15 +17,14 @@ function visitStringProperty(namesStack, stringDescriptor, extensions, callsStac
         if hasSpecifiedParentsInCallChain("visitStringProperty",
                 callsStack, { Script.OBJECT_START, Script.ALL_OF_START }) then
             local currentPropertyName = getCurrentPropertyNameMandatory(namesStack)
-            local required = global_context:isPropertyRequired("visitStringProperty", parentModelName,
-                currentPropertyName)
-            local requiredMarker = getRequiredMarker(required, "@NonNull ")
 
-            local code = string.format("    private %sString %s;\n", requiredMarker,
-                currentPropertyName);
-
-            global_context:addProperties("visitStringProperty", parentModelName,
-                { WriteOperation.new_append(code, parentModelName) })
+            generateSimplePropertyCode("visitStringProperty",
+                parentModelName,
+                currentPropertyName,
+                "String",
+                "@Nonnull",
+                "import javax.annotation.Nonnull;\n\n"
+            )
         else
             error("Unknown parent type for String")
         end

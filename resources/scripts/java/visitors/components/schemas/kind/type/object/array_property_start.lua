@@ -18,7 +18,6 @@ function visitArrayPropertyStart(namesStack, arrayDescriptor, extensions, callsS
 end
 
 local function beforeDecorator()
-    global_context:addParentType("visitArrayPropertyStart", ParentType.ARRAY)
 end
 
 return functionCallAndLog("visitArrayPropertyStart", visitArrayPropertyStart, beforeDecorator)

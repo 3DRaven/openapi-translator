@@ -22,8 +22,6 @@ function visitAllOfEnd(namesStack, required, extensions, callsStack)
 end
 
 local function beforeDecorator(namesStack)
-    -- drop before main code because we need to know parent for this object if it exists, this object not a parent now
-    global_context:dropLastParentType("visitAllOfEnd")
 end
 
 return functionCallAndLog("visitAllOfEnd", visitAllOfEnd, beforeDecorator)
