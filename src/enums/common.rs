@@ -21,286 +21,144 @@ pub enum WriteMode {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum Script {
-    #[serde(rename = "PRELUDE")]
     Prelude,
-    #[serde(rename = "OPERATION_RESPONSES_START")]
     OperationResponsesStart,
-    #[serde(rename = "OPERATION_RESPONSES_END")]
     OperationResponsesEnd,
-    #[serde(rename = "COMPONENTS_RESPONSES_START")]
     ComponentsResponsesStart,
-    #[serde(rename = "COMPONENTS_RESPONSES_END")]
     ComponentsResponsesEnd,
-    #[serde(rename = "PARAMETER_DATA_START")]
     ParameterDataStart,
-    #[serde(rename = "PARAMETER_DATA_END")]
     ParameterDataEnd,
-    #[serde(rename = "SECURITY_SCHEME_API_KEY")]
     SecuritySchemeApiKey,
-    #[serde(rename = "SECURITY_SCHEME_OPENID_CONNECT")]
     SecuritySchemeOpenIdConnect,
-    #[serde(rename = "SECURITY_SCHEME_OAUTH2_FLOW_IMPLICIT")]
     SecuritySchemeOAuth2FlowImplicit,
-    #[serde(rename = "SECURITY_SCHEME_OAUTH2_FLOW_PASSWORD")]
     SecuritySchemeOAuth2FlowPassword,
-    #[serde(rename = "SECURITY_SCHEME_OAUTH2_FLOW_CLIENT_CREDENTIALS")]
     SecuritySchemeOAuth2FlowClientCredentials,
-    #[serde(rename = "SECURITY_SCHEME_OAUTH2_FLOW_AUTHORIZATION_CODE")]
     SecuritySchemeOAuth2FlowAuthorizationCode,
-    #[serde(rename = "SECURITY_SCHEME_HTTP")]
     SecuritySchemeHttp,
-    #[serde(rename = "SECURITY_SCHEME_OAUTH2_START")]
     SecuritySchemeOAuth2Start,
-    #[serde(rename = "SECURITY_SCHEME_OAUTH2_END")]
     SecuritySchemeOAuth2End,
-    #[serde(rename = "SECURITY_SCHEME_OAUTH2_FLOWS_START")]
     SecuritySchemeOAuth2FlowsStart,
-    #[serde(rename = "SECURITY_SCHEME_OAUTH2_FLOWS_END")]
     SecuritySchemeOAuth2FlowsEnd,
-    #[serde(rename = "QUERY_PARAMETER_START")]
     QueryParameterStart,
-    #[serde(rename = "QUERY_PARAMETER_END")]
     QueryParameterEnd,
-    #[serde(rename = "HEADER_PARAMETER_START")]
     HeaderParameterStart,
-    #[serde(rename = "HEADER_PARAMETER_END")]
     HeaderParameterEnd,
-    #[serde(rename = "PATH_PARAMETER_START")]
     PathParameterStart,
-    #[serde(rename = "PATH_PARAMETER_END")]
     PathParameterEnd,
-    #[serde(rename = "PATH_ITEM_START")]
     PathItemStart,
-    #[serde(rename = "PATH_ITEM_END")]
     PathItemEnd,
-    #[serde(rename = "TRACE_OPERATION_START")]
     TraceOperationStart,
-    #[serde(rename = "TRACE_OPERATION_END")]
     TraceOperationEnd,
-    #[serde(rename = "PUT_OPERATION_START")]
     PutOperationStart,
-    #[serde(rename = "PUT_OPERATION_END")]
     PutOperationEnd,
-    #[serde(rename = "POST_OPERATION_START")]
     PostOperationStart,
-    #[serde(rename = "POST_OPERATION_END")]
     PostOperationEnd,
-    #[serde(rename = "PATCH_OPERATION_START")]
     PatchOperationStart,
-    #[serde(rename = "PATCH_OPERATION_END")]
     PatchOperationEnd,
-    #[serde(rename = "OPTIONS_OPERATION_START")]
     OptionsOperationStart,
-    #[serde(rename = "OPTIONS_OPERATION_END")]
     OptionsOperationEnd,
-    #[serde(rename = "HEAD_OPERATION_START")]
     HeadOperationStart,
-    #[serde(rename = "HEAD_OPERATION_END")]
     HeadOperationEnd,
-    #[serde(rename = "GET_OPERATION_START")]
     GetOperationStart,
-    #[serde(rename = "GET_OPERATION_END")]
     GetOperationEnd,
-    #[serde(rename = "DELETE_OPERATION_START")]
     DeleteOperationStart,
-    #[serde(rename = "DELETE_OPERATION_END")]
     DeleteOperationEnd,
-    #[serde(rename = "COOKIE_PARAMETER_START")]
     CookieParameterStart,
-    #[serde(rename = "COOKIE_PARAMETER_END")]
     CookieParameterEnd,
-    #[serde(rename = "PARAMETERS_START")]
     ParametersStart,
-    #[serde(rename = "PARAMETERS_END")]
     ParametersEnd,
-    #[serde(rename = "PATHS_START")]
     PathsStart,
-    #[serde(rename = "PATHS_END")]
     PathsEnd,
-    #[serde(rename = "RESPONSE_START")]
     ResponseStart,
-    #[serde(rename = "RESPONSE_END")]
     ResponseEnd,
-    #[serde(rename = "MEDIA_TYPES_START")]
     MediaTypesStart,
-    #[serde(rename = "MEDIA_TYPES_END")]
     MediaTypesEnd,
-    #[serde(rename = "LINKS_START")]
     LinksStart,
-    #[serde(rename = "LINKS_END")]
     LinksEnd,
-    #[serde(rename = "ASYNC_CALLBACKS_START")]
     AsyncCallbacksStart,
-    #[serde(rename = "ASYNC_CALLBACKS_END")]
     AsyncCallbacksEnd,
-    #[serde(rename = "ASYNC_CALLBACK_START")]
     AsyncCallbackStart,
-    #[serde(rename = "ASYNC_CALLBACK_END")]
     AsyncCallbackEnd,
-    #[serde(rename = "HEADERS_START")]
     HeadersStart,
-    #[serde(rename = "HEADERS_END")]
     HeadersEnd,
-    #[serde(rename = "SECURITY_SCHEMES_START")]
     SecuritySchemesStart,
-    #[serde(rename = "SECURITY_SCHEMES_END")]
     SecuritySchemesEnd,
-    #[serde(rename = "HEADER_START")]
     HeaderStart,
-    #[serde(rename = "HEADER_END")]
     HeaderEnd,
-    #[serde(rename = "REQUEST_BODY_START")]
     RequestBodyStart,
-    #[serde(rename = "REQUEST_BODY_END")]
     RequestBodyEnd,
-    #[serde(rename = "EXAMPLE_START")]
     ExampleStart,
-    #[serde(rename = "EXAMPLE_END")]
     ExampleEnd,
-    #[serde(rename = "EXAMPLES_START")]
     ExamplesStart,
-    #[serde(rename = "EXAMPLES_END")]
     ExamplesEnd,
-    #[serde(rename = "REQUEST_BODIES_START")]
     RequestBodiesStart,
-    #[serde(rename = "REQUEST_BODIES_END")]
     RequestBodiesEnd,
-    #[serde(rename = "GENERIC_PARAMETERS_START")]
     GenericParametersStart,
-    #[serde(rename = "GENERIC_PARAMETER")]
     GenericParameter,
-    #[serde(rename = "GENERIC_PARAMETERS_END")]
     GenericParametersEnd,
-    #[serde(rename = "PARAMETER_SCHEMA_OR_CONTENT_START")]
     ParameterSchemaOrContentStart,
-    #[serde(rename = "PARAMETER_SCHEMA_OR_CONTENT_END")]
     ParameterSchemaOrContentEnd,
-    #[serde(rename = "MEDIA_TYPE_START")]
     MediaTypeStart,
-    #[serde(rename = "MEDIA_TYPE_END")]
     MediaTypeEnd,
-    #[serde(rename = "LINK_START")]
     LinkStart,
-    #[serde(rename = "LINK_END")]
     LinkEnd,
-    #[serde(rename = "COMPONENTS_START")]
     ComponentsStart,
-    #[serde(rename = "COMPONENTS_END")]
     ComponentsEnd,
-    #[serde(rename = "MEDIA_TYPE_EXAMPLE")]
     GenericExample,
-    #[serde(rename = "GENERIC_REQUEST_BODY")]
     GenericRequestBody,
-    #[serde(rename = "ENCODING_START")]
     EncodingStart,
-    #[serde(rename = "ENCODING_END")]
     EncodingEnd,
-    #[serde(rename = "ENCODINGS_START")]
     EncodingsStart,
-    #[serde(rename = "ENCODINGS_END")]
     EncodingsEnd,
-
-    #[serde(rename = "SCHEMAS_START")]
     SchemasStart,
-    #[serde(rename = "SCHEMAS_END")]
     SchemasEnd,
-    #[serde(rename = "SCHEMA_START")]
     SchemaStart,
-    #[serde(rename = "SCHEMA_END")]
     SchemaEnd,
-    #[serde(rename = "SCHEMA_DEFAULT")]
     SchemaDefault,
-    #[serde(rename = "SCHEMA_DISCRIMINATOR")]
     SchemaDiscriminator,
-
-    #[serde(rename = "SPEC_START")]
     SpecStart,
-    #[serde(rename = "SPEC_END")]
     SpecEnd,
-
-    #[serde(rename = "EXTERNAL_DOCS")]
     ExternalDocs,
-    #[serde(rename = "SPEC_TAG")]
     SpecTag,
-    #[serde(rename = "SPEC_TAGS_END")]
     SpecTagsEnd,
-    #[serde(rename = "SPEC_TAGS_START")]
     SpecTagsStart,
-    #[serde(rename = "SPEC_SERVERS_START")]
     ServersStart,
-    #[serde(rename = "SPEC_SERVERS_END")]
     ServersEnd,
-    #[serde(rename = "SERVER_START")]
     ServerStart,
-    #[serde(rename = "SERVER_END")]
     ServerEnd,
-    #[serde(rename = "SERVER_VARIABLE")]
     ServerVariable,
-    #[serde(rename = "SPEC_INFO_START")]
     SpecInfoStart,
-    #[serde(rename = "SPEC_INFO_END")]
     SpecInfoEnd,
-    #[serde(rename = "SPEC_INFO_CONTACT")]
     SpecInfoContact,
-    #[serde(rename = "SPEC_INFO_LICENSE")]
     SpecInfoLicense,
-
-    #[serde(rename = "SECURITY_REQUIREMENTS_START")]
     SecurityRequirementsStart,
-    #[serde(rename = "SECURITY_REQUIREMENT")]
     SecurityRequirement,
-    #[serde(rename = "SECURITY_REQUIREMENTS_END")]
     SecurityRequirementsEnd,
-    #[serde(rename = "OBJECT_START")]
     ObjectStart,
-    #[serde(rename = "OBJECT_PROPERTY_START")]
     ObjectPropertyStart,
-    #[serde(rename = "OBJECT_PROPERTY_END")]
     ObjectPropertyEnd,
-    #[serde(rename = "OBJECT_PROPERTIES_START")]
     ObjectPropertiesStart,
-    #[serde(rename = "OBJECT_PROPERTIES_END")]
     ObjectPropertiesEnd,
-    #[serde(rename = "OBJECT_END")]
     ObjectEnd,
-    #[serde(rename = "ANY_SCHEMA")]
     AnySchema,
-
-    #[serde(rename = "NOT_PROPERTY_START")]
     NotPropertyStart,
-    #[serde(rename = "NOT_PROPERTY_END")]
     NotPropertyEnd,
-    #[serde(rename = "OBJECT_ADDITIONAL_PROPERTIES_ANY")]
     ObjectAdditionalPropertiesAny,
-    #[serde(rename = "OBJECT_ADDITIONAL_PROPERTIES_START")]
     ObjectAdditionalPropertiesStart,
-    #[serde(rename = "OBJECT_ADDITIONAL_PROPERTIES_END")]
     ObjectAdditionalPropertiesEnd,
-    #[serde(rename = "STRING_PROPERTY")]
     StringProperty,
-    #[serde(rename = "NUMBER_PROPERTY")]
     NumberProperty,
-    #[serde(rename = "INTEGER_PROPERTY")]
     IntegerProperty,
-    #[serde(rename = "ARRAY_PROPERTY_START")]
     ArrayPropertyStart,
-    #[serde(rename = "ARRAY_PROPERTY_END")]
     ArrayPropertyEnd,
-    #[serde(rename = "BOOLEAN_PROPERTY")]
     BooleanProperty,
-
-    #[serde(rename = "ONE_OF_START")]
     OneOfStart,
-    #[serde(rename = "ONE_OF_END")]
     OneOfEnd,
-    #[serde(rename = "ALL_OF_START")]
     AllOfStart,
-    #[serde(rename = "ALL_OF_END")]
     AllOfEnd,
-    #[serde(rename = "ANY_OF_START")]
     AnyOfStart,
-    #[serde(rename = "ANY_OF_END")]
     AnyOfEnd,
 }
 
