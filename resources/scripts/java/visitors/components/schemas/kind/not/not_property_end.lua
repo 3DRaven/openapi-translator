@@ -1,13 +1,10 @@
 --- This visitor is called after the schema in the not property is processed
---- @param namesStack ModelName[] # chain of model names from root to this point
+--- @param schema ReferenceOr<Schema>
 --- @param extensions table # table with free form with "x-" OpenAPI extensions for this level of spec
 --- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
-function visitPropertyNotEnd(namesStack, extensions, callsStack)
+function visitPropertyNotEnd(schema, namesStack, extensions, callsStack)
     return {}
 end
 
-local function beforeDecorator(namesStack)
-end
-
-return functionCallAndLog("visitPropertyNotEnd", visitPropertyNotEnd, beforeDecorator)
+return functionCallAndLog("visitPropertyNotEnd", visitPropertyNotEnd)

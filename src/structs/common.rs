@@ -16,21 +16,6 @@ pub struct ParsedSpec {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ModelName {
-    pub base: String,
-    pub extended: Option<serde_json::Value>,
-}
-
-impl ModelName {
-    pub fn new(base: String) -> Self {
-        Self {
-            base,
-            extended: None,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Code {
     pub code: Option<String>,
     pub file: String,

@@ -154,8 +154,10 @@ pub enum Script {
     RequestBodyStart,
     #[serde(rename = "REQUEST_BODY_END")]
     RequestBodyEnd,
-    #[serde(rename = "EXAMPLES_EXAMPLE")]
-    ExamplesExample,
+    #[serde(rename = "EXAMPLE_START")]
+    ExampleStart,
+    #[serde(rename = "EXAMPLE_END")]
+    ExampleEnd,
     #[serde(rename = "EXAMPLES_START")]
     ExamplesStart,
     #[serde(rename = "EXAMPLES_END")]
@@ -207,10 +209,6 @@ pub enum Script {
     SchemaStart,
     #[serde(rename = "SCHEMA_END")]
     SchemaEnd,
-    #[serde(rename = "SCHEMA_EXTERNAL_DOCS")]
-    SchemaExternalDocs,
-    #[serde(rename = "SCHEMA_EXAMPLE")]
-    SchemaExample,
     #[serde(rename = "SCHEMA_DEFAULT")]
     SchemaDefault,
     #[serde(rename = "SCHEMA_DISCRIMINATOR")]
@@ -458,8 +456,9 @@ impl From<&Script> for &'static str {
             Script::HeadersEnd => "visitors/common/headers/headers_end",
             Script::HeaderStart => "visitors/common/headers/header/header_start",
             Script::HeaderEnd => "visitors/common/headers/header/header_end",
-            Script::ExamplesExample => "visitors/common/examples/examples_example",
             Script::ExamplesStart => "visitors/common/examples/examples_start",
+            Script::ExampleStart => "visitors/common/examples/example_start",
+            Script::ExampleEnd => "visitors/common/examples/example_end",
             Script::ExamplesEnd => "visitors/common/examples/examples_end",
             Script::ParameterSchemaOrContentStart => {
                 "visitors/common/parameter_schema_or_content/parameter_schema_or_content_start"
@@ -476,8 +475,6 @@ impl From<&Script> for &'static str {
             Script::SchemasEnd => "visitors/components/schemas/schemas_end",
             Script::SchemaStart => "visitors/components/schemas/schema_start",
             Script::SchemaEnd => "visitors/components/schemas/schema_end",
-            Script::SchemaExternalDocs => "visitors/components/schemas/external_docs",
-            Script::SchemaExample => "visitors/components/schemas/example",
             Script::SchemaDefault => "visitors/components/schemas/default",
             Script::SchemaDiscriminator => "visitors/components/schemas/discriminator",
 
@@ -486,9 +483,8 @@ impl From<&Script> for &'static str {
 
             Script::ExternalDocs => "visitors/common/external_docs/external_docs",
             Script::SpecTag => "visitors/tags/spec_tag",
-            Script::SpecTagsEnd => "visitors/tags/spec_tags_end",
             Script::SpecTagsStart => "visitors/tags/spec_tags_start",
-
+            Script::SpecTagsEnd => "visitors/tags/spec_tags_end",
             Script::ServersStart => "visitors/common/servers/servers_start",
             Script::ServersEnd => "visitors/common/servers/servers_end",
             Script::ServerStart => "visitors/common/servers/server/server_start",
@@ -503,11 +499,12 @@ impl From<&Script> for &'static str {
             Script::SecurityRequirementsStart => {
                 "visitors/common/security_requirements/security_requirements_start"
             }
-            Script::SecurityRequirement => {
-                "visitors/common/security_requirements/security_requirement"
-            }
             Script::SecurityRequirementsEnd => {
                 "visitors/common/security_requirements/security_requirements_end"
+            }
+
+            Script::SecurityRequirement => {
+                "visitors/common/security_requirements/security_requirement"
             }
 
             Script::ObjectStart => "visitors/components/schemas/kind/type/object/object_start",
@@ -602,6 +599,7 @@ impl From<&Script> for &'static str {
             Script::CookieParameterEnd => {
                 "visitors/common/parameters/cookie_parameter/cookie_parameter_end"
             }
+
             Script::RequestBodiesStart => "visitors/components/request_bodies/request_bodies_start",
             Script::RequestBodiesEnd => "visitors/components/request_bodies/request_bodies_end",
             Script::RequestBodyStart => "visitors/components/request_bodies/request_body_start",

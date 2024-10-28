@@ -2,12 +2,11 @@
 --- the schema is nested within an object or is a top-level schema. The invocation occurs after processing
 --- the schemas contained within the array.
 --- Returns a code for array model end
---- @param namesStack ModelName[] # chain of model names from root to this point
 --- @param arrayDescriptor ArrayType # object descriptor
 --- @param extensions table # table with free form with "x-" OpenAPI extensions for this level of spec
 --- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
-function visitArrayPropertyEnd(namesStack, arrayDescriptor, extensions, callsStack)
+function visitArrayPropertyEnd(arrayDescriptor, extensions, callsStack)
     local parentModelName = getParentModelName(namesStack)
     local currentModelName = getCurrentModelNameMandatory(namesStack)
     local currentPropertyName = getCurrentPropertyNameMandatory(namesStack)

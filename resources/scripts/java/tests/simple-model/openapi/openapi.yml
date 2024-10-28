@@ -56,4 +56,5 @@ components:
           x-ot-name: InnerObject
           properties:
             some_field:
+              x-ot-name: someField
               type: string

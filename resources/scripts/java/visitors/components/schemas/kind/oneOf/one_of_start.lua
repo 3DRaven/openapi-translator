@@ -1,14 +1,10 @@
 --- This visitor is invoked before processing oneOf schemas
---- @param namesStack ModelName[] # chain of model names from root to this point
---- @param required boolean # Indicates if the property value (this object) is required
+--- @param schemas ReferenceOr<Schema>[] #
 --- @param extensions table # table with free form with "x-" OpenAPI extensions for this level of spec
 --- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
-function visitOneOfStart(namesStack, required, extensions, callsStack)
+function visitOneOfStart(schemas, extensions, callsStack)
     return {}
 end
 
-local function beforeDecorator(namesStack)
-end
-
-return functionCallAndLog("visitOneOfStart", visitOneOfStart, beforeDecorator)
+return functionCallAndLog("visitOneOfStart", visitOneOfStart)

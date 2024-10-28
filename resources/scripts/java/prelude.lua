@@ -6,6 +6,34 @@
 --- They represent an approximate content of the structures; for example, since Lua does not have Enums,
 --- a string will be used in place of fields.
 
+
+--- Represents a set of reusable components for different aspects of the OpenAPI Specification (OAS).
+--- All objects defined within the components will not impact the API unless they are explicitly referenced 
+--- from properties outside the components.
+--- @class Components
+--- A table to hold reusable Schema Objects.
+--- @field schemas table<string, ReferenceOr> A table mapping strings to Schema reference objects.
+--- A table to hold reusable Response Objects.
+--- @field responses table<string, ReferenceOr> A table mapping strings to Response reference objects.
+--- A table to hold reusable Parameter Objects.
+--- @field parameters table<string, ReferenceOr> A table mapping strings to Parameter reference objects.
+--- A table to hold reusable Example Objects.
+--- @field examples table<string, ReferenceOr> A table mapping strings to Example reference objects.
+--- A table to hold reusable Request Body Objects.
+--- @field request_bodies table<string, ReferenceOr> A table mapping strings to RequestBody reference objects.
+--- A table to hold reusable Header Objects.
+--- @field headers table<string, ReferenceOr> A table mapping strings to Header reference objects.
+--- A table to hold reusable Security Scheme Objects.
+--- @field security_schemes table<string, ReferenceOr> A table mapping strings to SecurityScheme reference objects.
+--- A table to hold reusable Link Objects.
+--- @field links table<string, ReferenceOr> A table mapping strings to Link reference objects.
+--- A table to hold reusable Callback Objects.
+--- @field callbacks table<string, ReferenceOr> A table mapping strings to Callback reference objects.
+--- A table representing inline extensions to this object.
+--- These extensions provide additional, custom data.
+--- @field extensions table<string, any> A table mapping strings to JSON values representing additional extensions.
+
+
 --- A table that maps strings to PathItems, representing callback paths.
 ---@alias Callback table<string, PathItem>
 
@@ -303,12 +331,6 @@
 ---@field all_of table | nil                    # Array of schemas where all should match
 ---@field any_of table | nil                    # Array of schemas where any can match
 ---@field not table | nil                       # Schema that must not match
-
---- Allows referencing an external resource for extended documentation.
----@class ExternalDocsDescriptor
----@field description string | nil # A short description of the target documentation
----@field url string # REQUIRED. URL for the target documentation
----@field extensions table<string, any> # Inline extensions to this object
 
 --- Used to aid in serialization, deserialization, and validation when request bodies or response payloads
 --- may be one of a number of different schemas.
