@@ -72,7 +72,7 @@ pub fn visit_command(command: &Commands) -> Result<()> {
             spec: Arc::new(spec_as_json),
         };
 
-        Script::SpecStart
+        Script::VisitSpecStart
             .call_with_descriptor(
                 out_path,
                 &(&openapi.openapi, &openapi.extensions),
@@ -94,7 +94,7 @@ pub fn visit_command(command: &Commands) -> Result<()> {
                 Ok(())
             })?;
 
-        Script::SpecEnd.call_with_descriptor(
+        Script::VisitSpecEnd.call_with_descriptor(
             out_path,
             &(&openapi.openapi, &openapi.extensions),
             call_stack,
@@ -120,10 +120,14 @@ pub fn visit_not<T>(
 where
     T: DeserializeOwned + Send + Sync + AsSchemaRef + From<Schema> + 'static + Serialize,
 {
-    Script::NotPropertyStart
+    Script::VisitPropertyNotStart
         .call_with_descriptor(out_path, &(schema_ref, extensions), call_stack)?
         .and_then(|it| visit_schema(parsed_spec, out_path, None, schema_ref, it))?;
-    Script::NotPropertyEnd.call_with_descriptor(out_path, &(schema_ref, extensions), call_stack)?;
+    Script::VisitPropertyNotEnd.call_with_descriptor(
+        out_path,
+        &(schema_ref, extensions),
+        call_stack,
+    )?;
 
     Ok(())
 }
@@ -153,7 +157,7 @@ where
 
             let schema_data = &schema_item.as_schema().schema_data;
 
-            Script::SchemaStart
+            Script::VisitSchemaStart
                 .call_with_descriptor(
                     out_path,
                     &(schema_name, &schema_data, &schema_extensions),
@@ -222,7 +226,7 @@ where
                         }
                     }
                 })?;
-            Script::SchemaEnd.call_with_descriptor(
+            Script::VisitSchemaEnd.call_with_descriptor(
                 out_path,
                 &(schema_name, schema_data, schema_extensions),
                 call_stack,
@@ -252,7 +256,7 @@ pub fn visit_response(
         ReferenceOr::Item(response) => {
             let response_extensions = &response.extensions;
 
-            Script::ResponseStart
+            Script::VisitResponseStart
                 .call_with_descriptor(
                     out_path,
                     &(&response_name, response, &response_extensions),
@@ -284,7 +288,7 @@ pub fn visit_response(
                     )?;
                     Ok(())
                 })?;
-            Script::ResponseEnd.call_with_descriptor(
+            Script::VisitResponseEnd.call_with_descriptor(
                 out_path,
                 &(response_name, response, response_extensions),
                 call_stack,
@@ -300,7 +304,7 @@ pub fn visit_string(
     extensions: &IndexMap<String, serde_json::Value>,
     call_stack: &CallStack,
 ) -> Result<()> {
-    Script::StringProperty.call_with_descriptor(
+    Script::VisitStringProperty.call_with_descriptor(
         out_path,
         &(string_descriptor, extensions),
         call_stack,
@@ -314,7 +318,7 @@ pub fn visit_any_schema(
     extensions: &IndexMap<String, serde_json::Value>,
     call_stack: &CallStack,
 ) -> Result<()> {
-    Script::AnySchema.call_with_descriptor(
+    Script::VisitAnySchema.call_with_descriptor(
         out_path,
         &(any_schema_descriptor, extensions),
         call_stack,
@@ -328,7 +332,7 @@ pub fn visit_number(
     extensions: &IndexMap<String, serde_json::Value>,
     call_stack: &CallStack,
 ) -> Result<()> {
-    Script::NumberProperty.call_with_descriptor(
+    Script::VisitNumberProperty.call_with_descriptor(
         out_path,
         &(number_descriptor, extensions),
         call_stack,
@@ -342,7 +346,7 @@ pub fn visit_integer(
     extensions: &IndexMap<String, serde_json::Value>,
     call_stack: &CallStack,
 ) -> Result<()> {
-    Script::IntegerProperty.call_with_descriptor(
+    Script::VisitIntegerProperty.call_with_descriptor(
         out_path,
         &(integer_descriptor, extensions),
         call_stack,
@@ -357,7 +361,7 @@ pub fn visit_array(
     extensions: &IndexMap<String, serde_json::Value>,
     call_stack: &CallStack,
 ) -> Result<()> {
-    Script::ArrayPropertyStart
+    Script::VisitArrayPropertyStart
         .call_with_descriptor(
             out_path,
             &(array_descriptor, extensions, call_stack),
@@ -369,7 +373,7 @@ pub fn visit_array(
             }
             Ok(())
         })?;
-    Script::ArrayPropertyEnd.call_with_descriptor(
+    Script::VisitArrayPropertyEnd.call_with_descriptor(
         out_path,
         &(array_descriptor, extensions),
         call_stack,
@@ -383,7 +387,7 @@ pub fn visit_boolean(
     extensions: &IndexMap<String, serde_json::Value>,
     call_stack: &CallStack,
 ) -> Result<()> {
-    Script::BooleanProperty.call_with_descriptor(
+    Script::VisitBooleanProperty.call_with_descriptor(
         out_path,
         &(boolean_descriptor, extensions),
         call_stack,
@@ -399,14 +403,14 @@ pub fn visit_one_of(
     call_stack: &CallStack,
 ) -> Result<()> {
     if !schemas.is_empty() {
-        Script::OneOfStart
+        Script::VisitOneOfStart
             .call_with_descriptor(out_path, &(schemas, &extensions), call_stack)?
             .and_then(|call_stack| {
                 schemas
                     .iter()
                     .try_for_each(|it| visit_schema(parsed_spec, out_path, None, it, call_stack))
             })?;
-        Script::OneOfEnd.call_with_descriptor(out_path, &(schemas, extensions), call_stack)?;
+        Script::VisitOneOfEnd.call_with_descriptor(out_path, &(schemas, extensions), call_stack)?;
     }
     Ok(())
 }
@@ -419,14 +423,14 @@ pub fn visit_all_of(
     call_stack: &CallStack,
 ) -> Result<()> {
     if !schemas.is_empty() {
-        Script::AllOfStart
+        Script::VisitAllOfStart
             .call_with_descriptor(out_path, &(schemas, extensions), call_stack)?
             .and_then(|call_stack| {
                 schemas
                     .iter()
                     .try_for_each(|it| visit_schema(parsed_spec, out_path, None, it, call_stack))
             })?;
-        Script::AllOfEnd.call_with_descriptor(out_path, &(schemas, extensions), call_stack)?;
+        Script::VisitAllOfEnd.call_with_descriptor(out_path, &(schemas, extensions), call_stack)?;
     }
     Ok(())
 }
@@ -439,14 +443,14 @@ pub fn visit_any_of(
     call_stack: &CallStack,
 ) -> Result<()> {
     if !schemas.is_empty() {
-        Script::AnyOfStart
+        Script::VisitAnyOfStart
             .call_with_descriptor(out_path, &(schemas, extensions), call_stack)?
             .and_then(|call_stack| {
                 schemas
                     .iter()
                     .try_for_each(|it| visit_schema(parsed_spec, out_path, None, it, call_stack))
             })?;
-        Script::AnyOfEnd.call_with_descriptor(out_path, &(schemas, extensions), call_stack)?;
+        Script::VisitAnyOfEnd.call_with_descriptor(out_path, &(schemas, extensions), call_stack)?;
     }
     Ok(())
 }
@@ -457,7 +461,7 @@ pub fn visit_discriminator(
     call_stack: &CallStack,
 ) -> Result<()> {
     if let Some(discriminator) = dicriminator.as_ref() {
-        Script::SchemaDiscriminator.call_with_descriptor(
+        Script::VisitDiscriminator.call_with_descriptor(
             out_path,
             &(discriminator, &discriminator.extensions),
             call_stack,
@@ -473,7 +477,7 @@ pub fn visit_generic_example(
     call_stack: &CallStack,
 ) -> Result<()> {
     if let Some(example) = example {
-        Script::GenericExample.call_with_descriptor(
+        Script::VisitGenericExample.call_with_descriptor(
             out_path,
             &(&example, extensions),
             call_stack,
@@ -489,7 +493,7 @@ pub fn visit_generic_parameter(
     extensions: &IndexMap<String, serde_json::Value>,
     call_stack: &CallStack,
 ) -> Result<()> {
-    Script::GenericParameter.call_with_descriptor(
+    Script::VisitGenericParameter.call_with_descriptor(
         out_path,
         &(parameter_name, parameter, extensions),
         call_stack,
@@ -504,7 +508,7 @@ pub fn visit_generic_request_body(
     call_stack: &CallStack,
 ) -> Result<()> {
     if let Some(body_json) = body {
-        Script::GenericRequestBody.call_with_descriptor(
+        Script::VisitGenericRequestBody.call_with_descriptor(
             out_path,
             &(&body_json, extensions),
             call_stack,
@@ -521,7 +525,7 @@ pub fn visit_media_type_encodings(
     call_stack: &CallStack,
 ) -> Result<()> {
     if !encodings.is_empty() {
-        Script::EncodingsStart
+        Script::VisitEncodingsStart
             .call_with_descriptor(out_path, &(&encodings, extensions), call_stack)?
             .and_then(|call_stack| {
                 encodings.iter().try_for_each(|encoding| {
@@ -534,7 +538,7 @@ pub fn visit_media_type_encodings(
                     )
                 })
             })?;
-        Script::EncodingsEnd.call_with_descriptor(
+        Script::VisitEncodingsEnd.call_with_descriptor(
             out_path,
             &(&encodings, extensions),
             call_stack,
@@ -550,7 +554,7 @@ pub fn visit_media_type_encoding(
     encoding: &Encoding,
     call_stack: &CallStack,
 ) -> Result<()> {
-    Script::EncodingStart
+    Script::VisitEncodingStart
         .call_with_descriptor(
             out_path,
             &(&encoding_name, &encoding, &encoding.extensions),
@@ -565,7 +569,7 @@ pub fn visit_media_type_encoding(
                 call_stack,
             )
         })?;
-    Script::EncodingEnd.call_with_descriptor(
+    Script::VisitEncodingEnd.call_with_descriptor(
         out_path,
         &(&encoding_name, &encoding, &encoding.extensions),
         call_stack,
@@ -591,7 +595,7 @@ pub fn visit_example(
             )?;
         }
         ReferenceOr::Item(example) => {
-            Script::ExampleStart
+            Script::VisitExampleStart
                 .call_with_descriptor(
                     out_path,
                     &(example_name, &example, &example.extensions),
@@ -605,7 +609,7 @@ pub fn visit_example(
                         &call_stack,
                     )
                 })?;
-            Script::ExampleEnd.call_with_descriptor(
+            Script::VisitExampleEnd.call_with_descriptor(
                 out_path,
                 &(example_name, &example, &example.extensions),
                 call_stack,
@@ -633,7 +637,7 @@ pub fn visit_request_body(
             )?;
         }
         ReferenceOr::Item(request_body) => {
-            Script::RequestBodyStart
+            Script::VisitRequestBodyStart
                 .call_with_descriptor(
                     out_path,
                     &(&request_body_name, &request_body, &request_body.extensions),
@@ -648,7 +652,7 @@ pub fn visit_request_body(
                         call_stack,
                     )
                 })?;
-            Script::RequestBodyEnd.call_with_descriptor(
+            Script::VisitRequestBodyEnd.call_with_descriptor(
                 out_path,
                 &(&request_body_name, &request_body, &request_body.extensions),
                 call_stack,
@@ -666,7 +670,7 @@ pub fn visit_parameter_schema_or_content(
     extensions: &IndexMap<String, serde_json::Value>,
     call_stack: &CallStack,
 ) -> Result<()> {
-    Script::ParameterSchemaOrContentStart
+    Script::VisitParameterSchemaOrContentStart
         .call_with_descriptor(
             out_path,
             &(&parameter_name, &parameter_schema_or_content, extensions),
@@ -689,7 +693,7 @@ pub fn visit_parameter_schema_or_content(
             }
             Ok(())
         })?;
-    Script::ParameterSchemaOrContentEnd.call_with_descriptor(
+    Script::VisitParameterSchemaOrContentEnd.call_with_descriptor(
         out_path,
         &(&parameter_name, &parameter_schema_or_content, extensions),
         call_stack,
@@ -704,7 +708,7 @@ pub fn visit_media_types(
     extensions: &IndexMap<String, serde_json::Value>,
     call_stack: &CallStack,
 ) -> Result<()> {
-    Script::MediaTypesStart
+    Script::VisitMediaTypesStart
         .call_with_descriptor(out_path, &(media_types, extensions), call_stack)?
         .and_then(|call_stack| {
             media_types.iter().try_for_each(|media_type| {
@@ -717,7 +721,11 @@ pub fn visit_media_types(
                 )
             })
         })?;
-    Script::MediaTypesEnd.call_with_descriptor(out_path, &(media_types, extensions), call_stack)?;
+    Script::VisitMediaTypesEnd.call_with_descriptor(
+        out_path,
+        &(media_types, extensions),
+        call_stack,
+    )?;
     Ok(())
 }
 
@@ -729,7 +737,7 @@ pub fn visit_callbacks(
     call_stack: &CallStack,
 ) -> Result<()> {
     if !operation_callbacks.is_empty() {
-        Script::AsyncCallbacksStart
+        Script::VisitAsyncCallbacksStart
             .call_with_descriptor(out_path, &(operation_callbacks, &extensions), call_stack)?
             .and_then(|call_stack| {
                 operation_callbacks.iter().try_for_each(|callbacks| {
@@ -743,7 +751,7 @@ pub fn visit_callbacks(
                     )
                 })
             })?;
-        Script::AsyncCallbacksEnd.call_with_descriptor(
+        Script::VisitAsyncCallbacksEnd.call_with_descriptor(
             out_path,
             &(operation_callbacks, &extensions),
             call_stack,
@@ -759,14 +767,14 @@ pub fn visit_links(
     extensions: &IndexMap<String, serde_json::Value>,
     call_stack: &CallStack,
 ) -> Result<()> {
-    Script::LinksStart
+    Script::VisitLinksStart
         .call_with_descriptor(out_path, &(links, &extensions), call_stack)?
         .and_then(|call_stack| {
             links
                 .iter()
                 .try_for_each(|link| visit_link(parsed_spec, out_path, link.0, link.1, call_stack))
         })?;
-    Script::LinksEnd.call_with_descriptor(out_path, &(links, &extensions), call_stack)?;
+    Script::VisitLinksEnd.call_with_descriptor(out_path, &(links, &extensions), call_stack)?;
     Ok(())
 }
 
@@ -788,7 +796,7 @@ pub fn visit_link(
             )?;
         }
         ReferenceOr::Item(link) => {
-            Script::LinkStart
+            Script::VisitLinkStart
                 .call_with_descriptor(out_path, &(link_name, link, &link.extensions), call_stack)?
                 .and_then(|call_stack| {
                     visit_generic_request_body(
@@ -810,7 +818,7 @@ pub fn visit_link(
                     }
                     Ok(())
                 })?;
-            Script::LinkEnd.call_with_descriptor(
+            Script::VisitLinkEnd.call_with_descriptor(
                 out_path,
                 &(link_name, link, &link.extensions),
                 call_stack,
@@ -840,7 +848,7 @@ pub fn visit_callback(
             )?;
         }
         ReferenceOr::Item(callback) => {
-            Script::AsyncCallbackStart
+            Script::VisitAsyncCallbackStart
                 .call_with_descriptor(
                     out_path,
                     &(callbacks_name, callback, &extensions),
@@ -851,7 +859,7 @@ pub fn visit_callback(
                         visit_path_item(parsed_spec, out_path, it.0, it.1, call_stack)
                     })
                 })?;
-            Script::AsyncCallbackEnd.call_with_descriptor(
+            Script::VisitAsyncCallbackEnd.call_with_descriptor(
                 out_path,
                 &(callbacks_name, callback, &extensions),
                 call_stack,
@@ -868,7 +876,7 @@ pub fn visit_media_type(
     media_type: &MediaType,
     call_stack: &CallStack,
 ) -> Result<()> {
-    Script::MediaTypeStart
+    Script::VisitMediaTypeStart
         .call_with_descriptor(
             out_path,
             &(&media_type_name, &media_type.extensions),
@@ -909,7 +917,7 @@ pub fn visit_media_type(
             )?;
             Ok(())
         })?;
-    Script::MediaTypeEnd.call_with_descriptor(
+    Script::VisitMediaTypeEnd.call_with_descriptor(
         out_path,
         &(&media_type_name, &media_type.extensions),
         call_stack,
@@ -925,14 +933,18 @@ pub fn visit_examples(
     call_stack: &CallStack,
 ) -> Result<()> {
     if !examples.is_empty() {
-        Script::ExamplesStart
+        Script::VisitExamplesStart
             .call_with_descriptor(out_path, &(&examples, extensions), call_stack)?
             .and_then(|call_stack| {
                 examples
                     .iter()
                     .try_for_each(|it| visit_example(parsed_spec, out_path, it.0, it.1, call_stack))
             })?;
-        Script::ExamplesEnd.call_with_descriptor(out_path, &(&examples, extensions), call_stack)?;
+        Script::VisitExamplesEnd.call_with_descriptor(
+            out_path,
+            &(&examples, extensions),
+            call_stack,
+        )?;
     }
     Ok(())
 }
@@ -945,14 +957,14 @@ pub fn visit_request_bodies(
     call_stack: &CallStack,
 ) -> Result<()> {
     if !request_bodies.is_empty() {
-        Script::RequestBodiesStart
+        Script::VisitRequestBodiesStart
             .call_with_descriptor(out_path, &(request_bodies, extensions), call_stack)?
             .and_then(|call_stack| {
                 request_bodies.iter().try_for_each(|it| {
                     visit_request_body(parsed_spec, out_path, Some(it.0), it.1, call_stack)
                 })
             })?;
-        Script::RequestBodiesEnd.call_with_descriptor(
+        Script::VisitRequestBodiesEnd.call_with_descriptor(
             out_path,
             &(request_bodies, extensions),
             call_stack,
@@ -968,7 +980,7 @@ pub fn visit_generic_parameters(
     call_stack: &CallStack,
 ) -> Result<()> {
     if !parameters.is_empty() {
-        Script::GenericParametersStart
+        Script::VisitGenericParametersStart
             .call_with_descriptor(out_path, &(&parameters, extensions), call_stack)?
             .and_then(|call_stack| {
                 parameters.iter().try_for_each(|it| {
@@ -976,7 +988,7 @@ pub fn visit_generic_parameters(
                     Ok(())
                 })
             })?;
-        Script::GenericParametersEnd.call_with_descriptor(
+        Script::VisitGenericParametersEnd.call_with_descriptor(
             out_path,
             &(&parameters, extensions),
             call_stack,
@@ -1003,7 +1015,7 @@ pub fn visit_header(
             )?;
         }
         ReferenceOr::Item(header) => {
-            Script::HeaderStart
+            Script::VisitHeaderStart
                 .call_with_descriptor(
                     out_path,
                     &(&header_name, &header, &header.extensions),
@@ -1034,7 +1046,7 @@ pub fn visit_header(
                         call_stack,
                     )
                 })?;
-            Script::HeaderEnd.call_with_descriptor(
+            Script::VisitHeaderEnd.call_with_descriptor(
                 out_path,
                 &(&header_name, &header, &header.extensions),
                 call_stack,
@@ -1092,14 +1104,18 @@ pub fn visit_headers(
     call_stack: &CallStack,
 ) -> Result<()> {
     if !headers.is_empty() {
-        Script::HeadersStart
+        Script::VisitHeadersStart
             .call_with_descriptor(out_path, &(headers, extensions), call_stack)?
             .and_then(|call_stack| {
                 headers
                     .iter()
                     .try_for_each(|it| visit_header(parsed_spec, out_path, it.0, it.1, call_stack))
             })?;
-        Script::HeadersEnd.call_with_descriptor(out_path, &(headers, extensions), call_stack)?;
+        Script::VisitHeadersEnd.call_with_descriptor(
+            out_path,
+            &(headers, extensions),
+            call_stack,
+        )?;
     }
     Ok(())
 }
@@ -1112,14 +1128,14 @@ pub fn visit_security_schemes(
     call_stack: &CallStack,
 ) -> Result<()> {
     if !security_schemes.is_empty() {
-        Script::SecuritySchemesStart
+        Script::VisitSecuritySchemesStart
             .call_with_descriptor(out_path, &(&security_schemes, extensions), call_stack)?
             .and_then(|call_stack| {
                 security_schemes.iter().try_for_each(|it| {
                     visit_security_scheme(parsed_spec, out_path, it.0, it.1, call_stack)
                 })
             })?;
-        Script::SecuritySchemesEnd.call_with_descriptor(
+        Script::VisitSecuritySchemesEnd.call_with_descriptor(
             out_path,
             &(&security_schemes, extensions),
             call_stack,
@@ -1135,12 +1151,12 @@ pub fn visit_spec_tags(
     call_stack: &CallStack,
 ) -> Result<()> {
     if !tags.is_empty() {
-        Script::SpecTagsStart
+        Script::VisitSpecTagsStart
             .call_with_descriptor(out_path, &(tags, extensions), call_stack)?
             .and_then(|call_stack| {
                 tags.iter().try_for_each(|tag| {
                     visit_external_docs(out_path, &tag.external_docs, call_stack)?;
-                    Script::SpecTag.call_with_descriptor(
+                    Script::VisitSpecTag.call_with_descriptor(
                         out_path,
                         &(tag, &tag.extensions),
                         call_stack,
@@ -1148,7 +1164,7 @@ pub fn visit_spec_tags(
                     Ok(())
                 })
             })?;
-        Script::SpecTagsEnd.call_with_descriptor(out_path, &(tags, extensions), call_stack)?;
+        Script::VisitSpecTagsEnd.call_with_descriptor(out_path, &(tags, extensions), call_stack)?;
     }
     Ok(())
 }
@@ -1161,11 +1177,11 @@ pub fn visit_security_requirements(
 ) -> Result<()> {
     if let Some(it) = securities.as_ref() {
         if !it.is_empty() {
-            Script::SecurityRequirementsStart
+            Script::VisitSecurityRequirementsStart
                 .call_with_descriptor(out_path, &(it, extensions), call_stack)?
                 .and_then(|call_stack| {
                     it.iter().try_for_each(|sec_map| {
-                        Script::SecurityRequirement.call_with_descriptor(
+                        Script::VisitSecurityRequirement.call_with_descriptor(
                             out_path,
                             &(sec_map, extensions),
                             call_stack,
@@ -1173,7 +1189,7 @@ pub fn visit_security_requirements(
                         Ok(())
                     })
                 })?;
-            Script::SecurityRequirementsEnd.call_with_descriptor(
+            Script::VisitSecurityRequirementsEnd.call_with_descriptor(
                 out_path,
                 &(it, extensions),
                 call_stack,
@@ -1188,7 +1204,11 @@ pub fn visit_external_docs(
     call_stack: &CallStack,
 ) -> Result<()> {
     if let Some(it) = external_docs {
-        Script::ExternalDocs.call_with_descriptor(out_path, &(it, &it.extensions), call_stack)?;
+        Script::VisitExternalDocs.call_with_descriptor(
+            out_path,
+            &(it, &it.extensions),
+            call_stack,
+        )?;
     }
     Ok(())
 }
@@ -1200,14 +1220,18 @@ pub fn visit_schemas(
     call_stack: &CallStack,
 ) -> Result<()> {
     if !schemas.is_empty() {
-        Script::SchemasStart
+        Script::VisitSchemasStart
             .call_with_descriptor(out_path, &(schemas, extensions), call_stack)?
             .and_then(|it| {
                 schemas.iter().try_for_each(|(schema_name, schema_ref)| {
                     visit_schema(parsed_spec, out_path, Some(schema_name), schema_ref, it)
                 })
             })?;
-        Script::SchemasEnd.call_with_descriptor(out_path, &(schemas, extensions), call_stack)?;
+        Script::VisitSchemasEnd.call_with_descriptor(
+            out_path,
+            &(schemas, extensions),
+            call_stack,
+        )?;
     }
     Ok(())
 }
@@ -1220,7 +1244,7 @@ pub fn visit_components_responses(
     call_stack: &CallStack,
 ) -> Result<()> {
     if !responses.is_empty() {
-        Script::ComponentsResponsesStart
+        Script::VisitResponsesStart
             .call_with_descriptor(out_path, &(responses, extensions), call_stack)?
             .and_then(|it| {
                 responses
@@ -1229,7 +1253,7 @@ pub fn visit_components_responses(
                         visit_response(parsed_spec, out_path, Some(response_name), response_ref, it)
                     })
             })?;
-        Script::ComponentsResponsesEnd.call_with_descriptor(
+        Script::VisitResponsesEnd.call_with_descriptor(
             out_path,
             &(responses, extensions),
             call_stack,
@@ -1244,7 +1268,7 @@ pub fn visit_operation_responses(
     responses: &Responses,
     call_stack: &CallStack,
 ) -> Result<()> {
-    Script::OperationResponsesStart
+    Script::VisitOperationResponsesStart
         .call_with_descriptor(out_path, &(&responses, &responses.extensions), call_stack)?
         .and_then(|call_stack| {
             if let Some(response) = &responses.default {
@@ -1264,7 +1288,7 @@ pub fn visit_operation_responses(
                     )
                 })
         })?;
-    Script::OperationResponsesEnd.call_with_descriptor(
+    Script::VisitOperationResponsesEnd.call_with_descriptor(
         out_path,
         &(&responses, &responses.extensions),
         call_stack,
@@ -1280,7 +1304,7 @@ pub fn visit_parameters(
     call_stack: &CallStack,
 ) -> Result<()> {
     if !parameters.is_empty() {
-        Script::ParametersStart
+        Script::VisitParametersStart
             .call_with_descriptor(out_path, &(parameters, &extensions), call_stack)?
             .and_then(|call_stack| {
                 parameters
@@ -1297,7 +1321,7 @@ pub fn visit_parameters(
                         Ok(())
                     })
             })?;
-        Script::ParametersEnd.call_with_descriptor(
+        Script::VisitParametersEnd.call_with_descriptor(
             out_path,
             &(parameters, &extensions),
             call_stack,
@@ -1312,14 +1336,18 @@ pub fn visit_paths(
     paths: &Paths,
     call_stack: &CallStack,
 ) -> Result<()> {
-    Script::PathsStart
+    Script::VisitPathsStart
         .call_with_descriptor(out_path, &(&paths, &paths.extensions), call_stack)?
         .and_then(|call_stack| {
             paths.paths.iter().try_for_each(|it| {
                 visit_path_item_ref(parsed_spec, out_path, it.0, it.1, call_stack)
             })
         })?;
-    Script::PathsEnd.call_with_descriptor(out_path, &(&paths, &paths.extensions), call_stack)?;
+    Script::VisitPathsEnd.call_with_descriptor(
+        out_path,
+        &(&paths, &paths.extensions),
+        call_stack,
+    )?;
     Ok(())
 }
 
@@ -1419,7 +1447,7 @@ pub fn visit_security_scheme_http(
     call_stack: &CallStack,
 ) -> Result<()> {
     if let SecurityScheme::HTTP { extensions, .. } = http {
-        Script::SecuritySchemeHttp.call_with_descriptor(
+        Script::VisitSecuritySchemeHttp.call_with_descriptor(
             out_path,
             &(&scheme_name, &http, &extensions),
             call_stack,
@@ -1440,12 +1468,12 @@ pub fn visit_security_scheme_oauth2(
         flows, extensions, ..
     } = oauth2
     {
-        Script::SecuritySchemeOAuth2Start
+        Script::VisitSecuritySchemeOAuth2Start
             .call_with_descriptor(out_path, &(&scheme_name, &oauth2, extensions), call_stack)?
             .and_then(|call_stack| {
                 visit_security_scheme_oauth2_flows(out_path, flows, call_stack)
             })?;
-        Script::SecuritySchemeOAuth2End.call_with_descriptor(
+        Script::VisitSecuritySchemeOAuth2End.call_with_descriptor(
             out_path,
             &(&scheme_name, &oauth2, extensions),
             call_stack,
@@ -1461,7 +1489,7 @@ pub fn visit_security_scheme_oauth2_flows(
     flows: &OAuth2Flows,
     call_stack: &CallStack,
 ) -> Result<()> {
-    Script::SecuritySchemeOAuth2FlowsStart
+    Script::VisitSecuritySchemeOAuth2FlowsStart
         .call_with_descriptor(out_path, &(flows, &flows.extensions), call_stack)?
         .and_then(|call_stack| {
             visit_security_scheme_oauth2_flows_implicit(out_path, &flows.implicit, call_stack)?;
@@ -1477,7 +1505,7 @@ pub fn visit_security_scheme_oauth2_flows(
                 call_stack,
             )
         })?;
-    Script::SecuritySchemeOAuth2FlowsEnd.call_with_descriptor(
+    Script::VisitSecuritySchemeOAuth2FlowsEnd.call_with_descriptor(
         out_path,
         &(flows, &flows.extensions),
         call_stack,
@@ -1491,7 +1519,7 @@ pub fn visit_security_scheme_oauth2_flows_implicit(
     call_stack: &CallStack,
 ) -> Result<()> {
     if let Some(flow) = flow {
-        Script::SecuritySchemeOAuth2FlowImplicit.call_with_descriptor(
+        Script::VisitSecuritySchemeOAuth2FlowImplicit.call_with_descriptor(
             out_path,
             &(flow, &flow.extensions),
             call_stack,
@@ -1506,7 +1534,7 @@ pub fn visit_security_scheme_oauth2_flows_password(
     call_stack: &CallStack,
 ) -> Result<()> {
     if let Some(flow) = flow {
-        Script::SecuritySchemeOAuth2FlowPassword.call_with_descriptor(
+        Script::VisitSecuritySchemeOAuth2FlowPassword.call_with_descriptor(
             out_path,
             &(flow, &flow.extensions),
             call_stack,
@@ -1521,7 +1549,7 @@ pub fn visit_security_scheme_oauth2_flows_client_credentials(
     call_stack: &CallStack,
 ) -> Result<()> {
     if let Some(flow) = flow {
-        Script::SecuritySchemeOAuth2FlowClientCredentials.call_with_descriptor(
+        Script::VisitSecuritySchemeOAuth2FlowClientCredentials.call_with_descriptor(
             out_path,
             &(flow, &flow.extensions),
             call_stack,
@@ -1536,7 +1564,7 @@ pub fn visit_security_scheme_oauth2_flows_authorization_code(
     call_stack: &CallStack,
 ) -> Result<()> {
     if let Some(flow) = flow {
-        Script::SecuritySchemeOAuth2FlowAuthorizationCode.call_with_descriptor(
+        Script::VisitSecuritySchemeOAuth2FlowAuthorizationCode.call_with_descriptor(
             out_path,
             &(flow, &flow.extensions),
             call_stack,
@@ -1552,7 +1580,7 @@ pub fn visit_security_scheme_apikey(
     call_stack: &CallStack,
 ) -> Result<()> {
     if let SecurityScheme::APIKey { extensions, .. } = api_key {
-        Script::SecuritySchemeApiKey.call_with_descriptor(
+        Script::VisitSecuritySchemeApiKey.call_with_descriptor(
             out_path,
             &(scheme_name, &api_key, &extensions),
             call_stack,
@@ -1570,7 +1598,7 @@ pub fn visit_security_scheme_openid_connect(
     call_stack: &CallStack,
 ) -> Result<()> {
     if let SecurityScheme::OpenIDConnect { extensions, .. } = openid_connect {
-        Script::SecuritySchemeOpenIdConnect.call_with_descriptor(
+        Script::VisitSecuritySchemeOpenIdConnect.call_with_descriptor(
             out_path,
             &(scheme_name, &openid_connect, &extensions),
             call_stack,
@@ -1587,7 +1615,7 @@ pub fn visit_parameter_data(
     parameter_data: &ParameterData,
     call_stack: &CallStack,
 ) -> Result<()> {
-    Script::ParameterDataStart
+    Script::VisitParameterDataStart
         .call_with_descriptor(
             out_path,
             &(parameter_data, &parameter_data.extensions),
@@ -1617,7 +1645,7 @@ pub fn visit_parameter_data(
             )?;
             Ok(())
         })?;
-    Script::ParameterDataEnd.call_with_descriptor(
+    Script::VisitParameterDataEnd.call_with_descriptor(
         out_path,
         &(parameter_data, &parameter_data.extensions),
         call_stack,
@@ -1634,7 +1662,7 @@ pub fn visit_query_parameter(
     call_stack: &CallStack,
 ) -> Result<()> {
     if let Parameter::Query { parameter_data, .. } = parameter {
-        Script::QueryParameterStart
+        Script::VisitQueryParameterStart
             .call_with_descriptor(
                 out_path,
                 &(parameter_name, &parameter, &extensions),
@@ -1644,7 +1672,7 @@ pub fn visit_query_parameter(
                 visit_parameter_data(parsed_spec, out_path, parameter_data, call_stack)?;
                 Ok(())
             })?;
-        Script::QueryParameterEnd.call_with_descriptor(
+        Script::VisitQueryParameterEnd.call_with_descriptor(
             out_path,
             &(parameter_name, &parameter, &extensions),
             call_stack,
@@ -1664,7 +1692,7 @@ pub fn visit_header_parameter(
     call_stack: &CallStack,
 ) -> Result<()> {
     if let Parameter::Header { parameter_data, .. } = parameter {
-        Script::HeaderParameterStart
+        Script::VisitHeaderParameterStart
             .call_with_descriptor(
                 out_path,
                 &(parameter_name, &parameter, &extensions),
@@ -1674,7 +1702,7 @@ pub fn visit_header_parameter(
                 visit_parameter_data(parsed_spec, out_path, parameter_data, call_stack)?;
                 Ok(())
             })?;
-        Script::HeaderParameterEnd.call_with_descriptor(
+        Script::VisitHeaderParameterEnd.call_with_descriptor(
             out_path,
             &(parameter_name, &parameter, &extensions),
             call_stack,
@@ -1694,7 +1722,7 @@ pub fn visit_path_parameter(
     call_stack: &CallStack,
 ) -> Result<()> {
     if let Parameter::Path { parameter_data, .. } = parameter {
-        Script::PathParameterStart
+        Script::VisitPathParameterStart
             .call_with_descriptor(
                 out_path,
                 &(parameter_name, &parameter, &extensions),
@@ -1704,7 +1732,7 @@ pub fn visit_path_parameter(
                 visit_parameter_data(parsed_spec, out_path, parameter_data, call_stack)?;
                 Ok(())
             })?;
-        Script::PathParameterEnd.call_with_descriptor(
+        Script::VisitPathParameterEnd.call_with_descriptor(
             out_path,
             &(parameter_name, &parameter, &extensions),
             call_stack,
@@ -1722,7 +1750,7 @@ pub fn visit_path_item(
     path_item: &PathItem,
     call_stack: &CallStack,
 ) -> Result<()> {
-    Script::PathItemStart
+    Script::VisitPathItemStart
         .call_with_descriptor(
             out_path,
             &(path_item_name, &path_item, &path_item.extensions),
@@ -1734,8 +1762,8 @@ pub fn visit_path_item(
                 out_path,
                 &path_item.trace,
                 &BracketScripts {
-                    start: Script::TraceOperationStart,
-                    end: Script::TraceOperationEnd,
+                    start: Script::VisitTraceOperationStart,
+                    end: Script::VisitTraceOperationEnd,
                 },
                 call_stack,
             )?;
@@ -1744,8 +1772,8 @@ pub fn visit_path_item(
                 out_path,
                 &path_item.put,
                 &BracketScripts {
-                    start: Script::PutOperationStart,
-                    end: Script::PutOperationEnd,
+                    start: Script::VisitPutOperationStart,
+                    end: Script::VisitPutOperationEnd,
                 },
                 call_stack,
             )?;
@@ -1754,8 +1782,8 @@ pub fn visit_path_item(
                 out_path,
                 &path_item.post,
                 &BracketScripts {
-                    start: Script::PostOperationStart,
-                    end: Script::PostOperationEnd,
+                    start: Script::VisitPostOperationStart,
+                    end: Script::VisitPostOperationEnd,
                 },
                 call_stack,
             )?;
@@ -1764,8 +1792,8 @@ pub fn visit_path_item(
                 out_path,
                 &path_item.patch,
                 &BracketScripts {
-                    start: Script::PatchOperationStart,
-                    end: Script::PatchOperationEnd,
+                    start: Script::VisitPatchOperationStart,
+                    end: Script::VisitPatchOperationEnd,
                 },
                 call_stack,
             )?;
@@ -1774,8 +1802,8 @@ pub fn visit_path_item(
                 out_path,
                 &path_item.options,
                 &BracketScripts {
-                    start: Script::OptionsOperationStart,
-                    end: Script::OptionsOperationEnd,
+                    start: Script::VisitOptionsOperationStart,
+                    end: Script::VisitOptionsOperationEnd,
                 },
                 call_stack,
             )?;
@@ -1784,8 +1812,8 @@ pub fn visit_path_item(
                 out_path,
                 &path_item.head,
                 &BracketScripts {
-                    start: Script::HeadOperationStart,
-                    end: Script::HeadOperationEnd,
+                    start: Script::VisitHeadOperationStart,
+                    end: Script::VisitHeadOperationEnd,
                 },
                 call_stack,
             )?;
@@ -1794,8 +1822,8 @@ pub fn visit_path_item(
                 out_path,
                 &path_item.get,
                 &BracketScripts {
-                    start: Script::GetOperationStart,
-                    end: Script::GetOperationEnd,
+                    start: Script::VisitGetOperationStart,
+                    end: Script::VisitGetOperationEnd,
                 },
                 call_stack,
             )?;
@@ -1804,8 +1832,8 @@ pub fn visit_path_item(
                 out_path,
                 &path_item.delete,
                 &BracketScripts {
-                    start: Script::DeleteOperationStart,
-                    end: Script::DeleteOperationEnd,
+                    start: Script::VisitDeleteOperationStart,
+                    end: Script::VisitDeleteOperationEnd,
                 },
                 call_stack,
             )?;
@@ -1830,7 +1858,7 @@ pub fn visit_path_item(
             )?;
             Ok(())
         })?;
-    Script::PathItemEnd.call_with_descriptor(
+    Script::VisitPathItemEnd.call_with_descriptor(
         out_path,
         &(path_item_name, &path_item, &path_item.extensions),
         call_stack,
@@ -1915,7 +1943,7 @@ pub fn visit_cookie_parameter(
     call_stack: &CallStack,
 ) -> Result<()> {
     if let Parameter::Cookie { parameter_data, .. } = parameter {
-        Script::CookieParameterStart
+        Script::VisitCookieParameterStart
             .call_with_descriptor(
                 out_path,
                 &(parameter_name, &parameter, &extensions),
@@ -1925,7 +1953,7 @@ pub fn visit_cookie_parameter(
                 visit_parameter_data(parsed_spec, out_path, parameter_data, call_stack)?;
                 Ok(())
             })?;
-        Script::CookieParameterEnd.call_with_descriptor(
+        Script::VisitCookieParameterEnd.call_with_descriptor(
             out_path,
             &(parameter_name, &parameter, &extensions),
             call_stack,
@@ -1943,7 +1971,7 @@ pub fn visit_spec_components(
     call_stack: &CallStack,
 ) -> Result<()> {
     if let Some(components) = components {
-        Script::ComponentsStart
+        Script::VisitComponentsStart
             .call_with_descriptor(out_path, &(components, &components.extensions), call_stack)?
             .and_then(|call_stack| {
                 visit_schemas(
@@ -2018,7 +2046,7 @@ pub fn visit_spec_components(
                     call_stack,
                 )
             })?;
-        Script::ComponentsEnd.call_with_descriptor(
+        Script::VisitComponentsEnd.call_with_descriptor(
             out_path,
             &(components, &components.extensions),
             call_stack,
@@ -2034,19 +2062,23 @@ pub fn visit_schema_default(
     call_stack: &CallStack,
 ) -> Result<()> {
     if let Some(default) = default.as_ref() {
-        Script::SchemaDefault.call_with_descriptor(out_path, &(default, extensions), call_stack)?;
+        Script::VisitDefault.call_with_descriptor(out_path, &(default, extensions), call_stack)?;
     }
     Ok(())
 }
 
 pub fn visit_spec_info(out_path: &Path, info: &Info, call_stack: &CallStack) -> Result<()> {
-    Script::SpecInfoStart
+    Script::VisitSpecInfoStart
         .call_with_descriptor(out_path, &(info, &info.extensions), call_stack)?
         .and_then(|call_stack| {
             visit_spec_info_contact(out_path, &info.contact, call_stack)?;
             visit_spec_info_license(out_path, &info.license, call_stack)
         })?;
-    Script::SpecInfoEnd.call_with_descriptor(out_path, &(info, &info.extensions), call_stack)?;
+    Script::VisitSpecInfoEnd.call_with_descriptor(
+        out_path,
+        &(info, &info.extensions),
+        call_stack,
+    )?;
     Ok(())
 }
 
@@ -2056,7 +2088,7 @@ pub fn visit_spec_info_contact(
     call_stack: &CallStack,
 ) -> Result<()> {
     if let Some(it) = contact {
-        Script::SpecInfoContact.call_with_descriptor(
+        Script::VisitSpecInfoContact.call_with_descriptor(
             out_path,
             &(&it, &it.extensions),
             call_stack,
@@ -2071,7 +2103,7 @@ pub fn visit_spec_info_license(
     call_stack: &CallStack,
 ) -> Result<()> {
     if let Some(it) = license {
-        Script::SpecInfoLicense.call_with_descriptor(
+        Script::VisitSpecInfoLicense.call_with_descriptor(
             out_path,
             &(&it, &it.extensions),
             call_stack,
@@ -2080,12 +2112,12 @@ pub fn visit_spec_info_license(
     Ok(())
 }
 pub fn visit_server(out_path: &Path, server: &Server, call_stack: &CallStack) -> Result<()> {
-    Script::ServerStart
+    Script::VisitServerStart
         .call_with_descriptor(out_path, &(server, &server.extensions), call_stack)?
         .and_then(|call_stack| {
             if let Some(variables) = server.variables.as_ref() {
                 variables.iter().try_for_each(|it| {
-                    Script::ServerVariable.call_with_descriptor(
+                    Script::VisitServerVariable.call_with_descriptor(
                         out_path,
                         &(&server.url, &it.0, &it.1, &it.1.extensions),
                         call_stack,
@@ -2095,7 +2127,11 @@ pub fn visit_server(out_path: &Path, server: &Server, call_stack: &CallStack) ->
             }
             Ok(())
         })?;
-    Script::ServerEnd.call_with_descriptor(out_path, &(server, &server.extensions), call_stack)?;
+    Script::VisitServerEnd.call_with_descriptor(
+        out_path,
+        &(server, &server.extensions),
+        call_stack,
+    )?;
     Ok(())
 }
 
@@ -2106,7 +2142,7 @@ pub fn visit_servers(
     call_stack: &CallStack,
 ) -> Result<()> {
     if !servers.is_empty() {
-        Script::ServersStart
+        Script::VisitServersStart
             .call_with_descriptor(out_path, &(servers, extensions), call_stack)?
             .and_then(|call_stack| {
                 servers.iter().try_for_each(|server| {
@@ -2114,7 +2150,11 @@ pub fn visit_servers(
                     Ok(())
                 })
             })?;
-        Script::ServersEnd.call_with_descriptor(out_path, &(servers, extensions), call_stack)?;
+        Script::VisitServersEnd.call_with_descriptor(
+            out_path,
+            &(servers, extensions),
+            call_stack,
+        )?;
     }
     Ok(())
 }
@@ -2145,7 +2185,7 @@ where
         ReferenceOr::Item(schema) => {
             let schema = schema.as_schema();
 
-            Script::ObjectPropertyStart
+            Script::VisitObjectPropertyStart
                 .call_with_descriptor(out_path, &(property_name, schema, extensions), call_stack)?
                 .and_then(|call_stack| {
                     visit_schema(
@@ -2156,7 +2196,7 @@ where
                         call_stack,
                     )
                 })?;
-            Script::ObjectPropertyEnd.call_with_descriptor(
+            Script::VisitObjectPropertyEnd.call_with_descriptor(
                 out_path,
                 &(property_name, schema, extensions),
                 call_stack,
@@ -2173,10 +2213,10 @@ pub fn visit_object(
     extensions: &IndexMap<String, serde_json::Value>,
     call_stack: &CallStack,
 ) -> Result<()> {
-    Script::ObjectStart
+    Script::VisitObjectStart
         .call_with_descriptor(out_path, &(object_description, extensions), call_stack)?
         .and_then(|call_stack| {
-            Script::ObjectPropertiesStart
+            Script::VisitObjectPropertiesStart
                 .call_with_descriptor(
                     out_path,
                     &(&object_description.properties, extensions),
@@ -2197,7 +2237,7 @@ pub fn visit_object(
                     )?;
                     Ok(())
                 })?;
-            Script::ObjectPropertiesEnd.call_with_descriptor(
+            Script::VisitObjectPropertiesEnd.call_with_descriptor(
                 out_path,
                 &(&object_description.properties, extensions),
                 call_stack,
@@ -2206,7 +2246,7 @@ pub fn visit_object(
             if let Some(it) = object_description.additional_properties.as_ref() {
                 match it {
                     openapiv3::AdditionalProperties::Any(value) => {
-                        Script::ObjectAdditionalPropertiesAny.call_with_descriptor(
+                        Script::VisitAdditionalPropertiesAny.call_with_descriptor(
                             out_path,
                             &(
                                 *value,
@@ -2219,7 +2259,7 @@ pub fn visit_object(
                     }
                     openapiv3::AdditionalProperties::Schema(it) => {
                         let schema_ref = it.as_ref();
-                        Script::ObjectAdditionalPropertiesStart
+                        Script::VisitAdditionalPropertiesStart
                             .call_with_descriptor(
                                 out_path,
                                 &(
@@ -2233,7 +2273,7 @@ pub fn visit_object(
                             .and_then(|call_stack| {
                                 visit_schema(parsed_spec, out_path, None, schema_ref, call_stack)
                             })?;
-                        Script::ObjectAdditionalPropertiesEnd.call_with_descriptor(
+                        Script::VisitAdditionalPropertiesEnd.call_with_descriptor(
                             out_path,
                             &(
                                 schema_ref,
@@ -2248,7 +2288,7 @@ pub fn visit_object(
             }
             Ok(())
         })?;
-    Script::ObjectEnd.call_with_descriptor(
+    Script::VisitObjectEnd.call_with_descriptor(
         out_path,
         &(object_description, extensions),
         call_stack,

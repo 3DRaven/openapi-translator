@@ -150,3 +150,7 @@ pub fn init_logger() {
     })
     .init();
 }
+
+pub fn check_scripts(){
+    
+}

@@ -29,3 +29,4 @@ diffy = "0.4.0"
 chrono = "0.4.38"
 ansi_term = "0.12.1"
 indexmap = "2.5.0"
+strum = { version = "0.26.3", features = ["derive"] }
