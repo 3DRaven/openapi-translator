@@ -14,7 +14,7 @@ function visitStringProperty(stringDescriptor, extensions, callsStack)
         print("String property without parent skipt")
     else
         if hasSpecifiedParentsInCallChain("visitStringProperty",
-                callsStack, { Script.OBJECT_START, Script.ALL_OF_START }) then
+                callsStack, { Script.VISIT_OBJECT_START, Script.VISIT_ALL_OF_START }) then
             local currentPropertyName = getCurrentPropertyNameMandatory(namesStack)
 
             generateSimplePropertyCode("visitStringProperty",
