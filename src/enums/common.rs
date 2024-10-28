@@ -3,6 +3,7 @@ use std::{fmt::Display, ops::Add, path::Path};
 use anyhow::{anyhow, Context, Result};
 use mlua::LuaSerdeExt;
 use serde::{Deserialize, Serialize};
+use strum::EnumIter;
 
 use crate::{
     holders::context::get_lua_vm,
@@ -20,7 +21,7 @@ pub enum WriteMode {
     Remove,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, EnumIter)]
 #[serde(rename_all = "camelCase")]
 pub enum Script {
     Prelude,

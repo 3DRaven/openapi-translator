@@ -1,10 +1,12 @@
 use ansi_term::Color;
-use anyhow::Result;
+use anyhow::{anyhow, Result};
+use enums::common::Script;
 use env_logger::Env;
-use holders::context::{DEFAULT_LOGS_COLOR_MODE, DEFAULT_LOGS_LOG_LEVEL, LOG_CONTEXT};
+use holders::context::{CLI, DEFAULT_LOGS_COLOR_MODE, DEFAULT_LOGS_LOG_LEVEL, LOG_CONTEXT};
 use serde_json::Value;
-use std::io::Write;
 use std::path::PathBuf;
+use std::{io::Write, path::Path};
+use strum::IntoEnumIterator;
 
 use clap::{ArgAction, Parser, Subcommand};
 pub mod services {
@@ -151,6 +153,15 @@ pub fn init_logger() {
     .init();
 }
 
-pub fn check_scripts(){
-    
+pub fn check_scripts() -> Result<()> {
+    for variant in Script::iter() {
+        let script_relative_path: &str = (&variant).into();
+        let script_path = CLI
+            .get_scripts_dir()
+            .join(format!("{}.lua", script_relative_path));
+        if !Path::new(&script_path).exists() {
+            return Err(anyhow!("Script [{:?}] not found", script_path));
+        }
+    }
+    Ok(())
 }

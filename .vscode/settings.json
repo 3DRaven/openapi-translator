@@ -265,12 +265,14 @@
         "generateSimplePropertyCode",
         "visitExampleStart",
         "visitExampleEnd",
-        "visitPostOperationEnd"
+        "visitPostOperationEnd",
+        "visitRequestBodyEnd"
     ],
     "terminal.integrated.scrollback": 16777216,
     "references.preferredLocation": "view",
     "cSpell.words": [
         "apikey",
+        "chrono",
         "dicriminator",
         "diffy",
         "indexmap",
