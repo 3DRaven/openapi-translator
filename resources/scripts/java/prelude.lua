@@ -1581,6 +1581,7 @@ function addGenericPropertyCode(model, type, extensions)
 
             property.code:push(WriteOperation.new_append(code, model.name))
         elseif model:instanceOf(TypeTransferModel) then
+            -- This is necessary for additionalProperties and type: array since they independently generate code for themselves
             model.name = type
         end
     end
