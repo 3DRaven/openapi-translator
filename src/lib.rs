@@ -1,11 +1,15 @@
 use ansi_term::Color;
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Context, Result};
 use enums::common::Script;
 use env_logger::Env;
-use holders::context::{CLI, DEFAULT_LOGS_COLOR_MODE, DEFAULT_LOGS_LOG_LEVEL, LOG_CONTEXT};
+use holders::context::{
+    get_lua_vm, CLI, DEFAULT_LOGS_COLOR_MODE, DEFAULT_LOGS_LOG_LEVEL, LOG_CONTEXT,
+};
 use serde_json::Value;
+use services::scripts;
+use std::collections::HashMap;
+use std::io::Write;
 use std::path::PathBuf;
-use std::{io::Write, path::Path};
 use strum::IntoEnumIterator;
 
 use clap::{ArgAction, Parser, Subcommand};
@@ -154,14 +158,34 @@ pub fn init_logger() {
 }
 
 pub fn check_scripts() -> Result<()> {
+    let mut scripts_files: HashMap<String, String> = HashMap::new();
+    let lua_vm = get_lua_vm();
+
     for variant in Script::iter() {
         let script_relative_path: &str = (&variant).into();
         let script_path = CLI
             .get_scripts_dir()
             .join(format!("{}.lua", script_relative_path));
-        if !Path::new(&script_path).exists() {
-            return Err(anyhow!("Script [{:?}] not found", script_path));
+
+        if let Some(old_value) = scripts_files.insert(
+            script_path
+                .file_name()
+                .expect("Unknown script filename")
+                .to_str()
+                .expect("Script filename not found")
+                .to_owned(),
+            script_path
+                .to_str()
+                .expect("Script path conversion error")
+                .to_owned(),
+        ) {
+            return Err(anyhow!(
+                "Duplicate script filenames first [{}] second [{:?}]",
+                old_value,
+                &script_path
+            ));
         }
+        scripts::get_lua_function(&variant, &lua_vm).context("Script checking error")?;
     }
     Ok(())
 }

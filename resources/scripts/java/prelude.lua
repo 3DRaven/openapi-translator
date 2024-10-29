@@ -8,7 +8,7 @@
 
 
 --- Represents a set of reusable components for different aspects of the OpenAPI Specification (OAS).
---- All objects defined within the components will not impact the API unless they are explicitly referenced 
+--- All objects defined within the components will not impact the API unless they are explicitly referenced
 --- from properties outside the components.
 --- @class Components
 --- A table to hold reusable Schema Objects.
@@ -564,249 +564,125 @@
 --- @field Schema ReferenceOr<Schema>
 
 ---------------------------------------------------------------------------------------------------
+--- Generic stack
+--- @class Stack
+--- @field items any[]
+--- @field stackName string
+Stack = {}
+Stack.__index = Stack
+
+function Stack.new(stackName)
+    local instance = setmetatable({}, Stack)
+    instance.stackName = stackName
+    instance.items = {}
+    return instance
+end
+
+function Stack:push(item)
+    table.insert(self.items, item)
+    print(string.format([[
+CONTEXT <- push to stack, after
+[
+%s
+]
+]], tableToString(self)))
+    return item
+end
+
+--- Pushes all elements from the given table onto the stack.
+--- @param elements any[] # A table containing elements to be pushed onto the stack
+function Stack:pushAll(elements)
+    for _, element in ipairs(elements) do
+        self:push(element)
+    end
+end
+
+function Stack:pop()
+    if #self.items == 0 then
+        error("Stack is empty")
+    end
+    print(string.format([[
+CONTEXT -> pop from stack, before
+[
+%s
+]
+]], tableToString(self)))
+    local item = table.remove(self.items)
+    return item
+end
+
+function Stack:peek()
+    if #self.items == 0 then
+        return nil
+    end
+    local item = self.items[#self.items]
+    print(string.format([[
+CONTEXT -> peek from stack
+[
+%s
+]
+]], tableToString(self)))
+    return item
+end
+
+--- Retrieves, but does not remove, the head of this stack.
+--- This method differs from peek only in that it throws an error if this stack is empty.
+--- @return any # The head of this stack
+function Stack:element()
+    if #self.items == 0 then
+        error("Stack '" .. self.stackName .. "' is empty.")
+    end
+    local item = self.items[#self.items]
+    print(string.format([[
+CONTEXT -> element from stack
+[
+%s
+]
+]], tableToString(self)))
+    return item
+end
+
+--- Retrieves, but does not remove, the penultimate element of this stack.
+--- This method return nil if the stack has fewer than two elements.
+--- @return any|nil # The penultimate element of this stack
+function Stack:penultimate()
+    if #self.items < 2 then
+        return nil
+    end
+    local item = self.items[#self.items - 1]
+    print(string.format([[
+CONTEXT -> penultimate from stack
+[
+%s
+]
+]], tableToString(self)))
+    return item
+end
+
+function Stack:isEmpty()
+    return #self.items == 0
+end
+
+function Stack:size()
+    return #self.items
+end
 
 --- Class for storing variables across scripts with loggable access manner for all chain of models
 --- @class GlobalContext
+--- @field names Stack # stack of names of processed schemas
+--- @field models Stack # stack of models in processing
 GlobalContext = {}
 GlobalContext.__index = GlobalContext
 
 --- Constructor to create a new instance of the GlobalContext class.
 --- @return GlobalContext # A new instance of the GlobalContext class.
 function GlobalContext:new()
+    --- @class GlobalContext
     local instance = setmetatable({}, GlobalContext)
-    --- @type table<string,Model>
-    local models = {}
-    --- Children can send information to parents about they model name
-    --- @type string[]
-    local childrenModelNames = {}
-
-    --- Requiered properties for model
-    --- @type table<string,string[]>
-    local requiredProperties = {}
-
-    --- Method to add required properties for model
-    --- @param setter string # The name of the script who set the value.
-    --- @param modelName string # model name with required properties
-    --- @param modelRequiredProperties string[]|nil # Type of last parent
-    function GlobalContext:setRequiredProperties(setter, modelName, modelRequiredProperties)
-        requiredProperties[modelName] = modelRequiredProperties
-        print("\nCONTEXT <- [" ..
-            setter ..
-            "] add required properties list for model [" ..
-            modelName .. "] as [\n" .. tableToString(modelRequiredProperties) .. "\n]")
-    end
-
-    --- Method to get property required status
-    --- @param getter string # The name of the script who set the value.
-    --- @param modelName string # model name with required properties
-    --- @param propertyName string # Type of last parent
-    --- @return boolean # required property (true) or not (false)
-    function GlobalContext:isPropertyRequired(getter, modelName, propertyName)
-        local required = table.contains(requiredProperties[modelName], propertyName)
-        print("\nCONTEXT <- [" ..
-            getter ..
-            "] for model [" .. modelName .. "] and property [" ..
-            propertyName .. "] get required status as [" .. tostring(required) .. "]")
-        return required
-    end
-
-    --- Method to add last child model name
-    --- @param setter string # The name of the script who set the value.
-    --- @param modelName string # last model name of child
-    function GlobalContext:addLastChildrenModelName(setter, modelName)
-        table.insert(childrenModelNames, modelName)
-        print("\nCONTEXT <- [" ..
-            setter ..
-            "] add last model name as [" ..
-            modelName .. "] full chain after [\n" .. tableToString(childrenModelNames) .. "\n]")
-    end
-
-    --- Method to get last child model name
-    --- @param getter string # The name of the script who set the value.
-    --- @return string? # last child model name
-    function GlobalContext:getLastChildrenModelName(getter)
-        local lastChildModelName = childrenModelNames[#childrenModelNames]
-        print("\nCONTEXT -> [" ..
-            getter ..
-            "] get last model name as [" ..
-            lastChildModelName .. "] full chain is [\n" .. tableToString(childrenModelNames) .. "\n]")
-        return lastChildModelName
-    end
-
-    --- Method to drop last child model name
-    --- @param setter string # The name of the script who set the value.
-    function GlobalContext:dropLastChildrenModelName(setter)
-        local lastChildModelName = table.remove(childrenModelNames)
-        print("\nCONTEXT <- [" ..
-            setter ..
-            "] drop last children model name as [" ..
-            lastChildModelName .. "] full chain is [\n" .. tableToString(childrenModelNames) .. "\n]")
-    end
-
-    --- Method to add include to final model
-    --- @param setter string # The name of the script who set the value.
-    --- @param modelName string # Model name, function can be called for other model when current is not finished.
-    --- @param writeOperations WriteOperation[] # Collected by visitor write operation
-    function GlobalContext:addIncludes(setter, modelName, writeOperations)
-        if models[modelName] then
-            models[modelName]:addIncludes(writeOperations)
-        else
-            local model = Model.new()
-            model:addIncludes(writeOperations)
-            models[modelName] = model
-        end
-        print("\nCONTEXT <- [" ..
-            setter .. "] add include to model [" .. modelName .. "] as [\n" .. tableToString(writeOperations) .. "\n]")
-    end
-
-    --- Method to adapt include to new model
-    --- @param setter string # The name of the script who set the value.
-    --- @param modelName string # Model name, function can be called for other model when current is not finished.
-    --- @param writeOperations WriteOperation[] # Collected by visitor write operation
-    function GlobalContext:adaptIncludes(setter, modelName, writeOperations)
-        local adaptedWriteOperations = adaptWriteOperations(writeOperations, modelName)
-        if models[modelName] then
-            models[modelName]:addIncludes(adaptedWriteOperations)
-        else
-            local model = Model.new()
-            model:addIncludes(adaptedWriteOperations)
-            models[modelName] = model
-        end
-        print("\nCONTEXT <- [" ..
-            setter ..
-            "] adapted include to model [" .. modelName .. "] as [\n" .. tableToString(adaptedWriteOperations) .. "\n]")
-    end
-
-    --- Method to get includes of final model
-    --- @param getter string # The name of the script who get the value.
-    --- @param modelName string # Model name, function can be called for other model when current is not finished.
-    --- @return WriteOperation[] # Collected by visitor write operation
-    function GlobalContext:getIncludes(getter, modelName)
-        local includes = {}
-        if models[modelName] then
-            includes = models[modelName].includes
-        end
-        print("\nCONTEXT -> [" ..
-            getter .. "] get includes of model [" .. modelName .. "] as [\n" .. tableToString(includes) .. "\n]")
-        return includes
-    end
-
-    --- Method to add property to final model
-    --- @param setter string # The name of the script who set the value.
-    --- @param modelName string # Model name, function can be called for other model when current is not finished.
-    --- @param writeOperations WriteOperation[] # Collected by visitor write operation
-    function GlobalContext:addProperties(setter, modelName, writeOperations)
-        if models[modelName] then
-            models[modelName]:addProperties(writeOperations)
-        else
-            local model = Model.new()
-            model:addProperties(writeOperations)
-            models[modelName] = model
-        end
-        print("\nCONTEXT <- [" ..
-            setter .. "] add property to model [" .. modelName .. "] as [\n" .. tableToString(writeOperations) .. "\n]")
-    end
-
-    --- Method to adapting property to model with replacing target file name
-    --- @param setter string # The name of the script who set the value.
-    --- @param modelName string # Model name, function can be called for other model when current is not finished.
-    --- @param writeOperations WriteOperation[] # Collected by visitor write operation
-    function GlobalContext:adaptProperties(setter, modelName, writeOperations)
-        local adaptedWriteOperations = adaptWriteOperations(writeOperations, modelName)
-        if models[modelName] then
-            models[modelName]:addProperties(adaptedWriteOperations)
-        else
-            local model = Model.new()
-            model:addProperties(adaptedWriteOperations)
-            models[modelName] = model
-        end
-        print("\nCONTEXT <- [" ..
-            setter ..
-            "] adapt properties to model [" .. modelName .. "] as [\n" .. tableToString(adaptedWriteOperations) .. "\n]")
-    end
-
-    --- Method to get properties of model
-    --- @param getter string # The name of the script who get the value.
-    --- @param modelName string # Model name, function can be called for other model when current is not finished.
-    --- @return WriteOperation[] # Collected by visitor write operation
-    function GlobalContext:getProperties(getter, modelName)
-        local properties = {}
-        if models[modelName] then
-            properties = models[modelName].properties
-        end
-        print("\nCONTEXT -> [" ..
-            getter .. "] get properties of model [" .. modelName .. "] as [\n" .. tableToString(properties) .. "\n]")
-        return properties
-    end
-
-    --- Method to add method to final model
-    --- @param setter string # The name of the script who set the value.
-    --- @param modelName string # Model name, function can be called for other model when current is not finished.
-    --- @param writeOperations WriteOperation[] # Collected by visitor write operation
-    function GlobalContext:addMethods(setter, modelName, writeOperations)
-        if models[modelName] then
-            models[modelName]:addMethod(writeOperations)
-        else
-            local model = Model.new()
-            model:addMethod(writeOperations)
-            models[modelName] = model
-        end
-        print("\nCONTEXT <- [" ..
-            setter .. "] add method to model [" .. modelName .. "] as [\n" .. tableToString(writeOperations) .. "\n]")
-    end
-
-    --- Method to adapting method to new model name
-    --- @param setter string # The name of the script who set the value.
-    --- @param modelName string # Model name, function can be called for other model when current is not finished.
-    --- @param writeOperations WriteOperation[] # Collected by visitor write operation
-    function GlobalContext:adaptMethods(setter, modelName, writeOperations)
-        local adaptedWriteOperations = adaptWriteOperations(writeOperations, modelName)
-        if models[modelName] then
-            models[modelName]:addMethod(adaptedWriteOperations)
-        else
-            local model = Model.new()
-            model:addMethod(adaptedWriteOperations)
-            models[modelName] = model
-        end
-        print("\nCONTEXT <- [" ..
-            setter ..
-            "] adapted method to model [" .. modelName .. "] as [\n" .. tableToString(adaptedWriteOperations) .. "\n]")
-    end
-
-    --- Method to get methods of final model
-    --- @param getter string # The name of the script who get the value.
-    --- @param modelName string # Model name, function can be called for other model when current is not finished.
-    --- @return WriteOperation[] # Collected by visitor write operation
-    function GlobalContext:getMethods(getter, modelName)
-        local methods = {}
-        if models[modelName] then
-            methods = models[modelName].methods
-        end
-        print("\nCONTEXT -> [" ..
-            getter .. "] get methods of model [" .. modelName .. "] as [\n" .. tableToString(methods) .. "\n]")
-        return methods
-    end
-
-    --- Method to get collected model
-    --- @param getter string # The name of the script who get the value
-    --- @param modelName string # Required model name
-    --- @return Model? # collected model
-    function GlobalContext:getModel(getter, modelName)
-        print("\nCONTEXT -> [" ..
-            getter .. "] get model [" .. modelName .. "] as [\n" .. tableToString(models[modelName]) .. "\n]")
-        return models[modelName]
-    end
-
-    --- For instance, if we have already constructed this model, we can discard the old variant for new
-    --- processing. The translator attempts to reconstruct every reference from scratch.
-    --- @param getter string # The name of the script who get the value
-    --- @param modelName string # Required model name
-    function GlobalContext:dropModel(getter, modelName)
-        print("\nCONTEXT <- [" ..
-            getter .. "] drop model [" .. modelName .. "] with content [\n" .. tableToString(models[modelName]) .. "\n]")
-        models[modelName] = nil
-    end
-
+    --- @type Stack
+    instance.names = Stack.new("modelsNames")
+    --- @type Stack
+    instance.models = Stack.new("models")
     return instance
 end
 
@@ -831,7 +707,8 @@ end
 
 --- Print line
 function printBreak()
-    print("-----------------------")
+    print(
+        "-------------------------------------------------------------------------------------------------------------------")
 end
 
 --- Print table to console
@@ -950,10 +827,10 @@ function functionCallAndLog(funcName, mainFunc, beforeDecorator, afterDecorator)
             afterDecorator(...)
         end
         if type(result) == "table" then
-            print("    return = [table]")
+            print("RETURN <- [" .. funcName .. "] [table]")
             printTable(result, 8)
         else
-            print("    return = " .. tostring(result))
+            print("RETURN <- [" .. funcName .. "] " .. tostring(result))
         end
         return result
     end
@@ -969,6 +846,15 @@ WriteMode = {}
 WriteMode.APPEND = "APPEND"
 WriteMode.PREPEND = "PREPEND"
 WriteMode.REMOVE = "REMOVE"
+
+--- Enum emulation for predefined extensions
+--- @class Extensions
+--- @field MODEL_NAME string #
+--- @field PROPERTY_NAME string #
+Extensions = {}
+
+Extensions.MODEL_NAME = "x-ot-model-name"
+Extensions.PROPERTY_NAME = "x-ot-property-name"
 
 --- Script is an element of the visitor call chain
 --- @class Script
@@ -1254,11 +1140,6 @@ Script.VISIT_ANY_OF_END = "visitAnyOfEnd"
 --- userdata(nil) == null
 --- @class null
 
---- container for possible model names
---- @class ModelName
---- @field base string # The base name from OpenAPI
---- @field extended string|null # The extended name from x-ot-model-name, if present or special null value.
-
 --- Output text and target file name to write
 --- @class WriteOperation
 --- @field code string generated code
@@ -1338,81 +1219,156 @@ end
 --- to add elements to the model at any time (when they called), they are represented as separate lists
 --- of disk write operations. For example, before saving, we can sort our write operations based on
 --- certain criteria if needed.
---- @class Model
---- @field includes WriteOperation[]
---- @field properties WriteOperation[]
---- @field methods WriteOperation[]
-Model = {}
-Model.__index = Model
+--- @class ModelBase
+--- @field name string
+--- @field required string[]
+--- @field includes Stack
+--- @field properties Stack
+--- @field methods Stack
+ModelBase = {}
+ModelBase.__index = ModelBase
 
-function Model.new()
-    local instance = setmetatable({}, Model)
-    instance.includes = {}
-    instance.properties = {}
-    instance.methods = {}
+--- @param name string # name of model
+function ModelBase.new(name)
+    local instance = setmetatable({}, ModelBase)
+    instance.name = name
+    instance.required = {}
+    instance.includes = Stack.new(name .. "->includes")
+    instance.properties = Stack.new(name .. "->properties")
+    instance.methods = Stack.new(name .. "->methods")
     return instance
 end
 
+--- Method to get property required status
+--- @param propertyName string # Type of last parent
+--- @return boolean # required property (true) or not (false)
+function ModelBase:isPropertyRequired(propertyName)
+    local required = table.contains(self.required, propertyName)
+    print("\nCONTEXT <- for model [" .. self.name .. "] and property [" ..
+        propertyName .. "] get required status as [" .. tostring(required) .. "]")
+    return required
+end
+
+--- Method to include and adapt model
+--- @param model ModelBase #
+function ModelBase:includeModel(model)
+    self:adaptIncludes(model.includes.items)
+    self:adaptProperties(model.properties.items)
+    self:adaptMethods(model.methods.items)
+end
+
+--- Method to adapt includes to new model
 --- @param writeOperations WriteOperation[] # Collected by visitor write operation
-function Model:addIncludes(writeOperations)
-    self.includes = concatTables(self.includes, writeOperations)
+function ModelBase:adaptIncludes(writeOperations)
+    self.includes:pushAll(adaptWriteOperations(writeOperations, self.name))
 end
 
---- @return WriteOperation[] # Collected by visitor write operation
-function Model:getIncludes()
-    return self.includes
+--- Method to adapting properties to model with replacing target file name
+--- @param properties Property[] # Collected by visitor write operation
+function ModelBase:adaptProperties(properties)
+    for _, property in ipairs(properties) do
+        ---@type Property
+        local typedProperty = property
+        self.properties:push(typedProperty:adaptToModel(self.name))
+    end
 end
 
+--- Method to adapting method to new model name
 --- @param writeOperations WriteOperation[] # Collected by visitor write operation
-function Model:addProperties(writeOperations)
-    self.properties = concatTables(self.properties, writeOperations)
+function ModelBase:adaptMethods(writeOperations)
+    self.methods:pushAll(adaptWriteOperations(writeOperations, self.name))
 end
 
---- @return WriteOperation[] # Collected by visitor write operation
-function Model:getProperties()
-    return self.properties
-end
+--- Method to add model
+--- @param propertyName string|nil # Required model name
+--- @param extensions table<string,string> #
+--- @return Property # created property
+function ModelBase:addModelProperty(propertyName, extensions)
+    local name = extensions[Extensions.PROPERTY_NAME] or propertyName
 
---- @param writeOperations WriteOperation # Collected by visitor write operation
-function Model:addMethod(writeOperations)
-    self.methods = concatTables(self.methods, writeOperations)
-end
-
---- @return WriteOperation # Collected by visitor write operation
-function Model:getMethods()
-    return self.methods
-end
-
---- Function to get the value of the model name from x-ot-name property of schema if it exists, or the
---- `base` field otherwise and use it as model name.
---- @param modelName ModelName
---- @return string # model name
-local function getName(modelName)
-    local extendedModelName = modelName.extended
-    if extendedModelName == null then
-        return modelName.base
-    elseif type(extendedModelName) == "string" then -- just for compiler calm
-        return extendedModelName
-    else
-        error("Extended model name is null")
-    end
-end
-
---- Function to concatenate strings from array except last N
---- @param namesStack ModelName[] # model names chain
---- @return string|nil # conctatenated model names except last N
-local function concatenateExceptLastN(namesStack, n)
-    local length = #namesStack
-    if length - n <= 0 then
-        return nil
+    if not name then
+        error("Model name is missing: neither 'propertyName' nor '" ..
+        Extensions.PROPERTY_NAME .. "' in extensions is provided.")
     end
 
-    local result = ""
-    for i = 1, length - n do
-        result = result .. getName(namesStack[i])
+    --- @type Property
+    for _, item in ipairs(self.properties.items) do
+        if item.name == name then
+            error(string.format("Duplicate property name [%s]", name))
+        end
     end
 
-    return result
+    local property = Property.new(name)
+    self.properties:push(property)
+    return property
+end
+
+--- Method to adapting method to new model name
+--- @param clazz table # Class
+--- @return boolean # true if this model is instance of that class
+function ModelBase:instanceOf(clazz)
+    return getmetatable(self) == clazz
+end
+
+--- Collects all code from properties in the model
+--- @return WriteOperation[] # Array of code from all properties
+function ModelBase:collectAllPropertiesCode()
+    local allCode = {}
+    for _, property in ipairs(self.properties.items) do
+        for _, codeItem in ipairs(property.code.items) do
+            table.insert(allCode, codeItem)
+        end
+    end
+    return allCode
+end
+
+--- Derived class that inherits from BaseClass
+--- @class ObjectModel:ModelBase
+ObjectModel = setmetatable({}, { __index = ModelBase })
+ObjectModel.__index = ObjectModel
+
+--- @param name string
+--- @return ObjectModel
+function ObjectModel.new(name)
+    local instance = ModelBase.new(name)
+    setmetatable(instance, ObjectModel)
+    ---@type ObjectModel
+    return instance
+end
+
+--- Derived class that inherits from BaseClass
+--- @class AllOfModel:ModelBase
+AllOfModel = setmetatable({}, { __index = ModelBase })
+AllOfModel.__index = AllOfModel
+
+--- @param name string
+--- @return AllOfModel
+function AllOfModel.new(name)
+    local instance = ModelBase.new(name)
+    setmetatable(instance, AllOfModel)
+    ---@type AllOfModel
+    return instance
+end
+
+--- @class Property
+--- @field name string
+--- @field code Stack
+Property = {}
+Property.__index = Property
+
+function Property.new(name)
+    local instance = setmetatable({}, Property)
+    instance.name = name
+    instance.code = Stack.new("code")
+    return instance
+end
+
+--- @param modelName string # model name to adapt
+--- @return Property # adapted to other model name
+function Property:adaptToModel(modelName)
+    local adaptedProperty = Property.new(self.name)
+    adaptedProperty.code:pushAll(adaptWriteOperations(self.code.items, modelName))
+    return adaptedProperty
 end
 
 --- Replaces placeholders in the string with corresponding values from a table.
@@ -1424,45 +1380,6 @@ function interpolate(parameters, str)
     return (str:gsub("($%b{})", function(w) return parameters[w:sub(3, -2)] or w end))
 end
 
---- Function to get generic parent model name
---- @param namesStack ModelName[]
---- @return string|nil # parent model name
-function getParentModelName(namesStack)
-    local parentModelName = namesStack[#namesStack - 1]
-    if parentModelName == nil then
-        return nil
-    elseif parentModelName.extended == null then
-        return concatenateExceptLastN(namesStack, 1)
-    else
-        local extendedModelName = parentModelName.extended
-        if type(extendedModelName) == "string" then -- just for compiler calm
-            return extendedModelName
-        else
-            error("Extended model name for parent is null")
-        end
-    end
-end
-
---- Function to get generic Nth parent model name
---- @param namesStack ModelName[]
---- @param n integer # number of parent in stack
---- @return string # parent model name
-function getNthParentModelNameMandatory(namesStack, n)
-    local extendedModelName = namesStack[#namesStack - n].extended
-    if extendedModelName == null or extendedModelName == nil then
-        local parentModelName = concatenateExceptLastN(namesStack, n)
-        if parentModelName == nil then
-            error("Parent model name is null")
-        else
-            return parentModelName
-        end
-    elseif type(extendedModelName) == "string" then -- just for compiler calm
-        return extendedModelName
-    else
-        error("Extended model name for parent is null")
-    end
-end
-
 --- Function to get generic Nth parent model name
 --- @param callStack string[]
 --- @param n integer # number of parent in stack
@@ -1471,21 +1388,11 @@ function getNthFromEndCallerScriptType(callStack, n)
     return callStack[#callStack - n]
 end
 
---- Determines that there is a specified parent in the call chain
---- @param getter string # Caller function name
---- @param callStack string[] # An array of string constants.
---- @param allowedParents string[] # A list of constants to search for
---- @return boolean # if true then parent is found in call stack
-function hasSpecifiedParentsInCallChain(getter, callStack, allowedParents)
-    return findFirstMatchFromEnd(getter, callStack, allowedParents) ~= nil
-end
-
 --- Finds the first matching constant from the end of an array.
---- @param getter string # Caller function name
 --- @param stringsArray string[] # An array of string constants.
 --- @param searchList string[] # A list of constants to search for
 --- @return string|nil # The first found constant from `searchList`, or `nil` if none is found.
-function findFirstMatchFromEnd(getter, stringsArray, searchList)
+function findFirstMatchFromEnd(stringsArray, searchList)
     local searchSet = {}
     for _, const in ipairs(searchList) do
         searchSet[const] = true
@@ -1493,45 +1400,15 @@ function findFirstMatchFromEnd(getter, stringsArray, searchList)
 
     for i = #stringsArray, 1, -1 do
         if searchSet[stringsArray[i]] then
-            print("\nCALL -> [" ..
-                getter ..
-                "] get last string const as [" ..
+            print("\nCALL -> get last string const as [" ..
                 stringsArray[i] .. "] full strings array [\n" .. tableToString(stringsArray) .. "\n]")
             return stringsArray[i]
         end
     end
 
-    print("\nCALL -> [" ..
-        getter ..
-        "] get last string const as [nil] full strings array [\n" .. tableToString(stringsArray) .. "\n]")
+    print("\nCALL -> get last string const as [nil] full strings array [\n" .. tableToString(stringsArray) .. "\n]")
 
     return nil
-end
-
---- Function to get generic current model name or error
---- @param namesStack ModelName[]
---- @return string # current model name or error
-function getCurrentModelNameMandatory(namesStack)
-    local extendedModelName = namesStack[#namesStack].extended
-    if extendedModelName == null or extendedModelName == nil then
-        local currentModelName = concatenateExceptLastN(namesStack, 0)
-        if currentModelName == nil then
-            error("Current model name not found")
-        else
-            return currentModelName
-        end
-    elseif type(extendedModelName) == "string" then -- just for compiler calm
-        return extendedModelName
-    else
-        error("Extended model name for current model is null")
-    end
-end
-
---- Function to get current property name
---- @param namesStack ModelName[]
---- @return string # current property name
-function getCurrentPropertyNameMandatory(namesStack)
-    return getName(namesStack[#namesStack])
 end
 
 --- Removes leading spaces from a multiline string.
@@ -1614,20 +1491,31 @@ function concatTables(...)
     return result
 end
 
-function generateSimplePropertyCode(generatorName, parentModelName, currentPropertyName, propertyTypeName, requiredMarker,
-                                    requiredImport)
-    if global_context:isPropertyRequired(generatorName, parentModelName,
-            currentPropertyName) then
-        global_context:addIncludes(generatorName, parentModelName,
-            { WriteOperation.new_append(requiredImport, parentModelName) })
-        local code = string.format("    private %s %s %s;\n", requiredMarker, propertyTypeName, currentPropertyName);
-        global_context:addProperties(generatorName, parentModelName,
-            { WriteOperation.new_append(code, parentModelName) })
+--- @param model ModelBase
+--- @param type string
+--- @return WriteOperation[] # Returns the output code and  file name for writing code
+function addGenericPropertyCode(model, type)
+    if model == nil then
+        --- This is possible if a schema is constructed as a separate value;
+        --- such a schema is not a model but can be used as a reference in other schemas.
+        --- For example, you can add descriptions and other elements to it instead of copying them
+        --- within the specification. So, we simply don't need to do anything in this case.
+        print(type .. " property without parent skipt")
     else
-        local code = string.format("    private %s %s;\n", propertyTypeName, currentPropertyName);
-        global_context:addProperties(generatorName, parentModelName,
-            { WriteOperation.new_append(code, parentModelName) })
+        if model:instanceOf(ObjectModel) or model:instanceOf(AllOfModel) then
+            ---@type Property
+            local property = model.properties:element()
+            if model:isPropertyRequired(property.name) then
+                model.includes:push(WriteOperation.new_append("import javax.annotation.Nonnull;\n\n", model.name))
+                local code = string.format("    private @Nonnull %s %s;\n", type, property.name);
+                property.code:push(WriteOperation.new_append(code, model.name))
+            else
+                local code = string.format("    private %s %s;\n", type, property.name);
+                property.code:push(WriteOperation.new_append(code, model.name))
+            end
+        end
     end
+    return {}
 end
 
 --- Global variable containing parameters passed by the translator to the Lua code either from the OpenAPI

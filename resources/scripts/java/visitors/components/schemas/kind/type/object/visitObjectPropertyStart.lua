@@ -5,6 +5,9 @@
 --- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 function visitObjectPropertyStart(propertyName, schema, extensions, callsStack)
+    --- @type ModelBase
+    local model = global_context.models:element()
+    model:addModelProperty(propertyName, extensions)
     return {}
 end
 

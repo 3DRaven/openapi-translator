@@ -1,20 +1,13 @@
-local function getCollectedCode(currentModelName)
-    -- this object must to save self model
-    local model = global_context:getModel("visitObjectEnd", currentModelName)
-    if model == nil then
-        print("Model [" ..
-            currentModelName .. "] not found in global_context by [visitObjectEnd], generated empty object")
-        return { WriteOperation.new_append(string.format("public class %s {\n\n}\n", currentModelName),
-            currentModelName) }
-    else
-        return concatTables(
-            model.includes,
-            { WriteOperation.new_append(string.format("public class %s {\n\n", currentModelName),
-                currentModelName) },
-            model.properties,
-            model.methods,
-            { WriteOperation.new_append("\n}\n", currentModelName) })
-    end
+--- @param model ModelBase
+--- @return WriteOperation[] # final code
+local function getCollectedCode(model)
+    return concatTables(
+        model.includes.items,
+        { WriteOperation.new_append(string.format("public class %s {\n\n", model.name),
+            model.name) },
+        model:collectAllPropertiesCode(),
+        model.methods.items,
+        { WriteOperation.new_append("\n}\n", model.name) })
 end
 
 --- This visitor is invoked after all the content inside a schema of type object has been processed.
@@ -24,45 +17,26 @@ end
 --- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 function visitObjectEnd(objectDescriptor, extensions, callsStack)
-    local currentModelName = getCurrentModelNameMandatory(namesStack)
+    --- The endpoint for this visitor is either that the code will be saved to disk, or that
+    --- the model will be transferred to the parent, so we can immediately delete the current model.
+    --- @type ModelBase
+    local model = global_context.models:pop()
+    ---@type ModelBase?
+    local parentModel = global_context.models:peek()
 
-    local parentModelName = getParentModelName(namesStack)
     -- if this object has parent, it must save something to parent about it self
-    if parentModelName ~= nil then
-        -- this object must save it model name for parent if it exists
-        global_context:addLastChildrenModelName("visitObjectEnd", getCurrentModelNameMandatory(namesStack))
+    if parentModel ~= nil then
         -- For parent OBJECT we need to write property to it
-        if hasSpecifiedParentsInCallChain("visitObjectEnd",
-                callsStack,
-                { Script.OBJECT_PROPERTY_START }) then
-            local currentPropertyName = getCurrentPropertyNameMandatory(namesStack)
-            generateSimplePropertyCode("visitObjectEnd",
-                parentModelName,
-                currentPropertyName,
-                currentModelName,
-                "@Nonnull",
-                "import javax.annotation.Nonnull;\n\n"
-            )
-
-            return getCollectedCode(currentModelName)
-        elseif hasSpecifiedParentsInCallChain("visitObjectEnd", callsStack, { Script.ALL_OF_START }) then
+        if parentModel:instanceOf(ObjectModel) then
+            addGenericPropertyCode(parentModel, model.name)
+        elseif parentModel:instanceOf(AllOfModel) then
             --- If the parent is allOf, we need to place all created properties and other of this object into the parent.
-            local collectedProperties = global_context:getProperties("visitObjectEnd", currentModelName)
-            global_context:adaptProperties("visitObjectEnd", parentModelName, collectedProperties)
-            local collectedIncludes = global_context:getIncludes("visitObjectEnd", currentModelName)
-            global_context:adaptIncludes("visitObjectEnd", parentModelName, collectedIncludes)
-            local collectedMethods = global_context:getMethods("visitObjectEnd", currentModelName)
-            global_context:adaptMethods("visitObjectEnd", parentModelName, collectedMethods)
+            parentModel:includeModel(model)
+            return {}
         end
-    else
-        return getCollectedCode(currentModelName)
     end
 
-    return {}
+    return getCollectedCode(model)
 end
 
-local function beforeDecorator(namesStack)
-end
-
-
-return functionCallAndLog("visitObjectEnd", visitObjectEnd, beforeDecorator)
+return functionCallAndLog("visitObjectEnd", visitObjectEnd)

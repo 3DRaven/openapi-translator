@@ -266,7 +266,13 @@
         "visitExampleStart",
         "visitExampleEnd",
         "visitPostOperationEnd",
-        "visitRequestBodyEnd"
+        "visitRequestBodyEnd",
+        "pushCurrentModelName",
+        "selectModelName",
+        "selectPropertyName",
+        "selectSchemaName",
+        "addGenericProperty",
+        "addGenericPropertyCode"
     ],
     "terminal.integrated.scrollback": 16777216,
     "references.preferredLocation": "view",

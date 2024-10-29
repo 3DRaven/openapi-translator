@@ -43,18 +43,18 @@ components:
   schemas:
     Response:
       type: object
-      x-ot-name: Response
+      x-ot-model-name: Response
       required:
         - code
       properties:
         code:
           type: integer
         message:
-          type: string
+          type: integer
         inner_object:
           type: object
-          x-ot-name: InnerObject
+          x-ot-model-name: InnerObject
           properties:
             some_field:
-              x-ot-name: someField
+              x-ot-property-name: someField
               type: string

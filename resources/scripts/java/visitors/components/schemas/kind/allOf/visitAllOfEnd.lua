@@ -7,7 +7,7 @@ function visitAllOfEnd(schemas, extensions, callsStack)
     local currentModelName = getCurrentModelNameMandatory(namesStack)
 
     -- this "object" must to save self model
-    local model = global_context:getModel("visitAllOfEnd", currentModelName)
+    local model = global_context:getModelByName("visitAllOfEnd", currentModelName)
     if model == nil then
         error("Model for allOf not found")
     else

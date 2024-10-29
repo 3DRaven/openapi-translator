@@ -41,7 +41,7 @@ function visitArrayPropertyEnd(arrayDescriptor, extensions, callsStack)
             return { WriteOperation.new_append(code, currentModelName) }
         else -- if it is just property for object or additionalProperties we need to write some to parents
             if hasSpecifiedParentsInCallChain("visitArrayPropertyEnd",
-                    callsStack, { Script.OBJECT_START }) then
+                    callsStack, { Script.VISIT_OBJECT_START }) then
                 -- Adding the import at the beginning of the parent model file
                 global_context:addIncludes("visitArrayPropertyEnd", parentModelName,
                     { WriteOperation.new_append("import java.util.List;\n\n", parentModelName) })
@@ -55,7 +55,7 @@ function visitArrayPropertyEnd(arrayDescriptor, extensions, callsStack)
                 -- last children didn't droped because on visitObjectPropertyEnd it will be dropped
                 -- global_context:dropLastChildrenModelName("visitArrayPropertyEnd")
             elseif hasSpecifiedParentsInCallChain("visitArrayPropertyEnd",
-                    callsStack, { Script.ARRAY_PROPERTY_START, Script.OBJECT_ADDITIONAL_PROPERTIES_START }) then
+                    callsStack, { Script.VISIT_ARRAY_PROPERTY_START, Script.VISIT_ADDITIONAL_PROPERTIES_START }) then
                 -- additionalProperties with array with List<lastChildrenModelName>
                 local code = string.format("List<%s>", lastChildrenModelName);
                 -- last children used and it can be forgotten

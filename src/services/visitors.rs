@@ -708,24 +708,26 @@ pub fn visit_media_types(
     extensions: &IndexMap<String, serde_json::Value>,
     call_stack: &CallStack,
 ) -> Result<()> {
-    Script::VisitMediaTypesStart
-        .call_with_descriptor(out_path, &(media_types, extensions), call_stack)?
-        .and_then(|call_stack| {
-            media_types.iter().try_for_each(|media_type| {
-                visit_media_type(
-                    parsed_spec,
-                    out_path,
-                    media_type.0,
-                    media_type.1,
-                    call_stack,
-                )
-            })
-        })?;
-    Script::VisitMediaTypesEnd.call_with_descriptor(
-        out_path,
-        &(media_types, extensions),
-        call_stack,
-    )?;
+    if !media_types.is_empty() {
+        Script::VisitMediaTypesStart
+            .call_with_descriptor(out_path, &(media_types, extensions), call_stack)?
+            .and_then(|call_stack| {
+                media_types.iter().try_for_each(|media_type| {
+                    visit_media_type(
+                        parsed_spec,
+                        out_path,
+                        media_type.0,
+                        media_type.1,
+                        call_stack,
+                    )
+                })
+            })?;
+        Script::VisitMediaTypesEnd.call_with_descriptor(
+            out_path,
+            &(media_types, extensions),
+            call_stack,
+        )?;
+    }
     Ok(())
 }
 
@@ -767,14 +769,16 @@ pub fn visit_links(
     extensions: &IndexMap<String, serde_json::Value>,
     call_stack: &CallStack,
 ) -> Result<()> {
-    Script::VisitLinksStart
-        .call_with_descriptor(out_path, &(links, &extensions), call_stack)?
-        .and_then(|call_stack| {
-            links
-                .iter()
-                .try_for_each(|link| visit_link(parsed_spec, out_path, link.0, link.1, call_stack))
-        })?;
-    Script::VisitLinksEnd.call_with_descriptor(out_path, &(links, &extensions), call_stack)?;
+    if !links.is_empty() {
+        Script::VisitLinksStart
+            .call_with_descriptor(out_path, &(links, &extensions), call_stack)?
+            .and_then(|call_stack| {
+                links.iter().try_for_each(|link| {
+                    visit_link(parsed_spec, out_path, link.0, link.1, call_stack)
+                })
+            })?;
+        Script::VisitLinksEnd.call_with_descriptor(out_path, &(links, &extensions), call_stack)?;
+    }
     Ok(())
 }
 
@@ -2048,7 +2052,7 @@ pub fn visit_spec_components(
             })?;
         Script::VisitComponentsEnd.call_with_descriptor(
             out_path,
-            &(components, &components.extensions),
+            &(&components.extensions),
             call_stack,
         )?;
     }
@@ -2164,7 +2168,6 @@ pub fn visit_object_property<T>(
     out_path: &Path,
     property_name: &str,
     property_schema_ref: &ReferenceOr<T>,
-    extensions: &IndexMap<String, serde_json::Value>,
     call_stack: &CallStack,
 ) -> Result<()>
 where
@@ -2177,7 +2180,6 @@ where
                 out_path,
                 property_name,
                 references::resolve_reference::<T>(reference, parsed_spec)?,
-                extensions,
                 call_stack,
             )?;
             Ok(())
@@ -2186,7 +2188,11 @@ where
             let schema = schema.as_schema();
 
             Script::VisitObjectPropertyStart
-                .call_with_descriptor(out_path, &(property_name, schema, extensions), call_stack)?
+                .call_with_descriptor(
+                    out_path,
+                    &(property_name, schema, &schema.schema_data.extensions),
+                    call_stack,
+                )?
                 .and_then(|call_stack| {
                     visit_schema(
                         parsed_spec,
@@ -2198,7 +2204,7 @@ where
                 })?;
             Script::VisitObjectPropertyEnd.call_with_descriptor(
                 out_path,
-                &(property_name, schema, extensions),
+                &(property_name, schema, &schema.schema_data.extensions),
                 call_stack,
             )?;
             Ok(())
@@ -2230,7 +2236,6 @@ pub fn visit_object(
                                 out_path,
                                 local_property_name,
                                 property_schema_ref,
-                                extensions,
                                 call_stack,
                             )
                         },

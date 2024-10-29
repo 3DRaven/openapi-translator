@@ -5,16 +5,16 @@
 --- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 function visitObjectStart(objectDescriptor, extensions, callsStack)
-    --- When we begin processing an object, the model might already exist because, each time a
+    --- When we begin processing an schema, the model might already exist because, each time a
     --- reference is encountered in the specification, the translator starts constructing the model
     --- from scratch. However, the actual text that the reference points to is read only once and cached.
-    local currentModelName = getCurrentModelNameMandatory(namesStack)
-    global_context:dropModel("visitObjectStart", currentModelName)
-    global_context:setRequiredProperties("visitObjectStart", currentModelName, objectDescriptor.required)
-    return { WriteOperation.new_remove(currentModelName) }
+    local model = ObjectModel.new(global_context.names:element())
+    model.required = objectDescriptor.required
+    global_context.models:push(model)
+    return { WriteOperation.new_remove(model.name) }
 end
 
-local function beforeDecorator(namesStack)
+local function beforeDecorator()
 end
 
 return functionCallAndLog("visitObjectStart", visitObjectStart, beforeDecorator)
