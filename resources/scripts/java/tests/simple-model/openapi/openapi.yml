@@ -50,6 +50,8 @@ components:
           x-ot-code-before:
             - import: import org.springframework.beans.factory.annotation.Value;
               code: "@Value"
+            - import: import org.springframework.beans.factory.annotation.Autowired;
+              code: "@Autowired"
           type: string
         another_field:
           type: string

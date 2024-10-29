@@ -1559,9 +1559,9 @@ function addGenericPropertyCode(model, type, extensions)
                     end
                     local code = it[Extensions.CODE]
                     if codeBefore == nil and code then
-                        codeBefore = code .. "\n"
+                        codeBefore = "    " .. code .. "\n"
                     elseif codeBefore ~= nil and code then
-                        codeBefore = codeBefore .. code .. "\n"
+                        codeBefore = codeBefore .. "    " .. code .. "\n"
                     end
                 end
             end
@@ -1576,7 +1576,7 @@ function addGenericPropertyCode(model, type, extensions)
             end
 
             ---@type string
-            local code = string.format("    %s\n    private %s %s %s;\n", codeBefore or "", requiredMarker or "", type,
+            local code = string.format("%s\n    private %s %s %s;\n", codeBefore or "", requiredMarker or "", type,
                 property.name);
 
             property.code:push(WriteOperation.new_append(code, model.name))
