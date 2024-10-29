@@ -1550,12 +1550,20 @@ function addGenericPropertyCode(model, type, extensions)
         if model:instanceOf(ObjectModel) or model:instanceOf(AllOfModel) then
             local codeExtension = extensions[Extensions.CODE_BEFORE]
             local codeBefore = nil
+
             if codeExtension ~= nil then
-                local import = codeExtension[Extensions.IMPORT]
-                if import ~= nil then
-                    model.includes:push(WriteOperation.new_append(import .. "\n", model.name))
+                for _, it in ipairs(codeExtension) do
+                    local import = it[Extensions.IMPORT]
+                    if import ~= nil then
+                        model.includes:push(WriteOperation.new_append(import .. "\n", model.name))
+                    end
+                    local code = it[Extensions.CODE]
+                    if codeBefore == nil and code then
+                        codeBefore = code .. "\n"
+                    elseif codeBefore ~= nil and code then
+                        codeBefore = codeBefore .. code .. "\n"
+                    end
                 end
-                codeBefore = codeExtension[Extensions.CODE]
             end
 
             local requiredMarker
