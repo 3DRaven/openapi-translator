@@ -1,6 +1,17 @@
 --- This section contains all global functions and variables that are created before the visitors
 --- start working.
 
+--- Global variable containing parameters passed by the translator to the Lua code either from the OpenAPI
+--- specification (x-ot-target-parameters extension) or from command line parameters.
+--- Command line parameters take precedence over API specification parameters.
+--- This construction is used solely to inform the Lua language server
+--- about the existence of the global variable for convenience when writing scripts.
+--- variable already set by Rust code
+if false then
+    ---@type any|null|nil # The type depends on how the parameters are specified in the command line or OpenAPI specification
+    targetParameters = nil
+end
+
 --- TYPES -----------------------------------------------------------------------------------------------
 
 --- It is a special predefined global value similar to nil. However, it
@@ -1444,37 +1455,6 @@ function interpolate(parameters, str)
     return (str:gsub("($%b{})", function(w) return parameters[w:sub(3, -2)] or w end))
 end
 
---- Function to get generic Nth parent model name
---- @param callStack string[]
---- @param n integer # number of parent in stack
---- @return string # parent model name
-function getNthFromEndCallerScriptType(callStack, n)
-    return callStack[#callStack - n]
-end
-
---- Finds the first matching constant from the end of an array.
---- @param stringsArray string[] # An array of string constants.
---- @param searchList string[] # A list of constants to search for
---- @return string|nil # The first found constant from `searchList`, or `nil` if none is found.
-function findFirstMatchFromEnd(stringsArray, searchList)
-    local searchSet = {}
-    for _, const in ipairs(searchList) do
-        searchSet[const] = true
-    end
-
-    for i = #stringsArray, 1, -1 do
-        if searchSet[stringsArray[i]] then
-            print("\nCALL -> get last string const as [" ..
-                stringsArray[i] .. "] full strings array [\n" .. tableToString(stringsArray) .. "\n]")
-            return stringsArray[i]
-        end
-    end
-
-    print("\nCALL -> get last string const as [nil] full strings array [\n" .. tableToString(stringsArray) .. "\n]")
-
-    return nil
-end
-
 --- Removes leading spaces from a multiline string.
 --- Finds the minimum number of leading spaces present across all lines and removes that amount of spaces
 --- from the beginning of each line (as kotlin trimIndent()).
@@ -1583,7 +1563,7 @@ function addGenericPropertyCode(model, type, extensions)
             ---@type Property
             local property = model.properties:element()
             if model:isPropertyRequired(property.name) then
-                model.includes:push(WriteOperation.new_append("import javax.annotation.Nonnull;\n", model.name))
+                model.includes:push(WriteOperation.new_prepend("import javax.annotation.Nonnull;\n", model.name))
                 requiredMarker = "@Nonnull"
             end
 
@@ -1597,17 +1577,6 @@ function addGenericPropertyCode(model, type, extensions)
         end
     end
     return {}
-end
-
---- Global variable containing parameters passed by the translator to the Lua code either from the OpenAPI
---- specification or from command line parameters.
---- Command line parameters take precedence over API specification parameters.
---- This construction is used solely to inform the Lua language server
---- about the existence of the global variable for convenience when writing scripts.
---- variable already set by Rust code
-if false then
-    ---@type any|null|nil # The type depends on how the parameters are specified in the command line or OpenAPI specification
-    targetParameters = nil
 end
 
 --- This script is called first, at the beginning of all processing. It outputs the value of all parameters
