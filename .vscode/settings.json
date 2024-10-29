@@ -272,7 +272,8 @@
         "selectPropertyName",
         "selectSchemaName",
         "addGenericProperty",
-        "addGenericPropertyCode"
+        "addGenericPropertyCode",
+        "selectName"
     ],
     "terminal.integrated.scrollback": 16777216,
     "references.preferredLocation": "view",

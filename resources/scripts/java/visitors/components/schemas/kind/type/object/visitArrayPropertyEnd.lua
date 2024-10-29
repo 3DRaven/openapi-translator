@@ -7,18 +7,18 @@
 --- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 function visitArrayPropertyEnd(arrayDescriptor, extensions, callsStack)
-    local parentModel = global_context.models:penultimate()
     --- @type ModelBase
-    local model = global_context.models:element()
-    local property = model.properties:element()
-    local lastChildrenModelName = global_context:getLastChildrenModelName("visitArrayPropertyEnd")
+    local childModel = global_context.models:pop()
+    --- @type ModelBase?
+    local currentModel = global_context.models:peek()
 
-    if lastChildrenModelName == nil then
+    if childModel.name == nil then
         error("Unknown model for items")
     else
         -- if it is root object as array we must generate full model
-        if parentModel == nil then
-            local parameters = { className = model, childClassName = lastChildrenModelName }
+        if currentModel == nil then
+            local arrayModelName = global_context.names:element()
+            local parameters = { className = arrayModelName, childClassName = childModel.name }
 
             local code = interpolate(parameters, formatAndTrimIndent([[
             import java.util.List;
@@ -37,32 +37,20 @@ function visitArrayPropertyEnd(arrayDescriptor, extensions, callsStack)
                 }
             }
             ]]))
-            -- last children used and it can be forgotten
-            global_context:dropLastChildrenModelName("visitArrayPropertyEnd")
-            return { WriteOperation.new_append(code, model) }
+            return { WriteOperation.new_append(code, arrayModelName) }
         else -- if it is just property for object or additionalProperties we need to write some to parents
-            if hasSpecifiedParentsInCallChain("visitArrayPropertyEnd",
-                    callsStack, { Script.VISIT_OBJECT_START }) then
+            if currentModel:instanceOf(ObjectModel) then
+                --- @type Property
+                local property = currentModel.properties:element()
                 -- Adding the import at the beginning of the parent model file
-                global_context:addIncludes("visitArrayPropertyEnd", parentModel,
-                    { WriteOperation.new_append("import java.util.List;\n\n", parentModel) })
-
+                currentModel:adaptToIncludes({ WriteOperation.new_append("import java.util.List;\n\n", currentModel.name) })
                 local code = string.format("    private List<%s> %s = new List<>();\n",
-                    lastChildrenModelName, property);
-
-                global_context:addProperties("visitArrayPropertyEnd", parentModel,
-                    { WriteOperation.new_append(code, parentModel) })
-
-                -- last children didn't droped because on visitObjectPropertyEnd it will be dropped
-                -- global_context:dropLastChildrenModelName("visitArrayPropertyEnd")
-            elseif hasSpecifiedParentsInCallChain("visitArrayPropertyEnd",
-                    callsStack, { Script.VISIT_ARRAY_PROPERTY_START, Script.VISIT_ADDITIONAL_PROPERTIES_START }) then
+                    childModel.name, property.name);
+                currentModel:adaptToLastProperty({ WriteOperation.new_append(code, currentModel.name) })
+            elseif currentModel:instanceOf(TypeTransferModel) then
                 -- additionalProperties with array with List<lastChildrenModelName>
-                local code = string.format("List<%s>", lastChildrenModelName);
-                -- last children used and it can be forgotten
-                global_context:dropLastChildrenModelName("visitArrayPropertyEnd")
                 -- now for parent we child with model List<lastChildrenModelName>
-                global_context:addLastChildrenModelName("visitArrayPropertyEnd", code)
+                currentModel.name = "List<" .. childModel.name .. ">"
             end
             return {}
         end

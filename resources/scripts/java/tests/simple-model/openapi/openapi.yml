@@ -26,12 +26,14 @@ paths:
           description: Bad request response
           content:
             application/json:
+              x-ot-model-name: BadRequestResponse
               schema:
-                $ref: "#/components/schemas/Response"
+                $ref: "#/components/schemas/FreeForm"
         "200":
           description: Successful response
           content:
             application/json:
+              x-ot-model-name: SuccessResponse
               schema:
                 $ref: "#/components/schemas/Response"
 
@@ -41,17 +43,26 @@ components:
       type: http
       scheme: basic
   schemas:
+    FreeForm:
+      type: object
+      additionalProperties: true
     Response:
       type: object
-      x-ot-model-name: Response
       required:
         - code
       properties:
-        # simple_array:
-        #   type: array
-        #   x-ot-property-name: simpleArray
-        #   items:
-        #     type: string
+        simple_array:
+          type: array
+          x-ot-property-name: simpleArray
+          items:
+            type: string
+        inner_array:
+          type: array
+          x-ot-property-name: innerArray
+          items:
+            type: array
+            items:
+              type: string
         code:
           type: integer
         message:

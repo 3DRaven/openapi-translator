@@ -7,13 +7,9 @@
 --- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 function visitArrayPropertyStart(arrayDescriptor, extensions, callsStack)
-    -- local parentModel = global_context.models:penultimate()
-    -- -- if it is root object as array we must clean old variant of it model
-    -- if parentModel == nil then
-    --     return { WriteOperation.new_remove(parentModel.name) }
-    -- else
+    -- This is a temporary model for collecting information about the schemas inside the array
+    global_context.models:push(TypeTransferModel.new("unknown-items"))
     return {}
-    -- end
 end
 
 local function beforeDecorator()

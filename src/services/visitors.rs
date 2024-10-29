@@ -946,18 +946,12 @@ pub fn visit_media_type(
     Script::VisitMediaTypeStart
         .call_with_descriptor(
             out_path,
-            &(&media_type_name, &media_type.extensions),
+            &(&media_type_name, media_type, &media_type.extensions),
             call_stack,
         )?
         .and_then(|call_stack| {
             if let Some(schema_ref) = &media_type.schema {
-                visit_schema(
-                    parsed_spec,
-                    out_path,
-                    Some(media_type_name),
-                    schema_ref,
-                    call_stack,
-                )?;
+                visit_schema(parsed_spec, out_path, None, schema_ref, call_stack)?;
             }
 
             visit_generic_example(
@@ -987,7 +981,7 @@ pub fn visit_media_type(
         .and_then(|call_stack| {
             Script::VisitMediaTypeEnd.call_with_descriptor(
                 out_path,
-                &(&media_type_name, &media_type.extensions),
+                &(&media_type_name, media_type, &media_type.extensions),
                 call_stack,
             )?;
             Ok(())
@@ -1446,21 +1440,23 @@ pub fn visit_paths(
     paths: &Paths,
     call_stack: &CallStack,
 ) -> Result<()> {
-    Script::VisitPathsStart
-        .call_with_descriptor(out_path, &(&paths, &paths.extensions), call_stack)?
-        .and_then(|call_stack| {
-            paths.paths.iter().try_for_each(|it| {
-                visit_path_item_ref(parsed_spec, out_path, it.0, it.1, call_stack)
-            })
-        })?
-        .and_then(|call_stack| {
-            Script::VisitPathsEnd.call_with_descriptor(
-                out_path,
-                &(&paths, &paths.extensions),
-                call_stack,
-            )?;
-            Ok(())
-        })?;
+    if !paths.paths.is_empty() {
+        Script::VisitPathsStart
+            .call_with_descriptor(out_path, &(&paths, &paths.extensions), call_stack)?
+            .and_then(|call_stack| {
+                paths.paths.iter().try_for_each(|it| {
+                    visit_path_item_ref(parsed_spec, out_path, it.0, it.1, call_stack)
+                })
+            })?
+            .and_then(|call_stack| {
+                Script::VisitPathsEnd.call_with_descriptor(
+                    out_path,
+                    &(&paths, &paths.extensions),
+                    call_stack,
+                )?;
+                Ok(())
+            })?;
+    }
     Ok(())
 }
 
@@ -2371,34 +2367,36 @@ pub fn visit_object(
     Script::VisitObjectStart
         .call_with_descriptor(out_path, &(object_description, extensions), call_stack)?
         .and_then(|call_stack| {
-            Script::VisitObjectPropertiesStart
-                .call_with_descriptor(
-                    out_path,
-                    &(&object_description.properties, extensions),
-                    call_stack,
-                )?
-                .and_then(|call_stack| {
-                    object_description.properties.iter().try_for_each(
-                        |(local_property_name, property_schema_ref)| -> Result<()> {
-                            visit_object_property(
-                                parsed_spec,
-                                out_path,
-                                local_property_name,
-                                property_schema_ref,
-                                call_stack,
-                            )
-                        },
-                    )?;
-                    Ok(())
-                })?
-                .and_then(|call_stack| {
-                    Script::VisitObjectPropertiesEnd.call_with_descriptor(
+            if !object_description.properties.is_empty() {
+                Script::VisitObjectPropertiesStart
+                    .call_with_descriptor(
                         out_path,
                         &(&object_description.properties, extensions),
                         call_stack,
-                    )?;
-                    Ok(())
-                })?;
+                    )?
+                    .and_then(|call_stack| {
+                        object_description.properties.iter().try_for_each(
+                            |(local_property_name, property_schema_ref)| -> Result<()> {
+                                visit_object_property(
+                                    parsed_spec,
+                                    out_path,
+                                    local_property_name,
+                                    property_schema_ref,
+                                    call_stack,
+                                )
+                            },
+                        )?;
+                        Ok(())
+                    })?
+                    .and_then(|call_stack| {
+                        Script::VisitObjectPropertiesEnd.call_with_descriptor(
+                            out_path,
+                            &(&object_description.properties, extensions),
+                            call_stack,
+                        )?;
+                        Ok(())
+                    })?;
+            }
 
             if let Some(it) = object_description.additional_properties.as_ref() {
                 match it {

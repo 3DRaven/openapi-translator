@@ -2,7 +2,7 @@ import javax.annotation.Nonnull;
 
 import java.util.List;
 
-public class Response {
+public class SuccessResponse {
 
     private @Nonnull Integer code;
     private List<List<String>> innerArray = new List<>();

@@ -2,10 +2,15 @@
 --- start working.
 
 --- TYPES -----------------------------------------------------------------------------------------------
+
+--- It is a special predefined global value similar to nil. However, it
+--- specifically used for data passed from the translator (Rust code) that has a nil value.
+--- userdata(nil) == null
+--- @class null
+
 --- The description of incoming types is automatically generated based on the Rust structures.
 --- They represent an approximate content of the structures; for example, since Lua does not have Enums,
 --- a string will be used in place of fields.
-
 
 --- Represents a set of reusable components for different aspects of the OpenAPI Specification (OAS).
 --- All objects defined within the components will not impact the API unless they are explicitly referenced
@@ -856,6 +861,27 @@ Extensions = {}
 Extensions.MODEL_NAME = "x-ot-model-name"
 Extensions.PROPERTY_NAME = "x-ot-property-name"
 
+---select first not null or nill value
+---@param first string|null # it possible be null too
+---@param second string|null # it possible be null too
+---@return string|nil
+function getName(first, second)
+    ---@type string|nil
+    local nilableFirst = nil
+    ---@type string|nil
+    local nillableSecond = nil
+    if first ~= null then
+        ---@diagnostic disable-next-line: cast-local-type
+        nilableFirst = first
+    end
+    if second ~= null then
+        ---@diagnostic disable-next-line: cast-local-type
+        nillableSecond = second
+    end
+    ---@diagnostic disable-next-line: return-type-mismatch
+    return nilableFirst or nillableSecond
+end
+
 --- Script is an element of the visitor call chain
 --- @class Script
 --- @field PRELUDE string
@@ -1135,11 +1161,6 @@ Script.VISIT_ALL_OF_END = "visitAllOfEnd"
 Script.VISIT_ANY_OF_START = "visitAnyOfStart"
 Script.VISIT_ANY_OF_END = "visitAnyOfEnd"
 
---- It is a special predefined global value similar to nil. However, it
---- specifically used for data passed from the translator (Rust code) that has a nil value.
---- userdata(nil) == null
---- @class null
-
 --- Output text and target file name to write
 --- @class WriteOperation
 --- @field code string generated code
@@ -1252,20 +1273,43 @@ end
 --- Method to include and adapt model
 --- @param model ModelBase #
 function ModelBase:includeModel(model)
-    self:adaptIncludes(model.includes.items)
-    self:adaptProperties(model.properties.items)
-    self:adaptMethods(model.methods.items)
+    self:adaptToIncludes(model.includes.items)
+    self:adaptToProperties(model.properties.items)
+    self:adaptToMethods(model.methods.items)
 end
 
 --- Method to adapt includes to new model
 --- @param writeOperations WriteOperation[] # Collected by visitor write operation
-function ModelBase:adaptIncludes(writeOperations)
+--- @return boolean # true if new code added to model false if code already in model
+function ModelBase:adaptToIncludes(writeOperations)
+    local lookup = {}
+    for _, operation in ipairs(writeOperations) do
+        lookup[operation.code] = true
+    end
+
+    for _, item in ipairs(self.includes.items) do
+        ---@type WriteOperation
+        local typedItem = item
+        if lookup[typedItem.code] then
+            print("Already added include, skip")
+            return false
+        end
+    end
     self.includes:pushAll(adaptWriteOperations(writeOperations, self.name))
+    return true
+end
+
+--- Method to adapt write operations to new model for last added property
+--- @param writeOperations WriteOperation[] # Collected by visitor write operation
+function ModelBase:adaptToLastProperty(writeOperations)
+    ---@type Property
+    local property = self.properties:element()
+    property.code:pushAll(adaptWriteOperations(writeOperations, self.name))
 end
 
 --- Method to adapting properties to model with replacing target file name
 --- @param properties Property[] # Collected by visitor write operation
-function ModelBase:adaptProperties(properties)
+function ModelBase:adaptToProperties(properties)
     for _, property in ipairs(properties) do
         ---@type Property
         local typedProperty = property
@@ -1275,7 +1319,7 @@ end
 
 --- Method to adapting method to new model name
 --- @param writeOperations WriteOperation[] # Collected by visitor write operation
-function ModelBase:adaptMethods(writeOperations)
+function ModelBase:adaptToMethods(writeOperations)
     self.methods:pushAll(adaptWriteOperations(writeOperations, self.name))
 end
 
@@ -1288,7 +1332,7 @@ function ModelBase:addModelProperty(propertyName, extensions)
 
     if not name then
         error("Model name is missing: neither 'propertyName' nor '" ..
-        Extensions.PROPERTY_NAME .. "' in extensions is provided.")
+            Extensions.PROPERTY_NAME .. "' in extensions is provided.")
     end
 
     --- @type Property
@@ -1333,6 +1377,20 @@ function ObjectModel.new(name)
     local instance = ModelBase.new(name)
     setmetatable(instance, ObjectModel)
     ---@type ObjectModel
+    return instance
+end
+
+--- Derived class that inherits from BaseClass
+--- @class TypeTransferModel:ModelBase
+TypeTransferModel = setmetatable({}, { __index = ModelBase })
+TypeTransferModel.__index = TypeTransferModel
+
+--- @param name string
+--- @return TypeTransferModel
+function TypeTransferModel.new(name)
+    local instance = ModelBase.new(name)
+    setmetatable(instance, TypeTransferModel)
+    ---@type TypeTransferModel
     return instance
 end
 
@@ -1513,6 +1571,8 @@ function addGenericPropertyCode(model, type)
                 local code = string.format("    private %s %s;\n", type, property.name);
                 property.code:push(WriteOperation.new_append(code, model.name))
             end
+        elseif model:instanceOf(TypeTransferModel) then
+            model.name = type
         end
     end
     return {}

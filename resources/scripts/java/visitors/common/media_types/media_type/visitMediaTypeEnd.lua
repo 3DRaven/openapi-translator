@@ -5,6 +5,7 @@
 --- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 function visitMediaTypeEnd(mediaTypeName, mediaType, extensions, callsStack)
+    global_context.names:pop()
     return {}
 end
 

@@ -8,19 +8,20 @@
 --- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 function visitAdditionalPropertiesAny(flag, minProperties, maxProperties, extensions, callsStack)
-    local parentModelName = getParentModelName(namesStack)
-    if parentModelName == nil then
+    --- @type ModelBase
+    local currentModel = global_context.models:element()
+    if currentModel == nil then
         error("additionalProperties with type any without parent")
     else
         -- Adding the import at the beginning of the parent model file
-        global_context:addIncludes("visitAdditionalPropertiesAny", parentModelName,
-            { WriteOperation.new_prepend("import java.util.concurrent.ConcurrentHashMap;\n\n", parentModelName) })
-
+        currentModel:adaptToIncludes({ WriteOperation.new_prepend("import java.util.concurrent.ConcurrentHashMap;\n\n",
+            currentModel.name) })
+        local propertyName = "additionalProperties"
         local code = string.format("    private ConcurrentHashMap<String,Object> %s = new ConcurrentHashMap<>();\n",
-            getCurrentPropertyNameMandatory(namesStack));
+            propertyName);
 
-        global_context:addProperties("visitAdditionalPropertiesAny", parentModelName,
-            { WriteOperation.new_append(code, parentModelName) })
+        currentModel:addModelProperty(propertyName, extensions)
+        currentModel:adaptToLastProperty({ WriteOperation.new_append(code, currentModel.name) })
     end
     return {}
 end
