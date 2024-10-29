@@ -47,6 +47,11 @@ components:
       required:
         - code
       properties:
+        # simple_array:
+        #   type: array
+        #   x-ot-property-name: simpleArray
+        #   items:
+        #     type: string
         code:
           type: integer
         message:

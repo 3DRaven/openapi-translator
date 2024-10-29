@@ -7,17 +7,18 @@
 --- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 function visitArrayPropertyEnd(arrayDescriptor, extensions, callsStack)
-    local parentModelName = getParentModelName(namesStack)
-    local currentModelName = getCurrentModelNameMandatory(namesStack)
-    local currentPropertyName = getCurrentPropertyNameMandatory(namesStack)
+    local parentModel = global_context.models:penultimate()
+    --- @type ModelBase
+    local model = global_context.models:element()
+    local property = model.properties:element()
     local lastChildrenModelName = global_context:getLastChildrenModelName("visitArrayPropertyEnd")
 
     if lastChildrenModelName == nil then
         error("Unknown model for items")
     else
         -- if it is root object as array we must generate full model
-        if parentModelName == nil then
-            local parameters = { className = currentModelName, childClassName = lastChildrenModelName }
+        if parentModel == nil then
+            local parameters = { className = model, childClassName = lastChildrenModelName }
 
             local code = interpolate(parameters, formatAndTrimIndent([[
             import java.util.List;
@@ -38,19 +39,19 @@ function visitArrayPropertyEnd(arrayDescriptor, extensions, callsStack)
             ]]))
             -- last children used and it can be forgotten
             global_context:dropLastChildrenModelName("visitArrayPropertyEnd")
-            return { WriteOperation.new_append(code, currentModelName) }
+            return { WriteOperation.new_append(code, model) }
         else -- if it is just property for object or additionalProperties we need to write some to parents
             if hasSpecifiedParentsInCallChain("visitArrayPropertyEnd",
                     callsStack, { Script.VISIT_OBJECT_START }) then
                 -- Adding the import at the beginning of the parent model file
-                global_context:addIncludes("visitArrayPropertyEnd", parentModelName,
-                    { WriteOperation.new_append("import java.util.List;\n\n", parentModelName) })
+                global_context:addIncludes("visitArrayPropertyEnd", parentModel,
+                    { WriteOperation.new_append("import java.util.List;\n\n", parentModel) })
 
                 local code = string.format("    private List<%s> %s = new List<>();\n",
-                    lastChildrenModelName, currentPropertyName);
+                    lastChildrenModelName, property);
 
-                global_context:addProperties("visitArrayPropertyEnd", parentModelName,
-                    { WriteOperation.new_append(code, parentModelName) })
+                global_context:addProperties("visitArrayPropertyEnd", parentModel,
+                    { WriteOperation.new_append(code, parentModel) })
 
                 -- last children didn't droped because on visitObjectPropertyEnd it will be dropped
                 -- global_context:dropLastChildrenModelName("visitArrayPropertyEnd")

@@ -92,13 +92,15 @@ pub fn visit_command(command: &Commands) -> Result<()> {
                 visit_external_docs(out_path, &openapi.external_docs, call_stack)?;
                 visit_spec_components(&parsed_spec, out_path, &openapi.components, call_stack)?;
                 Ok(())
+            })?
+            .and_then(|call_stack| {
+                Script::VisitSpecEnd.call_with_descriptor(
+                    out_path,
+                    &(&openapi.openapi, &openapi.extensions),
+                    call_stack,
+                )?;
+                Ok(())
             })?;
-
-        Script::VisitSpecEnd.call_with_descriptor(
-            out_path,
-            &(&openapi.openapi, &openapi.extensions),
-            call_stack,
-        )?;
 
         if let Some(expected_path) = expected {
             assert_diff(out_path, expected_path)?
@@ -122,13 +124,15 @@ where
 {
     Script::VisitPropertyNotStart
         .call_with_descriptor(out_path, &(schema_ref, extensions), call_stack)?
-        .and_then(|it| visit_schema(parsed_spec, out_path, None, schema_ref, it))?;
-    Script::VisitPropertyNotEnd.call_with_descriptor(
-        out_path,
-        &(schema_ref, extensions),
-        call_stack,
-    )?;
-
+        .and_then(|it| visit_schema(parsed_spec, out_path, None, schema_ref, it))?
+        .and_then(|call_stack| {
+            Script::VisitPropertyNotEnd.call_with_descriptor(
+                out_path,
+                &(schema_ref, extensions),
+                call_stack,
+            )?;
+            Ok(())
+        })?;
     Ok(())
 }
 
@@ -225,12 +229,15 @@ where
                             visit_any_schema(out_path, any_schema, schema_extensions, it)
                         }
                     }
+                })?
+                .and_then(|call_stack| {
+                    Script::VisitSchemaEnd.call_with_descriptor(
+                        out_path,
+                        &(schema_name, schema_data, schema_extensions),
+                        call_stack,
+                    )?;
+                    Ok(())
                 })?;
-            Script::VisitSchemaEnd.call_with_descriptor(
-                out_path,
-                &(schema_name, schema_data, schema_extensions),
-                call_stack,
-            )?;
         }
     }
     Ok(())
@@ -287,12 +294,15 @@ pub fn visit_response(
                         call_stack,
                     )?;
                     Ok(())
+                })?
+                .and_then(|call_stack| {
+                    Script::VisitResponseEnd.call_with_descriptor(
+                        out_path,
+                        &(response_name, response, response_extensions),
+                        call_stack,
+                    )?;
+                    Ok(())
                 })?;
-            Script::VisitResponseEnd.call_with_descriptor(
-                out_path,
-                &(response_name, response, response_extensions),
-                call_stack,
-            )?;
         }
     }
     Ok(())
@@ -372,12 +382,15 @@ pub fn visit_array(
                 visit_schema(parsed_spec, out_path, None, it, call_stack)?;
             }
             Ok(())
+        })?
+        .and_then(|call_stack| {
+            Script::VisitArrayPropertyEnd.call_with_descriptor(
+                out_path,
+                &(array_descriptor, extensions),
+                call_stack,
+            )?;
+            Ok(())
         })?;
-    Script::VisitArrayPropertyEnd.call_with_descriptor(
-        out_path,
-        &(array_descriptor, extensions),
-        call_stack,
-    )?;
     Ok(())
 }
 
@@ -409,8 +422,15 @@ pub fn visit_one_of(
                 schemas
                     .iter()
                     .try_for_each(|it| visit_schema(parsed_spec, out_path, None, it, call_stack))
+            })?
+            .and_then(|call_stack| {
+                Script::VisitOneOfEnd.call_with_descriptor(
+                    out_path,
+                    &(schemas, extensions),
+                    call_stack,
+                )?;
+                Ok(())
             })?;
-        Script::VisitOneOfEnd.call_with_descriptor(out_path, &(schemas, extensions), call_stack)?;
     }
     Ok(())
 }
@@ -429,8 +449,15 @@ pub fn visit_all_of(
                 schemas
                     .iter()
                     .try_for_each(|it| visit_schema(parsed_spec, out_path, None, it, call_stack))
+            })?
+            .and_then(|call_stack| {
+                Script::VisitAllOfEnd.call_with_descriptor(
+                    out_path,
+                    &(schemas, extensions),
+                    call_stack,
+                )?;
+                Ok(())
             })?;
-        Script::VisitAllOfEnd.call_with_descriptor(out_path, &(schemas, extensions), call_stack)?;
     }
     Ok(())
 }
@@ -449,8 +476,15 @@ pub fn visit_any_of(
                 schemas
                     .iter()
                     .try_for_each(|it| visit_schema(parsed_spec, out_path, None, it, call_stack))
+            })?
+            .and_then(|call_stack| {
+                Script::VisitAnyOfEnd.call_with_descriptor(
+                    out_path,
+                    &(schemas, extensions),
+                    call_stack,
+                )?;
+                Ok(())
             })?;
-        Script::VisitAnyOfEnd.call_with_descriptor(out_path, &(schemas, extensions), call_stack)?;
     }
     Ok(())
 }
@@ -537,12 +571,15 @@ pub fn visit_media_type_encodings(
                         call_stack,
                     )
                 })
+            })?
+            .and_then(|call_stack| {
+                Script::VisitEncodingsEnd.call_with_descriptor(
+                    out_path,
+                    &(&encodings, extensions),
+                    call_stack,
+                )?;
+                Ok(())
             })?;
-        Script::VisitEncodingsEnd.call_with_descriptor(
-            out_path,
-            &(&encodings, extensions),
-            call_stack,
-        )?;
     }
     Ok(())
 }
@@ -568,12 +605,15 @@ pub fn visit_media_type_encoding(
                 &encoding.extensions,
                 call_stack,
             )
+        })?
+        .and_then(|call_stack| {
+            Script::VisitEncodingEnd.call_with_descriptor(
+                out_path,
+                &(&encoding_name, &encoding, &encoding.extensions),
+                call_stack,
+            )?;
+            Ok(())
         })?;
-    Script::VisitEncodingEnd.call_with_descriptor(
-        out_path,
-        &(&encoding_name, &encoding, &encoding.extensions),
-        call_stack,
-    )?;
     Ok(())
 }
 
@@ -600,20 +640,18 @@ pub fn visit_example(
                     out_path,
                     &(example_name, &example, &example.extensions),
                     call_stack,
-                )
+                )?
                 .and_then(|call_stack| {
-                    visit_generic_example(
+                    visit_generic_example(out_path, &example.value, &example.extensions, call_stack)
+                })?
+                .and_then(|call_stack| {
+                    Script::VisitExampleEnd.call_with_descriptor(
                         out_path,
-                        &example.value,
-                        &example.extensions,
-                        &call_stack,
-                    )
+                        &(example_name, &example, &example.extensions),
+                        call_stack,
+                    )?;
+                    Ok(())
                 })?;
-            Script::VisitExampleEnd.call_with_descriptor(
-                out_path,
-                &(example_name, &example, &example.extensions),
-                call_stack,
-            )?;
         }
     }
     Ok(())
@@ -651,12 +689,15 @@ pub fn visit_request_body(
                         &request_body.extensions,
                         call_stack,
                     )
+                })?
+                .and_then(|call_stack| {
+                    Script::VisitRequestBodyEnd.call_with_descriptor(
+                        out_path,
+                        &(&request_body_name, &request_body, &request_body.extensions),
+                        call_stack,
+                    )?;
+                    Ok(())
                 })?;
-            Script::VisitRequestBodyEnd.call_with_descriptor(
-                out_path,
-                &(&request_body_name, &request_body, &request_body.extensions),
-                call_stack,
-            )?;
         }
     }
     Ok(())
@@ -692,12 +733,15 @@ pub fn visit_parameter_schema_or_content(
                 }
             }
             Ok(())
+        })?
+        .and_then(|call_stack| {
+            Script::VisitParameterSchemaOrContentEnd.call_with_descriptor(
+                out_path,
+                &(&parameter_name, &parameter_schema_or_content, extensions),
+                call_stack,
+            )?;
+            Ok(())
         })?;
-    Script::VisitParameterSchemaOrContentEnd.call_with_descriptor(
-        out_path,
-        &(&parameter_name, &parameter_schema_or_content, extensions),
-        call_stack,
-    )?;
     Ok(())
 }
 
@@ -721,12 +765,15 @@ pub fn visit_media_types(
                         call_stack,
                     )
                 })
+            })?
+            .and_then(|call_stack| {
+                Script::VisitMediaTypesEnd.call_with_descriptor(
+                    out_path,
+                    &(media_types, extensions),
+                    call_stack,
+                )?;
+                Ok(())
             })?;
-        Script::VisitMediaTypesEnd.call_with_descriptor(
-            out_path,
-            &(media_types, extensions),
-            call_stack,
-        )?;
     }
     Ok(())
 }
@@ -752,12 +799,15 @@ pub fn visit_callbacks(
                         call_stack,
                     )
                 })
+            })?
+            .and_then(|call_stack| {
+                Script::VisitAsyncCallbacksEnd.call_with_descriptor(
+                    out_path,
+                    &(operation_callbacks, &extensions),
+                    call_stack,
+                )?;
+                Ok(())
             })?;
-        Script::VisitAsyncCallbacksEnd.call_with_descriptor(
-            out_path,
-            &(operation_callbacks, &extensions),
-            call_stack,
-        )?;
     }
     Ok(())
 }
@@ -776,8 +826,15 @@ pub fn visit_links(
                 links.iter().try_for_each(|link| {
                     visit_link(parsed_spec, out_path, link.0, link.1, call_stack)
                 })
+            })?
+            .and_then(|call_stack| {
+                Script::VisitLinksEnd.call_with_descriptor(
+                    out_path,
+                    &(links, &extensions),
+                    call_stack,
+                )?;
+                Ok(())
             })?;
-        Script::VisitLinksEnd.call_with_descriptor(out_path, &(links, &extensions), call_stack)?;
     }
     Ok(())
 }
@@ -821,12 +878,15 @@ pub fn visit_link(
                         visit_server(out_path, server, call_stack)?;
                     }
                     Ok(())
+                })?
+                .and_then(|call_stack| {
+                    Script::VisitLinkEnd.call_with_descriptor(
+                        out_path,
+                        &(link_name, link, &link.extensions),
+                        call_stack,
+                    )?;
+                    Ok(())
                 })?;
-            Script::VisitLinkEnd.call_with_descriptor(
-                out_path,
-                &(link_name, link, &link.extensions),
-                call_stack,
-            )?;
         }
     }
     Ok(())
@@ -862,12 +922,15 @@ pub fn visit_callback(
                     callback.iter().try_for_each(|it| {
                         visit_path_item(parsed_spec, out_path, it.0, it.1, call_stack)
                     })
+                })?
+                .and_then(|call_stack| {
+                    Script::VisitAsyncCallbackEnd.call_with_descriptor(
+                        out_path,
+                        &(callbacks_name, callback, &extensions),
+                        call_stack,
+                    )?;
+                    Ok(())
                 })?;
-            Script::VisitAsyncCallbackEnd.call_with_descriptor(
-                out_path,
-                &(callbacks_name, callback, &extensions),
-                call_stack,
-            )?;
         }
     }
     Ok(())
@@ -920,12 +983,15 @@ pub fn visit_media_type(
                 call_stack,
             )?;
             Ok(())
+        })?
+        .and_then(|call_stack| {
+            Script::VisitMediaTypeEnd.call_with_descriptor(
+                out_path,
+                &(&media_type_name, &media_type.extensions),
+                call_stack,
+            )?;
+            Ok(())
         })?;
-    Script::VisitMediaTypeEnd.call_with_descriptor(
-        out_path,
-        &(&media_type_name, &media_type.extensions),
-        call_stack,
-    )?;
     Ok(())
 }
 
@@ -943,12 +1009,15 @@ pub fn visit_examples(
                 examples
                     .iter()
                     .try_for_each(|it| visit_example(parsed_spec, out_path, it.0, it.1, call_stack))
+            })?
+            .and_then(|call_stack| {
+                Script::VisitExamplesEnd.call_with_descriptor(
+                    out_path,
+                    &(&examples, extensions),
+                    call_stack,
+                )?;
+                Ok(())
             })?;
-        Script::VisitExamplesEnd.call_with_descriptor(
-            out_path,
-            &(&examples, extensions),
-            call_stack,
-        )?;
     }
     Ok(())
 }
@@ -967,12 +1036,15 @@ pub fn visit_request_bodies(
                 request_bodies.iter().try_for_each(|it| {
                     visit_request_body(parsed_spec, out_path, Some(it.0), it.1, call_stack)
                 })
+            })?
+            .and_then(|call_stack| {
+                Script::VisitRequestBodiesEnd.call_with_descriptor(
+                    out_path,
+                    &(request_bodies, extensions),
+                    call_stack,
+                )?;
+                Ok(())
             })?;
-        Script::VisitRequestBodiesEnd.call_with_descriptor(
-            out_path,
-            &(request_bodies, extensions),
-            call_stack,
-        )?;
     }
     Ok(())
 }
@@ -991,12 +1063,15 @@ pub fn visit_generic_parameters(
                     visit_generic_parameter(out_path, it.0, it.1, extensions, call_stack)?;
                     Ok(())
                 })
+            })?
+            .and_then(|call_stack| {
+                Script::VisitGenericParametersEnd.call_with_descriptor(
+                    out_path,
+                    &(&parameters, extensions),
+                    call_stack,
+                )?;
+                Ok(())
             })?;
-        Script::VisitGenericParametersEnd.call_with_descriptor(
-            out_path,
-            &(&parameters, extensions),
-            call_stack,
-        )?;
     }
     Ok(())
 }
@@ -1049,12 +1124,15 @@ pub fn visit_header(
                         &header.extensions,
                         call_stack,
                     )
+                })?
+                .and_then(|call_stack| {
+                    Script::VisitHeaderEnd.call_with_descriptor(
+                        out_path,
+                        &(&header_name, &header, &header.extensions),
+                        call_stack,
+                    )?;
+                    Ok(())
                 })?;
-            Script::VisitHeaderEnd.call_with_descriptor(
-                out_path,
-                &(&header_name, &header, &header.extensions),
-                call_stack,
-            )?;
         }
     }
     Ok(())
@@ -1114,12 +1192,15 @@ pub fn visit_headers(
                 headers
                     .iter()
                     .try_for_each(|it| visit_header(parsed_spec, out_path, it.0, it.1, call_stack))
+            })?
+            .and_then(|call_stack| {
+                Script::VisitHeadersEnd.call_with_descriptor(
+                    out_path,
+                    &(headers, extensions),
+                    call_stack,
+                )?;
+                Ok(())
             })?;
-        Script::VisitHeadersEnd.call_with_descriptor(
-            out_path,
-            &(headers, extensions),
-            call_stack,
-        )?;
     }
     Ok(())
 }
@@ -1138,12 +1219,15 @@ pub fn visit_security_schemes(
                 security_schemes.iter().try_for_each(|it| {
                     visit_security_scheme(parsed_spec, out_path, it.0, it.1, call_stack)
                 })
+            })?
+            .and_then(|call_stack| {
+                Script::VisitSecuritySchemesEnd.call_with_descriptor(
+                    out_path,
+                    &(&security_schemes, extensions),
+                    call_stack,
+                )?;
+                Ok(())
             })?;
-        Script::VisitSecuritySchemesEnd.call_with_descriptor(
-            out_path,
-            &(&security_schemes, extensions),
-            call_stack,
-        )?;
     }
     Ok(())
 }
@@ -1167,8 +1251,15 @@ pub fn visit_spec_tags(
                     )?;
                     Ok(())
                 })
+            })?
+            .and_then(|call_stack| {
+                Script::VisitSpecTagsEnd.call_with_descriptor(
+                    out_path,
+                    &(tags, extensions),
+                    call_stack,
+                )?;
+                Ok(())
             })?;
-        Script::VisitSpecTagsEnd.call_with_descriptor(out_path, &(tags, extensions), call_stack)?;
     }
     Ok(())
 }
@@ -1192,12 +1283,15 @@ pub fn visit_security_requirements(
                         )?;
                         Ok(())
                     })
+                })?
+                .and_then(|call_stack| {
+                    Script::VisitSecurityRequirementsEnd.call_with_descriptor(
+                        out_path,
+                        &(it, extensions),
+                        call_stack,
+                    )?;
+                    Ok(())
                 })?;
-            Script::VisitSecurityRequirementsEnd.call_with_descriptor(
-                out_path,
-                &(it, extensions),
-                call_stack,
-            )?;
         }
     }
     Ok(())
@@ -1230,12 +1324,15 @@ pub fn visit_schemas(
                 schemas.iter().try_for_each(|(schema_name, schema_ref)| {
                     visit_schema(parsed_spec, out_path, Some(schema_name), schema_ref, it)
                 })
+            })?
+            .and_then(|call_stack| {
+                Script::VisitSchemasEnd.call_with_descriptor(
+                    out_path,
+                    &(schemas, extensions),
+                    call_stack,
+                )?;
+                Ok(())
             })?;
-        Script::VisitSchemasEnd.call_with_descriptor(
-            out_path,
-            &(schemas, extensions),
-            call_stack,
-        )?;
     }
     Ok(())
 }
@@ -1256,12 +1353,15 @@ pub fn visit_components_responses(
                     .try_for_each(|(response_name, response_ref)| {
                         visit_response(parsed_spec, out_path, Some(response_name), response_ref, it)
                     })
+            })?
+            .and_then(|call_stack| {
+                Script::VisitResponsesEnd.call_with_descriptor(
+                    out_path,
+                    &(responses, extensions),
+                    call_stack,
+                )?;
+                Ok(())
             })?;
-        Script::VisitResponsesEnd.call_with_descriptor(
-            out_path,
-            &(responses, extensions),
-            call_stack,
-        )?;
     }
     Ok(())
 }
@@ -1291,12 +1391,15 @@ pub fn visit_operation_responses(
                         call_stack,
                     )
                 })
+        })?
+        .and_then(|call_stack| {
+            Script::VisitOperationResponsesEnd.call_with_descriptor(
+                out_path,
+                &(&responses, &responses.extensions),
+                call_stack,
+            )?;
+            Ok(())
         })?;
-    Script::VisitOperationResponsesEnd.call_with_descriptor(
-        out_path,
-        &(&responses, &responses.extensions),
-        call_stack,
-    )?;
     Ok(())
 }
 
@@ -1324,12 +1427,15 @@ pub fn visit_parameters(
                         )?;
                         Ok(())
                     })
+            })?
+            .and_then(|call_stack| {
+                Script::VisitParametersEnd.call_with_descriptor(
+                    out_path,
+                    &(parameters, &extensions),
+                    call_stack,
+                )?;
+                Ok(())
             })?;
-        Script::VisitParametersEnd.call_with_descriptor(
-            out_path,
-            &(parameters, &extensions),
-            call_stack,
-        )?;
     }
     Ok(())
 }
@@ -1346,12 +1452,15 @@ pub fn visit_paths(
             paths.paths.iter().try_for_each(|it| {
                 visit_path_item_ref(parsed_spec, out_path, it.0, it.1, call_stack)
             })
+        })?
+        .and_then(|call_stack| {
+            Script::VisitPathsEnd.call_with_descriptor(
+                out_path,
+                &(&paths, &paths.extensions),
+                call_stack,
+            )?;
+            Ok(())
         })?;
-    Script::VisitPathsEnd.call_with_descriptor(
-        out_path,
-        &(&paths, &paths.extensions),
-        call_stack,
-    )?;
     Ok(())
 }
 
@@ -1474,14 +1583,15 @@ pub fn visit_security_scheme_oauth2(
     {
         Script::VisitSecuritySchemeOAuth2Start
             .call_with_descriptor(out_path, &(&scheme_name, &oauth2, extensions), call_stack)?
+            .and_then(|call_stack| visit_security_scheme_oauth2_flows(out_path, flows, call_stack))?
             .and_then(|call_stack| {
-                visit_security_scheme_oauth2_flows(out_path, flows, call_stack)
+                Script::VisitSecuritySchemeOAuth2End.call_with_descriptor(
+                    out_path,
+                    &(&scheme_name, &oauth2, extensions),
+                    call_stack,
+                )?;
+                Ok(())
             })?;
-        Script::VisitSecuritySchemeOAuth2End.call_with_descriptor(
-            out_path,
-            &(&scheme_name, &oauth2, extensions),
-            call_stack,
-        )?;
         Ok(())
     } else {
         Err(anyhow!("Not a SecurityScheme.OAuth2"))
@@ -1508,12 +1618,15 @@ pub fn visit_security_scheme_oauth2_flows(
                 &flows.authorization_code,
                 call_stack,
             )
+        })?
+        .and_then(|call_stack| {
+            Script::VisitSecuritySchemeOAuth2FlowsEnd.call_with_descriptor(
+                out_path,
+                &(flows, &flows.extensions),
+                call_stack,
+            )?;
+            Ok(())
         })?;
-    Script::VisitSecuritySchemeOAuth2FlowsEnd.call_with_descriptor(
-        out_path,
-        &(flows, &flows.extensions),
-        call_stack,
-    )?;
     Ok(())
 }
 
@@ -1648,12 +1761,15 @@ pub fn visit_parameter_data(
                 call_stack,
             )?;
             Ok(())
+        })?
+        .and_then(|call_stack| {
+            Script::VisitParameterDataEnd.call_with_descriptor(
+                out_path,
+                &(parameter_data, &parameter_data.extensions),
+                call_stack,
+            )?;
+            Ok(())
         })?;
-    Script::VisitParameterDataEnd.call_with_descriptor(
-        out_path,
-        &(parameter_data, &parameter_data.extensions),
-        call_stack,
-    )?;
     Ok(())
 }
 
@@ -1675,12 +1791,15 @@ pub fn visit_query_parameter(
             .and_then(|call_stack| {
                 visit_parameter_data(parsed_spec, out_path, parameter_data, call_stack)?;
                 Ok(())
+            })?
+            .and_then(|call_stack| {
+                Script::VisitQueryParameterEnd.call_with_descriptor(
+                    out_path,
+                    &(parameter_name, &parameter, &extensions),
+                    call_stack,
+                )?;
+                Ok(())
             })?;
-        Script::VisitQueryParameterEnd.call_with_descriptor(
-            out_path,
-            &(parameter_name, &parameter, &extensions),
-            call_stack,
-        )?;
         Ok(())
     } else {
         Err(anyhow!("Not a Query parameter"))
@@ -1705,12 +1824,15 @@ pub fn visit_header_parameter(
             .and_then(|call_stack| {
                 visit_parameter_data(parsed_spec, out_path, parameter_data, call_stack)?;
                 Ok(())
+            })?
+            .and_then(|call_stack| {
+                Script::VisitHeaderParameterEnd.call_with_descriptor(
+                    out_path,
+                    &(parameter_name, &parameter, &extensions),
+                    call_stack,
+                )?;
+                Ok(())
             })?;
-        Script::VisitHeaderParameterEnd.call_with_descriptor(
-            out_path,
-            &(parameter_name, &parameter, &extensions),
-            call_stack,
-        )?;
         Ok(())
     } else {
         Err(anyhow!("Not a Header parameter"))
@@ -1735,12 +1857,15 @@ pub fn visit_path_parameter(
             .and_then(|call_stack| {
                 visit_parameter_data(parsed_spec, out_path, parameter_data, call_stack)?;
                 Ok(())
+            })?
+            .and_then(|call_stack| {
+                Script::VisitPathParameterEnd.call_with_descriptor(
+                    out_path,
+                    &(parameter_name, &parameter, &extensions),
+                    call_stack,
+                )?;
+                Ok(())
             })?;
-        Script::VisitPathParameterEnd.call_with_descriptor(
-            out_path,
-            &(parameter_name, &parameter, &extensions),
-            call_stack,
-        )?;
         Ok(())
     } else {
         Err(anyhow!("Not a Path parameter"))
@@ -1861,12 +1986,15 @@ pub fn visit_path_item(
                 call_stack,
             )?;
             Ok(())
+        })?
+        .and_then(|call_stack| {
+            Script::VisitPathItemEnd.call_with_descriptor(
+                out_path,
+                &(path_item_name, &path_item, &path_item.extensions),
+                call_stack,
+            )?;
+            Ok(())
         })?;
-    Script::VisitPathItemEnd.call_with_descriptor(
-        out_path,
-        &(path_item_name, &path_item, &path_item.extensions),
-        call_stack,
-    )?;
     Ok(())
 }
 
@@ -1928,12 +2056,15 @@ pub fn visit_operation(
                     call_stack,
                 )?;
                 Ok(())
+            })?
+            .and_then(|call_stack| {
+                braced_scripts.end.call_with_descriptor(
+                    out_path,
+                    &(&operation, &operation.extensions),
+                    call_stack,
+                )?;
+                Ok(())
             })?;
-        braced_scripts.end.call_with_descriptor(
-            out_path,
-            &(&operation, &operation.extensions),
-            call_stack,
-        )?;
     }
     Ok(())
 }
@@ -1956,12 +2087,15 @@ pub fn visit_cookie_parameter(
             .and_then(|call_stack| {
                 visit_parameter_data(parsed_spec, out_path, parameter_data, call_stack)?;
                 Ok(())
+            })?
+            .and_then(|call_stack| {
+                Script::VisitCookieParameterEnd.call_with_descriptor(
+                    out_path,
+                    &(parameter_name, &parameter, &extensions),
+                    call_stack,
+                )?;
+                Ok(())
             })?;
-        Script::VisitCookieParameterEnd.call_with_descriptor(
-            out_path,
-            &(parameter_name, &parameter, &extensions),
-            call_stack,
-        )?;
         Ok(())
     } else {
         Err(anyhow!("Not a Cookie parameter"))
@@ -2049,12 +2183,15 @@ pub fn visit_spec_components(
                     &components.extensions,
                     call_stack,
                 )
+            })?
+            .and_then(|call_stack| {
+                Script::VisitComponentsEnd.call_with_descriptor(
+                    out_path,
+                    &(&components.extensions),
+                    call_stack,
+                )?;
+                Ok(())
             })?;
-        Script::VisitComponentsEnd.call_with_descriptor(
-            out_path,
-            &(&components.extensions),
-            call_stack,
-        )?;
     }
     Ok(())
 }
@@ -2077,12 +2214,15 @@ pub fn visit_spec_info(out_path: &Path, info: &Info, call_stack: &CallStack) -> 
         .and_then(|call_stack| {
             visit_spec_info_contact(out_path, &info.contact, call_stack)?;
             visit_spec_info_license(out_path, &info.license, call_stack)
+        })?
+        .and_then(|call_stack| {
+            Script::VisitSpecInfoEnd.call_with_descriptor(
+                out_path,
+                &(info, &info.extensions),
+                call_stack,
+            )?;
+            Ok(())
         })?;
-    Script::VisitSpecInfoEnd.call_with_descriptor(
-        out_path,
-        &(info, &info.extensions),
-        call_stack,
-    )?;
     Ok(())
 }
 
@@ -2130,12 +2270,15 @@ pub fn visit_server(out_path: &Path, server: &Server, call_stack: &CallStack) ->
                 })?;
             }
             Ok(())
+        })?
+        .and_then(|call_stack| {
+            Script::VisitServerEnd.call_with_descriptor(
+                out_path,
+                &(server, &server.extensions),
+                call_stack,
+            )?;
+            Ok(())
         })?;
-    Script::VisitServerEnd.call_with_descriptor(
-        out_path,
-        &(server, &server.extensions),
-        call_stack,
-    )?;
     Ok(())
 }
 
@@ -2153,12 +2296,15 @@ pub fn visit_servers(
                     visit_server(out_path, server, call_stack)?;
                     Ok(())
                 })
+            })?
+            .and_then(|call_stack| {
+                Script::VisitServersEnd.call_with_descriptor(
+                    out_path,
+                    &(servers, extensions),
+                    call_stack,
+                )?;
+                Ok(())
             })?;
-        Script::VisitServersEnd.call_with_descriptor(
-            out_path,
-            &(servers, extensions),
-            call_stack,
-        )?;
     }
     Ok(())
 }
@@ -2201,12 +2347,15 @@ where
                         property_schema_ref,
                         call_stack,
                     )
+                })?
+                .and_then(|call_stack| {
+                    Script::VisitObjectPropertyEnd.call_with_descriptor(
+                        out_path,
+                        &(property_name, schema, &schema.schema_data.extensions),
+                        call_stack,
+                    )?;
+                    Ok(())
                 })?;
-            Script::VisitObjectPropertyEnd.call_with_descriptor(
-                out_path,
-                &(property_name, schema, &schema.schema_data.extensions),
-                call_stack,
-            )?;
             Ok(())
         }
     }
@@ -2241,12 +2390,15 @@ pub fn visit_object(
                         },
                     )?;
                     Ok(())
+                })?
+                .and_then(|call_stack| {
+                    Script::VisitObjectPropertiesEnd.call_with_descriptor(
+                        out_path,
+                        &(&object_description.properties, extensions),
+                        call_stack,
+                    )?;
+                    Ok(())
                 })?;
-            Script::VisitObjectPropertiesEnd.call_with_descriptor(
-                out_path,
-                &(&object_description.properties, extensions),
-                call_stack,
-            )?;
 
             if let Some(it) = object_description.additional_properties.as_ref() {
                 match it {
@@ -2277,26 +2429,32 @@ pub fn visit_object(
                             )?
                             .and_then(|call_stack| {
                                 visit_schema(parsed_spec, out_path, None, schema_ref, call_stack)
+                            })?
+                            .and_then(|call_stack| {
+                                Script::VisitAdditionalPropertiesEnd.call_with_descriptor(
+                                    out_path,
+                                    &(
+                                        schema_ref,
+                                        object_description.min_properties,
+                                        object_description.max_properties,
+                                        extensions,
+                                    ),
+                                    call_stack,
+                                )?;
+                                Ok(())
                             })?;
-                        Script::VisitAdditionalPropertiesEnd.call_with_descriptor(
-                            out_path,
-                            &(
-                                schema_ref,
-                                object_description.min_properties,
-                                object_description.max_properties,
-                                extensions,
-                            ),
-                            call_stack,
-                        )?;
                     }
                 }
             }
             Ok(())
+        })?
+        .and_then(|call_stack| {
+            Script::VisitObjectEnd.call_with_descriptor(
+                out_path,
+                &(object_description, extensions),
+                call_stack,
+            )?;
+            Ok(())
         })?;
-    Script::VisitObjectEnd.call_with_descriptor(
-        out_path,
-        &(object_description, extensions),
-        call_stack,
-    )?;
     Ok(())
 }
