@@ -4,19 +4,18 @@
 --- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 function visitAllOfEnd(schemas, extensions, callsStack)
-    local currentModelName = getCurrentModelNameMandatory(namesStack)
+    ---@type AllOfModel
+    local currentModel = global_context.models:pop()
 
-    -- this "object" must to save self model
-    local model = global_context:getModelByName("visitAllOfEnd", currentModelName)
-    if model == nil then
+    if currentModel == nil then
         error("Model for allOf not found")
     else
         return concatTables(
-            model.includes,
-            { WriteOperation.new_append(string.format("public class %s {\n\n", currentModelName), currentModelName) },
-            model.properties,
-            model.methods,
-            { WriteOperation.new_append("\n}\n", currentModelName) })
+            currentModel.includes.items,
+            { WriteOperation.new_append(string.format("public class %s {\n\n", currentModel.name), currentModel.name) },
+            currentModel:collectAllPropertiesCode(),
+            currentModel.methods.items,
+            { WriteOperation.new_append("\n}\n", currentModel.name) })
     end
 end
 

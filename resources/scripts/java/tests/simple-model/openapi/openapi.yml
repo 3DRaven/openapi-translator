@@ -43,6 +43,14 @@ components:
       type: http
       scheme: basic
   schemas:
+    AllOf:
+      allOf:
+        - $ref: "#/components/schemas/FreeForm"
+        - type: object
+          properties:
+            some_field:
+              x-ot-property-name: someField
+              type: string
     FreeForm:
       type: object
       additionalProperties: true
