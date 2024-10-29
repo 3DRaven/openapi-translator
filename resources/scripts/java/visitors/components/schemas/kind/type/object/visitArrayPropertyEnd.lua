@@ -43,7 +43,7 @@ function visitArrayPropertyEnd(arrayDescriptor, extensions, callsStack)
                 --- @type Property
                 local property = currentModel.properties:element()
                 -- Adding the import at the beginning of the parent model file
-                currentModel:adaptToIncludes({ WriteOperation.new_append("import java.util.List;\n\n", currentModel.name) })
+                currentModel:adaptToIncludes({ WriteOperation.new_append("import java.util.List;\n", currentModel.name) })
                 local code = string.format("    private List<%s> %s = new List<>();\n",
                     childModel.name, property.name);
                 currentModel:adaptToLastProperty({ WriteOperation.new_append(code, currentModel.name) })

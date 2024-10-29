@@ -1,5 +1,7 @@
+
 public class InnerObject {
 
-    private String someField;
+    
+    private  String someField;
 
 }

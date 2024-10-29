@@ -1,6 +1,6 @@
 import org.springframework.beans.factory.annotation.Value;
 
-public class BadRequestResponse {
+public class CustomCode {
 
     
     private  String another_field;

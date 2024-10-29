@@ -856,10 +856,16 @@ WriteMode.REMOVE = "REMOVE"
 --- @class Extensions
 --- @field MODEL_NAME string #
 --- @field PROPERTY_NAME string #
+--- @field CODE_BEFORE string #
+--- @field IMPORT string #
+--- @field CODE string #
 Extensions = {}
 
 Extensions.MODEL_NAME = "x-ot-model-name"
 Extensions.PROPERTY_NAME = "x-ot-property-name"
+Extensions.CODE_BEFORE = "x-ot-code-before"
+Extensions.IMPORT = "import"
+Extensions.CODE = "code"
 
 ---select first not null or nill value
 ---@param first string|null # it possible be null too
@@ -1551,8 +1557,9 @@ end
 
 --- @param model ModelBase
 --- @param type string
+--- @param extensions table # table with free form with "x-" OpenAPI extensions for this level of spec
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
-function addGenericPropertyCode(model, type)
+function addGenericPropertyCode(model, type, extensions)
     if model == nil then
         --- This is possible if a schema is constructed as a separate value;
         --- such a schema is not a model but can be used as a reference in other schemas.
@@ -1561,16 +1568,30 @@ function addGenericPropertyCode(model, type)
         print(type .. " property without parent skipt")
     else
         if model:instanceOf(ObjectModel) or model:instanceOf(AllOfModel) then
+            local codeExtension = extensions[Extensions.CODE_BEFORE]
+            local codeBefore = nil
+            if codeExtension ~= nil then
+                local import = codeExtension[Extensions.IMPORT]
+                if import ~= nil then
+                    model.includes:push(WriteOperation.new_append(import .. "\n", model.name))
+                end
+                codeBefore = codeExtension[Extensions.CODE]
+            end
+
+            local requiredMarker
+
             ---@type Property
             local property = model.properties:element()
             if model:isPropertyRequired(property.name) then
-                model.includes:push(WriteOperation.new_append("import javax.annotation.Nonnull;\n\n", model.name))
-                local code = string.format("    private @Nonnull %s %s;\n", type, property.name);
-                property.code:push(WriteOperation.new_append(code, model.name))
-            else
-                local code = string.format("    private %s %s;\n", type, property.name);
-                property.code:push(WriteOperation.new_append(code, model.name))
+                model.includes:push(WriteOperation.new_append("import javax.annotation.Nonnull;\n", model.name))
+                requiredMarker = "@Nonnull"
             end
+
+            ---@type string
+            local code = string.format("    %s\n    private %s %s %s;\n", codeBefore or "", requiredMarker or "", type,
+                property.name);
+
+            property.code:push(WriteOperation.new_append(code, model.name))
         elseif model:instanceOf(TypeTransferModel) then
             model.name = type
         end

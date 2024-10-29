@@ -28,7 +28,7 @@ paths:
             application/json:
               x-ot-model-name: BadRequestResponse
               schema:
-                $ref: "#/components/schemas/FreeForm"
+                $ref: "#/components/schemas/CustomCode"
         "200":
           description: Successful response
           content:
@@ -43,7 +43,18 @@ components:
       type: http
       scheme: basic
   schemas:
+    CustomCode:
+      type: object
+      properties:
+        some_field:
+          x-ot-code-before:
+            import: import org.springframework.beans.factory.annotation.Value;
+            code: "@Value"
+          type: string
+        another_field:
+          type: string
     AllOf:
+      x-ot-model-name: CompositeObject
       allOf:
         - $ref: "#/components/schemas/FreeForm"
         - type: object

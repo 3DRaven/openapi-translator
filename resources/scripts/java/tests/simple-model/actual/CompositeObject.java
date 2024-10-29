@@ -1,8 +1,8 @@
 import java.util.concurrent.ConcurrentHashMap;
-
-public class AllOf {
+public class CompositeObject {
 
     private ConcurrentHashMap<String,Object> additionalProperties = new ConcurrentHashMap<>();
-    private String someField;
+    
+    private  String someField;
 
 }

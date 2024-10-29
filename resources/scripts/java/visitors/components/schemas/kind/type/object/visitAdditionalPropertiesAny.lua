@@ -14,7 +14,7 @@ function visitAdditionalPropertiesAny(flag, minProperties, maxProperties, extens
         error("additionalProperties with type any without parent")
     else
         -- Adding the import at the beginning of the parent model file
-        currentModel:adaptToIncludes({ WriteOperation.new_prepend("import java.util.concurrent.ConcurrentHashMap;\n\n",
+        currentModel:adaptToIncludes({ WriteOperation.new_prepend("import java.util.concurrent.ConcurrentHashMap;\n",
             currentModel.name) })
         local propertyName = "additionalProperties"
         local code = string.format("    private ConcurrentHashMap<String,Object> %s = new ConcurrentHashMap<>();\n",
