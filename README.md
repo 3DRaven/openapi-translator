@@ -113,5 +113,5 @@ RETURN <- [visitSchemaEnd] [table]
 
 ## Alternatives
 
-Hard to customize <https://github.com/OpenAPITools/openapi-generator>
-Only for Rust and clients generation <https://docs.rs/openapitor/latest/openapitor>
+- Hard to customize <https://github.com/OpenAPITools/openapi-generator>
+- Only for Rust and clients generation <https://docs.rs/openapitor/latest/openapitor>
