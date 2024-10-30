@@ -7,9 +7,9 @@ use holders::context::{
 };
 use serde_json::Value;
 use services::scripts;
-use std::collections::HashMap;
 use std::io::Write;
 use std::path::PathBuf;
+use std::{collections::HashMap, path::Path};
 use strum::IntoEnumIterator;
 
 use clap::{ArgAction, Parser, Subcommand};
@@ -45,24 +45,29 @@ fn parse_parameters_val(value: &str) -> Result<Value> {
 #[derive(Parser)]
 #[command(version, about="OpenAPI v3 translator", long_about = None)]
 pub struct Cli {
-    #[arg(short='p', long, value_parser = parse_parameters_val, num_args = 1, help = "Parameters for target Lua scripts are simply JSON of arbitrary structure, which will be converted into a Lua table and passed to the scripts as a global parameter named targetParameters. These parameters will replace the parameters passed in the OpenAPI spec as x-ot-target-parameters")]
-    pub parameters: Option<Value>,
+    #[arg(
+        short='p',
+        long="target-parameters",
+        value_name = "PARAMETERS_JSON",
+        value_parser = parse_parameters_val, num_args = 1,
+        help = "Parameters for target Lua scripts are simply JSON of arbitrary structure, which will be converted into a Lua table and passed to the scripts as a global parameter named targetParameters. These parameters will replace the parameters passed in the OpenAPI spec as x-ot-target-parameters")]
+    pub target_parameters: Option<Value>,
 
     #[arg(
-        short = 'd',
-        long,
-        value_name = "PRELUDE_PATH",
-        help = "Since visitors can be reused, the prelude dir contains in a separate script that runs at the start of the translation, where functions and modules that will be used in the general set of visitors to implement specific types of translation can be defined"
+        short = 'a',
+        long = "target-scripts",
+        value_name = "TARGET_SCRIPTS_PATH",
+        help = "Since visitors can be reused, the target dir contains in a separate script that runs at the start of the translation, where functions and modules that will be used in the general set of visitors to implement specific types of translation can be defined"
     )]
-    pub prelude: PathBuf,
+    pub target_scripts_path: PathBuf,
 
     #[arg(
-        short = 's',
-        long,
-        value_name = "VISITORS_PATH",
+        short = 'i',
+        long = "visitors-scripts",
+        value_name = "VISITORS_SCRIPTS_PATH",
         help = "The base directory for all visitors scripts, since for many types of translators, the final result only differs in specific small elements but is structurally similar, a common set of visitors can be used for different translation purposes"
     )]
-    pub visitors: PathBuf,
+    pub visitors_scripts_path: PathBuf,
 
     #[command(subcommand, help = "Action to execution")]
     pub command: Commands,
@@ -77,11 +82,11 @@ impl Cli {
     }
 
     pub fn get_visitors_dir(&self) -> &PathBuf {
-        &self.visitors
+        &self.visitors_scripts_path
     }
 
-    pub fn get_prelude_dir(&self) -> &PathBuf {
-        &self.prelude
+    pub fn get_target_dir(&self) -> &PathBuf {
+        &self.target_scripts_path
     }
 }
 
@@ -175,19 +180,24 @@ pub fn init_logger() {
 
 pub fn check_scripts() -> Result<()> {
     let mut scripts_files: HashMap<String, String> = HashMap::new();
-    check_script(Script::Prelude, &mut scripts_files)?;
-    for variant in Script::iter().filter(|it| *it != Script::Prelude) {
-        check_script(variant, &mut scripts_files)?;
+    let visitors = CLI.get_visitors_dir();
+    let target = CLI.get_target_dir();
+
+    check_script(Script::Target, target, &mut scripts_files)?;
+    for variant in Script::iter().filter(|it| *it != Script::Target) {
+        check_script(variant, visitors, &mut scripts_files)?;
     }
     Ok(())
 }
 
-fn check_script(variant: Script, scripts_files: &mut HashMap<String, String>) -> Result<()> {
+fn check_script(
+    variant: Script,
+    scripts: &Path,
+    scripts_files: &mut HashMap<String, String>,
+) -> Result<()> {
     let lua_vm = get_lua_vm();
     let script_relative_path: &str = (&variant).into();
-    let script_path = CLI
-        .get_visitors_dir()
-        .join(format!("{}.lua", script_relative_path));
+    let script_path = scripts.join(format!("{}.lua", script_relative_path));
 
     if let Some(old_value) = scripts_files.insert(
         script_path

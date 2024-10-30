@@ -33,7 +33,7 @@ pub fn set_global_lua_parameters(openapi: &OpenAPI) -> Result<CallStack> {
         })
         .transpose()?;
 
-    CLI.parameters
+    CLI.target_parameters
         .as_ref()
         .map(|it| {
             let params_value = lua_vm.to_value(it)?;
@@ -46,7 +46,7 @@ pub fn set_global_lua_parameters(openapi: &OpenAPI) -> Result<CallStack> {
     let fake_null = lua_vm.null();
     lua_vm.globals().set("null", fake_null)?;
     drop(lua_vm);
-    Script::Prelude.call_func()
+    Script::Target.call_func(Some(&Script::Prelude.call_func(None)?))
 }
 
 pub fn visit_commands() -> Result<()> {

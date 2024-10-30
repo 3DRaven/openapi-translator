@@ -7,7 +7,7 @@ use crate::{enums::common::Script, holders::context::CLI};
 //TODO: cached compilation
 pub fn get_lua_function<'a>(script: &Script, lua: &'a Lua) -> Result<Function<'a>> {
     let scripts_dir = match script {
-        Script::Prelude => CLI.get_prelude_dir(),
+        Script::Target => CLI.get_target_dir(),
         _ => CLI.get_visitors_dir(),
     };
     let script_relative_path: &str = script.into();

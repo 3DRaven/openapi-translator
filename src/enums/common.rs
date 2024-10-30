@@ -24,6 +24,7 @@ pub enum WriteMode {
 #[derive(Clone, Serialize, Deserialize, EnumIter, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub enum Script {
+    Target,
     Prelude,
     VisitOperationResponsesStart,
     VisitOperationResponsesEnd,
@@ -284,12 +285,19 @@ impl Script {
         Ok(call_stack + self)
     }
 
-    pub fn call_func(&self) -> Result<CallStack> {
+    pub fn call_func(&self, call_stack: Option<&CallStack>) -> Result<CallStack> {
         let lua_vm = get_lua_vm();
         let func = scripts::get_lua_function(self, &lua_vm)?;
-        func.call::<_, ()>(())
-            .with_context(|| format!("Could not call lua function [{}]", self))?;
-        Ok(CallStack::new(self.clone()))
+        if let Some(call_stack) = call_stack {
+            func.call::<_, ()>(lua_vm.to_value(call_stack))
+                .with_context(|| format!("Could not call lua function [{}]", self))?;
+        } else {
+            func.call::<_, ()>(())
+                .with_context(|| format!("Could not call lua function [{}]", self))?;
+        }
+        Ok(call_stack
+            .map(|it| it + self)
+            .unwrap_or(CallStack::new(self.clone())))
     }
 }
 
@@ -306,6 +314,7 @@ impl Display for Script {
 impl From<&Script> for &'static str {
     fn from(script: &Script) -> &'static str {
         match script {
+            Script::Target => "target",
             Script::Prelude => "prelude",
             Script::VisitResponsesStart => "components/responses/visitResponsesStart",
             Script::VisitResponsesEnd => "components/responses/visitResponsesEnd",

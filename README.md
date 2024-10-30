@@ -7,7 +7,7 @@ Translator from OpenAPI v3 to some code. The core is written in Rust, and a set 
 ```text
 OpenAPI v3 translator
 
-Usage: openapi-translator [OPTIONS] --prelude <PRELUDE_PATH> --visitors <VISITORS_PATH> <COMMAND>
+Usage: openapi-translator [OPTIONS] --target-scripts <TARGET_SCRIPTS_PATH> --visitors-scripts <VISITORS_SCRIPTS_PATH> <COMMAND>
 
 Commands:
   test
@@ -15,12 +15,17 @@ Commands:
   help       Print this message or the help of the given subcommand(s)
 
 Options:
-  -p, --parameters <PARAMETERS>   Parameters for target Lua scripts are simply JSON of arbitrary structure, which will be converted into a Lua table and passed to the scripts as a global parameter named targetParameters. These parameters will replace the parameters passed in the OpenAPI spec as x-ot-target-parameters
-  -d, --prelude <PRELUDE_PATH>    Since visitors can be reused, the prelude dir contains in a separate script that runs at the start of the translation, where functions and modules that will be used in the general set of visitors to implement specific types of translation can be defined
-  -s, --visitors <VISITORS_PATH>  The base directory for all visitors scripts, since for many types of translators, the final result only differs in specific small elements but is structurally similar, a common set of visitors can be used for different translation purposes
-  -h, --help                      Print help
-  -V, --version                   Print version
-  ```
+  -p, --target-parameters <PARAMETERS_JSON>
+          Parameters for target Lua scripts are simply JSON of arbitrary structure, which will be converted into a Lua table and passed to the scripts as a global parameter named targetParameters. These parameters will replace the parameters passed in the OpenAPI spec as x-ot-target-parameters
+  -a, --target-scripts <TARGET_SCRIPTS_PATH>
+          Since visitors can be reused, the target dir contains in a separate script that runs at the start of the translation, where functions and modules that will be used in the general set of visitors to implement specific types of translation can be defined
+  -i, --visitors-scripts <VISITORS_SCRIPTS_PATH>
+          The base directory for all visitors scripts, since for many types of translators, the final result only differs in specific small elements but is structurally similar, a common set of visitors can be used for different translation purposes
+  -h, --help
+          Print help
+  -V, --version
+          Print version
+```
 
 1. It is based on a set of lua scripts - visitors; in order to customize the generation, you do not need to rebuild the project.
 2. Lua scripts work in one common context as a set of visitors, just like in a regular parser
@@ -30,11 +35,12 @@ Options:
 
 ## How it Works
 
-1. The openapi-translator utility is called.
-2. It loads the OpenAPI 3 specification and parses it.
-3. Then, traversal of the parsed model by visitors begins.
-4. A prelude.lua (prelude dir parameter) script is executed before all visitors, where common functions can be written.
-5. During the traversal, visitors are invoked within a shared Lua context, which forms the result of the translation.
+1. The `openapi-translator` utility is invoked.
+2. It loads and parses the OpenAPI 3 specification.
+3. The `prelude.lua` script (located in the visitors directory) runs first, allowing for the definition of common generic functions for visitors.
+4. The `target.lua` script (located in the target directory) runs next, providing common functionality specific to the translation target.
+5. Following this, the parsed model undergoes traversal by visitors.
+6. During this traversal, visitors operate within a shared Lua context, collaboratively producing the translation outcome.
 
 In principle, the content of the visitors can be anything, but as an example, I made a translation from OpenAPI 3 to Java models.
 
