@@ -23,8 +23,10 @@ pub const DEFAULT_LOGS_LOG_LEVEL: &str = "debug";
 pub const EXTENSION_FOR_NAME: &str = "x-ot-name";
 pub const EXTENSION_ANY_ADDITIONAL_PROPERTIES_NAME: &str = "x-ot-additional-properties-name";
 pub const EXTENSION_TARGET_PARAMETERS_NAME: &str = "x-ot-target-parameters";
-pub const TARGET_PARAMETERS_NAME_IN_LUA: &str = "targetParameters";
-pub const DEFAULT_OBJECT_ADDITIONAL_PROPERTIES: &str = "additionalProperties";
+pub const TARGET_PARAMETERS_VARIABLE_NAME_IN_LUA: &str = "TARGET_PARAMETERS";
+pub const NULL_VALUE_VARIABLE_NAME_IN_LUA: &str = "NULL";
+pub const VISITORS_PATH_VARIABLE_NAME_IN_LUA: &str = "VISITORS_PATH";
+pub const TARGET_PATH_VARIABLE_NAME_IN_LUA: &str = "TARGET_PATH";
 
 pub static CLIENT: Lazy<Client> = Lazy::new(reqwest::blocking::Client::new);
 pub static CLI: Lazy<&'static Cli> = Lazy::new(|| Box::leak(Box::new(Cli::parse())));

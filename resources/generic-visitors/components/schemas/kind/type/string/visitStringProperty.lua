@@ -5,7 +5,7 @@
 --- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 function visitStringProperty(stringDescriptor, extensions, callsStack)
-    return addGenericPropertyCode(global_context.models:element(), "String", extensions)
+    return CODEGEN.addGenericPropertyCode(global_context.models:element(), "String", extensions)
 end
 
 return functionCallAndLog("visitStringProperty", visitStringProperty)

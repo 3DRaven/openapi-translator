@@ -1,22 +1,43 @@
 --- This section contains all global functions and variables that are created before the visitors
 --- start working.
 
+--- package.path concatenated with VISITORS_PATH and TARGET_PATH, modules can be placed to this paths
+CODEGEN = require("codegen")
+
+-----------------------------------------------------------------------------------------------------------------
+--- Constructions below is used solely to inform the Lua language server
+--- about the existence of the global variable for convenience when writing scripts.
+--- variable already set by Rust code
+
 --- Global variable containing parameters passed by the translator to the Lua code either from the OpenAPI
 --- specification (x-ot-target-parameters extension) or from command line parameters.
 --- Command line parameters take precedence over API specification parameters.
---- This construction is used solely to inform the Lua language server
---- about the existence of the global variable for convenience when writing scripts.
---- variable already set by Rust code
 if false then
     ---@type any|null|nil # The type depends on how the parameters are specified in the command line or OpenAPI specification
-    targetParameters = nil
+    TARGET_PARAMETERS = nil
 end
+
+if false then
+    ---@type null # it is predefined in rust code value with type null
+    NULL = nil
+end
+
+if false then
+    ---@type string # path to visitors scripts
+    VISITORS_PATH = nil
+end
+
+if false then
+    ---@type string # path to target scripts
+    TARGET_PATH = nil
+end
+---------------------------------------------------------------------------------------------------------
 
 --- TYPES -----------------------------------------------------------------------------------------------
 
 --- It is a special predefined global value similar to nil. However, it
 --- specifically used for data passed from the translator (Rust code) that has a nil value.
---- userdata(nil) == null
+--- userdata(nil) == NULL
 --- @class null
 
 --- The description of incoming types is automatically generated based on the Rust structures.
@@ -756,8 +777,8 @@ end
 function printTable(t, indent)
     indent = indent or 10
 
-    if t == null then
-        print(string.rep(" ", indent) .. "Argument is null!")
+    if t == NULL then
+        print(string.rep(" ", indent) .. "Argument is NULL!")
         return
     end
 
@@ -795,8 +816,8 @@ end
 function tableToString(tbl, indent)
     indent = indent or 10
 
-    if tbl == null then
-        return string.rep(" ", indent) .. "Argument is null!"
+    if tbl == NULL then
+        return string.rep(" ", indent) .. "Argument is NULL!"
     end
 
     if tbl == nil then
@@ -901,20 +922,20 @@ Extensions.CODE_BEFORE = "x-ot-code-before"
 Extensions.IMPORT = "import"
 Extensions.CODE = "code"
 
----select first not null or nill value
----@param first string|null # it possible be null too
----@param second string|null # it possible be null too
+---select first not NULL or nil value
+---@param first string|null # it possible be NULL too
+---@param second string|null # it possible be NULL too
 ---@return string|nil
 function getName(first, second)
     ---@type string|nil
     local nilableFirst = nil
     ---@type string|nil
     local nillableSecond = nil
-    if first ~= null then
+    if first ~= NULL then
         ---@diagnostic disable-next-line: cast-local-type
         nilableFirst = first
     end
-    if second ~= null then
+    if second ~= NULL then
         ---@diagnostic disable-next-line: cast-local-type
         nillableSecond = second
     end
@@ -1565,12 +1586,12 @@ end
 function stub()
     printBreak()
     print("Prelude script called")
-    print("targetParamaters type: " .. type(targetParameters))
+    print("targetParamaters type: " .. type(TARGET_PARAMETERS))
     print("targetParamaters value:")
-    if type(targetParameters) == "table" then
-        printTable(targetParameters)
+    if type(TARGET_PARAMETERS) == "table" then
+        printTable(TARGET_PARAMETERS)
     else
-        print(targetParameters)
+        print(TARGET_PARAMETERS)
     end
     printBreak()
 end

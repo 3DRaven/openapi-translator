@@ -5,12 +5,14 @@ use openapiv3::OpenAPI;
 use std::ffi::OsStr;
 
 use crate::{
+    check_scripts,
     enums::common::Script,
     holders::context::{
         get_lua_vm, recreate_lua_vm, CLI, DEFAULT_TESTS_EXPECTED_DIR_NAME,
         DEFAULT_TESTS_OPENAPI_DIR_NAME, DEFAULT_TESTS_OPENAPI_FILE_NAME,
         DEFAULT_TESTS_OUT_DIR_NAME, EXTENSION_TARGET_PARAMETERS_NAME, LOG_CONTEXT,
-        TARGET_PARAMETERS_NAME_IN_LUA,
+        NULL_VALUE_VARIABLE_NAME_IN_LUA, TARGET_PARAMETERS_VARIABLE_NAME_IN_LUA,
+        TARGET_PATH_VARIABLE_NAME_IN_LUA, VISITORS_PATH_VARIABLE_NAME_IN_LUA,
     },
     structs::common::CallStack,
     Commands,
@@ -29,7 +31,7 @@ pub fn set_global_lua_parameters(openapi: &OpenAPI) -> Result<CallStack> {
             let params_value = lua_vm.to_value(it)?;
             lua_vm
                 .globals()
-                .set(TARGET_PARAMETERS_NAME_IN_LUA, params_value)
+                .set(TARGET_PARAMETERS_VARIABLE_NAME_IN_LUA, params_value)
         })
         .transpose()?;
 
@@ -39,13 +41,45 @@ pub fn set_global_lua_parameters(openapi: &OpenAPI) -> Result<CallStack> {
             let params_value = lua_vm.to_value(it)?;
             lua_vm
                 .globals()
-                .set(TARGET_PARAMETERS_NAME_IN_LUA, params_value)
+                .set(TARGET_PARAMETERS_VARIABLE_NAME_IN_LUA, params_value)
         })
         .transpose()?;
 
     let fake_null = lua_vm.null();
-    lua_vm.globals().set("null", fake_null)?;
+    lua_vm
+        .globals()
+        .set(NULL_VALUE_VARIABLE_NAME_IN_LUA, fake_null)?;
+
+    let visitors_path_str = CLI
+        .get_visitors_dir()
+        .to_str()
+        .expect("unable to get string from visitors path");
+    lua_vm.globals().set(
+        VISITORS_PATH_VARIABLE_NAME_IN_LUA,
+        lua_vm.to_value(visitors_path_str)?,
+    )?;
+
+    let target_path_str = CLI
+        .get_target_dir()
+        .to_str()
+        .expect("unable to get string from visitors path");
+    lua_vm.globals().set(
+        TARGET_PATH_VARIABLE_NAME_IN_LUA,
+        lua_vm.to_value(target_path_str)?,
+    )?;
+
+    //Add relative paths to scripts to use with lua require
+    let code = format!(
+        r#"
+        package.path = "./{}/?.lua;" .. "./{}/?.lua;" .. package.path
+        "#,
+        visitors_path_str, target_path_str
+    );
+    lua_vm.load(&code).exec()?;
+
+    //It is drop of mutex lock
     drop(lua_vm);
+    check_scripts()?;
     Script::Target.call_func(Some(&Script::Prelude.call_func(None)?))
 }
 

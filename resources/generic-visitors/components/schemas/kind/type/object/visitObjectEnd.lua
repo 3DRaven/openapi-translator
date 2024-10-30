@@ -28,7 +28,7 @@ function visitObjectEnd(objectDescriptor, extensions, callsStack)
     if parentModel ~= nil then
         -- For parent OBJECT we need to write property to it
         if parentModel:instanceOf(ObjectModel) then
-            addGenericPropertyCode(parentModel, currentModel.name, extensions)
+            CODEGEN.addGenericPropertyCode(parentModel, currentModel.name, extensions)
         elseif parentModel:instanceOf(AllOfModel) then
             --- If the parent is allOf, we need to place all created properties and other of this object into the parent.
             parentModel:includeModel(currentModel)
