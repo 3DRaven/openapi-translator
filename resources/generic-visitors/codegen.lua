@@ -1,10 +1,10 @@
-local codegen_module = {}
+local module = {}
 
 --- @param model ModelBase
 --- @param type string
 --- @param extensions table # table with free form with "x-" OpenAPI extensions for this level of spec
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
-function codegen_module.addGenericPropertyCode(model, type, extensions)
+function module.addGenericPropertyCode(model, type, extensions)
     if model == nil then
         --- This is possible if a schema is constructed as a separate value;
         --- such a schema is not a model but can be used as a reference in other schemas.
@@ -51,4 +51,4 @@ function codegen_module.addGenericPropertyCode(model, type, extensions)
     return {}
 end
 
-return codegen_module
+return module
