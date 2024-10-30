@@ -11,9 +11,7 @@ function visitMediaTypeStart(mediaTypeName, mediaType, extensions, callsStack)
         error("Model name is missing: neither 'mediaTypeName' nor '" ..
             Extensions.MODEL_NAME .. "' in extensions is provided.")
     end
-    printBreak()
     global_context.names:push(name)
-    printBreak()
     return {}
 end
 

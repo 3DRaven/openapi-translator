@@ -1594,6 +1594,7 @@ end
 --- global variable `targetParameters` created by the translator (Rust code) in the Lua context
 function stub()
     printBreak()
+    print("Prelude script called")
     print("targetParamaters type: " .. type(targetParameters))
     print("targetParamaters value:")
     if type(targetParameters) == "table" then

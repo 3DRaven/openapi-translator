@@ -6,8 +6,8 @@ use openapi_translator::{check_scripts, init_logger};
 fn main() -> Result<()> {
     init_logger();
     check_scripts()?;
-    info!("======== TRANSLATION START ========");
+    info!("================================================ TRANSLATION START ================================================");
     cli::visit_commands()?;
-    info!("======== TRANSLATION FINISHED ========");
+    info!("================================================ TRANSLATION FINISHED ================================================");
     Ok(())
 }
