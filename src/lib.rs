@@ -45,36 +45,43 @@ fn parse_parameters_val(value: &str) -> Result<Value> {
 #[derive(Parser)]
 #[command(version, about="OpenAPI v3 translator", long_about = None)]
 pub struct Cli {
-    #[arg(
-        short,
-        long,
-        value_name = "TARGET",
-        help = "Name of dir with translation scripts and tests"
-    )]
-    pub target: String,
-
     #[arg(short='p', long, value_parser = parse_parameters_val, num_args = 1, help = "Parameters for target Lua scripts are simply JSON of arbitrary structure, which will be converted into a Lua table and passed to the scripts as a global parameter named targetParameters. These parameters will replace the parameters passed in the OpenAPI spec as x-ot-target-parameters")]
-    pub target_parameters: Option<Value>,
+    pub parameters: Option<Value>,
+
     #[arg(
-        short,
+        short = 'd',
         long,
-        value_name = "RESOURCES",
-        help = "Base dir for all translator resources",
-        default_value = "resources"
+        value_name = "PRELUDE_PATH",
+        help = "Since visitors can be reused, the prelude dir contains in a separate script that runs at the start of the translation, where functions and modules that will be used in the general set of visitors to implement specific types of translation can be defined"
     )]
-    pub resources: PathBuf,
+    pub prelude: PathBuf,
+
+    #[arg(
+        short = 's',
+        long,
+        value_name = "VISITORS_PATH",
+        help = "The base directory for all visitors scripts, since for many types of translators, the final result only differs in specific small elements but is structurally similar, a common set of visitors can be used for different translation purposes"
+    )]
+    pub visitors: PathBuf,
 
     #[command(subcommand, help = "Action to execution")]
     pub command: Commands,
 }
 
 impl Cli {
-    pub fn get_tests_dir(&self) -> PathBuf {
-        self.get_scripts_dir().join("tests")
+    pub fn get_tests_dir(&self) -> Option<&PathBuf> {
+        match &self.command {
+            Commands::Test { tests, .. } => Some(tests),
+            Commands::Translate { .. } => None,
+        }
     }
 
-    pub fn get_scripts_dir(&self) -> PathBuf {
-        self.resources.join("scripts").join(&self.target)
+    pub fn get_visitors_dir(&self) -> &PathBuf {
+        &self.visitors
+    }
+
+    pub fn get_prelude_dir(&self) -> &PathBuf {
+        &self.prelude
     }
 }
 
@@ -89,6 +96,15 @@ pub enum Commands {
             help = "Optional test name to run (option can be set multiple times)"
         )]
         names: Option<Vec<String>>,
+
+        #[arg(
+            short,
+            long,
+            value_name = "TESTS_PATH",
+            help = "The base directory for all tests",
+            default_value = "resources"
+        )]
+        tests: PathBuf,
     },
     Translate {
         #[arg(
@@ -159,33 +175,38 @@ pub fn init_logger() {
 
 pub fn check_scripts() -> Result<()> {
     let mut scripts_files: HashMap<String, String> = HashMap::new();
-    let lua_vm = get_lua_vm();
-
-    for variant in Script::iter() {
-        let script_relative_path: &str = (&variant).into();
-        let script_path = CLI
-            .get_scripts_dir()
-            .join(format!("{}.lua", script_relative_path));
-
-        if let Some(old_value) = scripts_files.insert(
-            script_path
-                .file_name()
-                .expect("Unknown script filename")
-                .to_str()
-                .expect("Script filename not found")
-                .to_owned(),
-            script_path
-                .to_str()
-                .expect("Script path conversion error")
-                .to_owned(),
-        ) {
-            return Err(anyhow!(
-                "Duplicate script filenames first [{}] second [{:?}]",
-                old_value,
-                &script_path
-            ));
-        }
-        scripts::get_lua_function(&variant, &lua_vm).context("Script checking error")?;
+    check_script(Script::Prelude, &mut scripts_files)?;
+    for variant in Script::iter().filter(|it| *it != Script::Prelude) {
+        check_script(variant, &mut scripts_files)?;
     }
+    Ok(())
+}
+
+fn check_script(variant: Script, scripts_files: &mut HashMap<String, String>) -> Result<()> {
+    let lua_vm = get_lua_vm();
+    let script_relative_path: &str = (&variant).into();
+    let script_path = CLI
+        .get_visitors_dir()
+        .join(format!("{}.lua", script_relative_path));
+
+    if let Some(old_value) = scripts_files.insert(
+        script_path
+            .file_name()
+            .expect("Unknown script filename")
+            .to_str()
+            .expect("Script filename not found")
+            .to_owned(),
+        script_path
+            .to_str()
+            .expect("Script path conversion error")
+            .to_owned(),
+    ) {
+        return Err(anyhow!(
+            "Duplicate script filenames first [{}] second [{:?}]",
+            old_value,
+            &script_path
+        ));
+    }
+    scripts::get_lua_function(&variant, &lua_vm).context("Script checking error")?;
     Ok(())
 }

@@ -11,8 +11,10 @@
             // "initCommands": ["settings set target.process.thread.step-avoid-libraries std"],
             "program": "${workspaceRoot}/target/debug/openapi-translator",
             "args": [
-                "-t",
-                "java",
+                "-d",
+                "resources/java-spring-boot",
+                "-s",
+                "resources/generic-visitors",
                 "-p",
                 "{\"replaces\":1}",
                 "test",
@@ -26,6 +28,8 @@
                 // "cycled-refs",
                 // "-n",
                 // "hard"
+                "-t",
+                "resources/java-spring-boot/tests"
             ],
             "cwd": "${workspaceRoot}",
             "stopOnEntry": false,

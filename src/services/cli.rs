@@ -33,7 +33,7 @@ pub fn set_global_lua_parameters(openapi: &OpenAPI) -> Result<CallStack> {
         })
         .transpose()?;
 
-    CLI.target_parameters
+    CLI.parameters
         .as_ref()
         .map(|it| {
             let params_value = lua_vm.to_value(it)?;
@@ -68,11 +68,10 @@ pub fn visit_commands() -> Result<()> {
 
 fn get_commands() -> Result<Vec<Commands>> {
     let commands = match &CLI.command {
-        Commands::Test { names } => {
-            let test_path = CLI.get_tests_dir();
-            let commands: Vec<Commands> = test_path
+        Commands::Test { names, tests } => {
+            let commands: Vec<Commands> = tests
                 .read_dir()
-                .with_context(|| format!("Could not read tests dir [{:?}]", &test_path))?
+                .with_context(|| format!("Could not read tests dir [{:?}]", &tests))?
                 .filter_map(Result::ok)
                 .map(|entry| entry.path())
                 .filter(|path| {

@@ -5,7 +5,6 @@ use std::{
 };
 
 use clap::Parser;
-use indexmap::IndexMap;
 use log::debug;
 use mlua::Lua;
 use once_cell::sync::Lazy;
@@ -31,7 +30,6 @@ pub static CLIENT: Lazy<Client> = Lazy::new(reqwest::blocking::Client::new);
 pub static CLI: Lazy<&'static Cli> = Lazy::new(|| Box::leak(Box::new(Cli::parse())));
 pub static LUA_VM: Lazy<Mutex<Lua>> = Lazy::new(|| Mutex::new(Lua::new()));
 pub static LOG_CONTEXT: Lazy<Mutex<String>> = Lazy::new(|| Mutex::new(String::new()));
-pub static EMPTY_INDEXMAP: Lazy<IndexMap<String, serde_json::Value>> = Lazy::new(IndexMap::new);
 
 pub fn get_lua_vm() -> MutexGuard<'static, Lua> {
     LUA_VM.lock().expect("Could not lock lua vm")

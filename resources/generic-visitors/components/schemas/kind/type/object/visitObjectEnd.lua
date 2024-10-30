@@ -21,7 +21,7 @@ function visitObjectEnd(objectDescriptor, extensions, callsStack)
     --- the model will be transferred to the parent, so we can immediately delete the current model.
     --- @type ModelBase
     local currentModel = global_context.models:pop()
-    ---@type ModelBase?
+    --- @type ModelBase?
     local parentModel = global_context.models:peek()
 
     -- if this object has parent, it must save something to parent about it self

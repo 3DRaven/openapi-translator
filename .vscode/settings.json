@@ -287,6 +287,7 @@
         "mlua",
         "openapi",
         "openapiv",
+        "OUTPATH",
         "Petstore",
         "reqwest",
         "springframework"
