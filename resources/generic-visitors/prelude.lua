@@ -413,7 +413,7 @@ end
 --- @field extensions table<string, any> Inline extensions to this object.
 
 --- Represents a reference or an item.
----@class ReferenceOr<T>
+---@class ReferenceOr
 ---@field reference string # The reference string, applicable if it is a reference.
 ---@field item any
 
@@ -503,26 +503,45 @@ end
 --- @field any AnySchema Generic schema allowing any structure.
 
 --- Enum representing different data types in a schema.
---- @alias Type
---- | '"string"'    # Represents a string data type with specific attributes.
---- | '"number"'    # Represents a number data type, including floating-point numbers.
---- | '"integer"'   # Represents an integer data type with its constraints.
---- | '"object"'    # Represents an object data type with properties and structure.
---- | '"array"'     # Represents an array data type with items of a specified type.
---- | '"boolean"'   # Represents a boolean data type, true or false.
+--- @class Type
+--- @field STRING string    # Represents a string data type with specific attributes.
+--- @field NUMBER string    # Represents a number data type, including floating-point numbers.
+--- @field INTEGER string   # Represents an integer data type with its constraints.
+--- @field OBJECT string    # Represents an object data type with properties and structure.
+--- @field ARRAY string     # Represents an array data type with items of a specified type.
+--- @field BOOLEAN string   # Represents a boolean data type, true or false.
+Type = {}
+
+Type.STRING = "string"
+Type.NUMBER = "number"
+Type.INTEGER = "integer"
+Type.OBJECT = "object"
+Type.ARRAY = "array"
+Type.BOOLEAN = "boolean"
 
 --- Represents different number formats.
---- @alias NumberFormat
---- | '"float"'   # Floating-point format for numbers.
---- | '"double"'  # Double precision format for numbers.
+--- @class NumberFormat
+--- @field FLOAT string     # Floating-point format for numbers.
+--- @field DOUBLE string    # Double precision format for numbers.
+NumberFormat = {}
+
+NumberFormat.FLOAT = "float"
+NumberFormat.DOUBLE = "double"
 
 --- Represents different string formats.
---- @alias StringFormat
---- | '"date"'       # Date format for strings.
---- | '"date-time"'  # Date and time format for strings.
---- | '"password"'   # Password format, used for secret fields.
---- | '"byte"'       # Byte format, representing base64 encoded data.
---- | '"binary"'     # Binary format, representing raw binary data.
+--- @class StringFormat
+--- @field DATE string        # Date format for strings.
+--- @field DATE_TIME string   # Date and time format for strings.
+--- @field PASSWORD string    # Password format, used for secret fields.
+--- @field BYTE string        # Byte format, representing base64 encoded data.
+--- @field BINARY string      # Binary format, representing raw binary data.
+StringFormat = {}
+
+StringFormat.DATE = "date"
+StringFormat.DATE_TIME = "date-time"
+StringFormat.PASSWORD = "password"
+StringFormat.BYTE = "byte"
+StringFormat.BINARY = "binary"
 
 --- Represents a string data type with additional validation attributes.
 --- @class StringType
@@ -543,9 +562,13 @@ end
 --- @field enumeration number[] Possible values for the number.
 
 --- Represents different integer formats.
---- @alias IntegerFormat
---- | '"int32"'  # Integer format for 32-bit integers.
---- | '"int64"'  # Integer format for 64-bit integers.
+--- @class IntegerFormat
+--- @field INT32 string  # Integer format for 32-bit integers.
+--- @field INT64 string  # Integer format for 64-bit integers.
+IntegerFormat = {}
+
+IntegerFormat.INT32 = "int32"
+IntegerFormat.INT64 = "int64"
 
 --- Represents an integer data type with additional validation attributes.
 --- @class IntegerType

@@ -84,6 +84,7 @@ components:
             type: array
             items:
               type: string
+              format: date
         code:
           type: integer
         message:
