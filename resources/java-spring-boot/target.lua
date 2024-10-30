@@ -1,7 +1,8 @@
---- This script is called first, at the beginning of all processing. It outputs the value of all parameters
---- passed to the script either from the OpenAPI specification or from the command line. Command line
---- parameters take precedence and override the specification parameters. Parameters are stored in the
---- global variable `targetParameters` created by the translator (Rust code) in the Lua context
+--- This script is run after prelude.lua to set functions specific to a particular type of translation
+--- That is, you can use a common set of visitors and prelude.lua to set general translation mechanisms
+--- and target.lua to set specific translation mechanisms for, for example, translation from the OpenAPI 3
+--- into a specific java target models
+
 function stub()
     printBreak()
     print("Target script called")
