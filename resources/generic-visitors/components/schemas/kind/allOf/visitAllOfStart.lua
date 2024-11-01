@@ -7,7 +7,7 @@ function visitAllOfStart(schemas, extensions, callsStack)
     --- When we begin processing an object, the model might already exist because, each time a
     --- reference is encountered in the specification, the visitors starts constructing the model
     --- from scratch. However, the actual text that the reference points to is read only once and cached.
-    global_context.models:push(AllOfModel.new(global_context.names:element()))
+    GLOBAL_CONTEXT.models:push(AllOfModel.new(GLOBAL_CONTEXT.names:element()))
     return {}
 end
 

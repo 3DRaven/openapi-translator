@@ -275,7 +275,11 @@
         "addGenericPropertyCode",
         "selectName",
         "getRequiredImport",
-        "getPropertyCode"
+        "getPropertyCode",
+        "getFirstExistName",
+        "getFirstExistsName",
+        "concatStack",
+        "concatStackCapitalized"
     ],
     "terminal.integrated.scrollback": 16777216,
     "references.preferredLocation": "view",

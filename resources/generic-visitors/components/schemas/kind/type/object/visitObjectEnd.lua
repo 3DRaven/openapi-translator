@@ -20,15 +20,18 @@ function visitObjectEnd(objectDescriptor, extensions, callsStack)
     --- The endpoint for this visitor is either that the code will be saved to disk, or that
     --- the model will be transferred to the parent, so we can immediately delete the current model.
     --- @type ModelBase
-    local currentModel = global_context.models:pop()
+    local currentModel = GLOBAL_CONTEXT.models:pop()
     --- @type ModelBase?
-    local parentModel = global_context.models:peek()
+    local parentModel = GLOBAL_CONTEXT.models:peek()
 
     -- if this object has parent, it must save something to parent about it self
     if parentModel ~= nil then
         -- For parent OBJECT we need to write property to it
         if parentModel:instanceOf(ObjectModel) then
             CODEGEN.addGenericPropertyCode(parentModel, currentModel.name, extensions)
+        elseif parentModel:instanceOf(TypeTransferModel) then
+            -- object must write it self model (currentModel) and must send it type to parent object
+            parentModel.name = currentModel.name
         elseif parentModel:instanceOf(AllOfModel) then
             --- If the parent is allOf, we need to place all created properties and other of this object into the parent.
             parentModel:includeModel(currentModel)

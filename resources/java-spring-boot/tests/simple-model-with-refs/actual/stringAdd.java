@@ -1,6 +1,6 @@
 import java.util.concurrent.ConcurrentHashMap;
 
-public class PersonstringAdd {
+public class stringAdd {
 
     private ConcurrentHashMap<String,String> additionalProperties = new ConcurrentHashMap<>();
 

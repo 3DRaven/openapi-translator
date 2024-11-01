@@ -719,12 +719,42 @@ CONTEXT -> penultimate from stack
     return item
 end
 
+--- Method to apply a given function to each element in the stack.
+--- @param action function # A function to be applied to each element in the stack.
+function Stack:forEach(action)
+    for _, item in ipairs(self.items) do
+        action(item)
+    end
+end
+
+--- Method to reduce the elements of the stack to a single value.
+--- @param accumulator any # The initial value for the reduction.
+--- @param reducer function # A function that takes the accumulator and an element, and returns a new accumulator.
+--- @return any # The final reduced value.
+function Stack:reduce(accumulator, reducer)
+    for _, item in ipairs(self.items) do
+        accumulator = reducer(accumulator, item)
+    end
+    return accumulator
+end
+
 function Stack:isEmpty()
     return #self.items == 0
 end
 
 function Stack:size()
     return #self.items
+end
+
+
+--- Concatenates all elements of the stack into a single string with each element's first letter capitalized.
+--- @param stack Stack # The stack whose elements will be concatenated.
+--- @return string # The concatenated string with each element's first letter capitalized.
+function concatStackCapitalized(stack)
+    local reducer = function(acc, item)
+        return acc .. item:gsub("^%l", string.upper)
+    end
+    return stack:reduce("", reducer)
 end
 
 --- Class for storing variables across scripts with loggable access manner for all chain of models
@@ -747,7 +777,7 @@ function GlobalContext:new()
 end
 
 --- global accessed context within scripts
-global_context = GlobalContext:new()
+GLOBAL_CONTEXT = GlobalContext:new()
 
 --- Function to check if a table contains a specific value.
 ---@param tbl table # The table to search in.
@@ -911,6 +941,8 @@ WriteMode.REMOVE = "REMOVE"
 --- @class Extensions
 --- @field MODEL_NAME string #
 --- @field PROPERTY_NAME string #
+--- @field ADDITIONAL_PROPERTY_NAME string #
+--- @field ADDITIONAL_PROPERTY_MODEL_NAME string #
 --- @field CODE_BEFORE string #
 --- @field IMPORT string #
 --- @field CODE string #
@@ -918,6 +950,8 @@ Extensions = {}
 
 Extensions.MODEL_NAME = "x-ot-model-name"
 Extensions.PROPERTY_NAME = "x-ot-property-name"
+Extensions.ADDITIONAL_PROPERTY_NAME = "x-ot-additional-property-name"
+Extensions.ADDITIONAL_PROPERTY_MODEL_NAME = "x-ot-additional-property-model-name"
 Extensions.CODE_BEFORE = "x-ot-code-before"
 Extensions.IMPORT = "import"
 Extensions.CODE = "code"
@@ -926,7 +960,7 @@ Extensions.CODE = "code"
 ---@param first string|null # it possible be NULL too
 ---@param second string|null # it possible be NULL too
 ---@return string|nil
-function getName(first, second)
+function getFirstExistsName(first, second)
     ---@type string|nil
     local nilableFirst = nil
     ---@type string|nil
@@ -1408,7 +1442,7 @@ function ModelBase:addModelProperty(propertyName, extensions)
     return property
 end
 
---- Method to adapting method to new model name
+--- Method to determinate type of model
 --- @param clazz table # Class
 --- @return boolean # true if this model is instance of that class
 function ModelBase:instanceOf(clazz)

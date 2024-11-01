@@ -2,12 +2,22 @@ openapi: "3.1.0"
 info:
   version: 1.0.0
   title: Simple model generated
+  license:
+    name: MIT License
+    url: https://opensource.org/licenses/MIT
 servers:
-  - url: http://localhost
+  - url: http://test.com
 paths:
   /endpoint:
     get:
+      operationId: getTestEndpointResponse
+      description: Test enpdpoint with long description for linter
+      security:
+        - basicAuth: []
+      summary: An endpoint for testing purposes
       responses:
+        "400":
+          description: just a stub
         "200":
           description: just a stub
 x-ot-target-parameters:
@@ -17,59 +27,67 @@ x-ot-target-parameters:
     value: 1
     value2: 2
 components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
   schemas:
-    Object:
-      ## schema level extensions here
-      # object_start with schema level extensions script
-      type: object
-      properties:
-        # object_property_start with schema level extensions script
-        value:
-          ## string level extensions here
-          # string_property with string level extensions script
-          type: string
-        # object_property_end with schema level extensions script
-        # object_property_start with schema level extensions script
-        value1:
-          ## integer level extensions here
-          # integer_property with integer level extensions script
-          type: string
-        # object_property_end with schema level extensions script
+    # Object:
+    #   ## schema level extensions here
+    #   # object_start with schema level extensions script
+    #   type: object
+    #   properties:
+    #     # object_property_start with schema level extensions script
+    #     value:
+    #       ## string level extensions here
+    #       # string_property with string level extensions script
+    #       type: string
+    #     # object_property_end with schema level extensions script
+    #     # object_property_start with schema level extensions script
+    #     value1:
+    #       ## integer level extensions here
+    #       # integer_property with integer level extensions script
+    #       type: string
+    #     # object_property_end with schema level extensions script
 
-    Array:
-      type: array
-      items:
-        type: string
-    ArrayWithArrayWithArray:
-      type: array
-      items:
-        type: array
-        items:
-          type: array
-          items:
-            type: string
-    ObjectWitArray:
-      type: object
-      properties:
-        value:
-          type: array
-          items:
-            type: string
-    ArrayWitObjects:
-      type: array
-      items:
-        type: object
-        properties:
-          value:
-            type: string
-    FreeAdd1:
-      type: object
-      x-ot-additional-properties-name: customName
-      additionalProperties: true
-    Any:
-      type: object
-      additionalProperties:
-        type: object
+    # Array:
+    #   type: array
+    #   items:
+    #     type: string
+    # ArrayWithArrayWithArray:
+    #   type: array
+    #   items:
+    #     type: array
+    #     items:
+    #       type: array
+    #       items:
+    #         type: string
+    # ObjectWitArray:
+    #   type: object
+    #   properties:
+    #     value:
+    #       type: array
+    #       items:
+    #         type: string
+    # ArrayWitObjects:
+    #   type: array
+    #   items:
+    #     type: object
+    #     properties:
+    #       value:
+    #         type: string
+    # FreeAdd1:
+    #   type: object
+    #   additionalProperties: true
+    # Any:
+    #   type: object
+    #   properties:
+    #     array:
+    #       type: array
+    #       items:
+    #         type: object
+    #   additionalProperties:
+    #     type: object
     Person:
       type: object
       properties:

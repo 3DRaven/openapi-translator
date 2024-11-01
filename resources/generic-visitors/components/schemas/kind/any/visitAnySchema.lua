@@ -6,11 +6,14 @@
 --- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 function visitAnySchema(anySchemaDescriptor, extensions, callsStack)
+    --- @type ModelBase
+    local currentModel = GLOBAL_CONTEXT.models:element()
+    if currentModel:instanceOf(TypeTransferModel) then
+        currentModel.name = PARTS.getAnyType()
+    else
+        error("Unknown model for Any schema")
+    end
     return {}
 end
 
-local function beforeDecorator()
-    global_context:addLastChildrenModelName("visitAnySchema", "Object")
-end
-
-return functionCallAndLog("visitAnySchema", visitAnySchema, beforeDecorator)
+return functionCallAndLog("visitAnySchema", visitAnySchema)

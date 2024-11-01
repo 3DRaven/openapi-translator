@@ -9,21 +9,12 @@
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 function visitAdditionalPropertiesAny(flag, minProperties, maxProperties, extensions, callsStack)
     --- @type ModelBase
-    local currentModel = global_context.models:element()
+    local currentModel = GLOBAL_CONTEXT.models:element()
     if currentModel == nil then
-        error("additionalProperties with type any without parent")
+        error("additionalProperties with type any in unknown position")
     else
-        -- Adding the import at the beginning of the parent model file
-        currentModel:adaptToIncludes({ WriteOperation.new_prepend("import java.util.concurrent.ConcurrentHashMap;\n",
-            currentModel.name) })
-        local propertyName = "additionalProperties"
-        local code = string.format("    private ConcurrentHashMap<String,Object> %s = new ConcurrentHashMap<>();\n",
-            propertyName);
-
-        currentModel:addModelProperty(propertyName, extensions)
-        currentModel:adaptToLastProperty({ WriteOperation.new_append(code, currentModel.name) })
+        return CODEGEN.addAdditionalProperty(currentModel, PARTS.getAnyType(), extensions)
     end
-    return {}
 end
 
 return functionCallAndLog("visitAdditionalPropertiesAny", visitAdditionalPropertiesAny)

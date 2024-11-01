@@ -7,7 +7,22 @@
 --- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 function visitAdditionalPropertiesEnd(schema, minProperties, maxProperties, extensions, callsStack)
-    return {}
+    --- @type ModelBase
+    local childModel = GLOBAL_CONTEXT.models:pop()
+    --- @type ModelBase
+    local currentModel = GLOBAL_CONTEXT.models:element()
+    -- drop predefined additionalProperties child model name
+    GLOBAL_CONTEXT.names:pop()
+
+    if currentModel:instanceOf(ObjectModel) then
+        if childModel:instanceOf(TypeTransferModel) then
+            return CODEGEN.addAdditionalProperty(currentModel, childModel.name, extensions)
+        else
+            error("Child type for additionalProperties not found")
+        end
+    else
+        error("additionalProperties not in object found")
+    end
 end
 
 return functionCallAndLog("visitAdditionalPropertiesEnd", visitAdditionalPropertiesEnd)

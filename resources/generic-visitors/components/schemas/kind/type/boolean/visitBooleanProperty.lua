@@ -5,7 +5,7 @@
 --- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 function visitBooleanProperty(booleanDescriptor, extensions, callsStack)
-    return CODEGEN.addGenericPropertyCode(global_context.models:element(), "Boolean", extensions)
+    return CODEGEN.addGenericPropertyCode(GLOBAL_CONTEXT.models:element(), PARTS.getBooleanType(), extensions)
 end
 
 return functionCallAndLog("visitBooleanProperty", visitBooleanProperty)

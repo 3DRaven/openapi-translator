@@ -5,7 +5,7 @@
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 function visitAllOfEnd(schemas, extensions, callsStack)
     ---@type AllOfModel
-    local currentModel = global_context.models:pop()
+    local currentModel = GLOBAL_CONTEXT.models:pop()
 
     if currentModel == nil then
         error("Model for allOf not found")

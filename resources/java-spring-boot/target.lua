@@ -3,20 +3,7 @@
 --- and target.lua to set specific translation mechanisms for, for example, translation from the OpenAPI 3
 --- into a specific java target models
 
---- @return string #
-function getPropertyCode(codeBefore, requiredMarker, type, name)
-    return string.format("%s\n    private %s %s %s;\n", codeBefore or "", requiredMarker or "", type, name)
-end
-
---- @return string #
-function getRequiredImport()
-    return "import javax.annotation.Nonnull;\n"
-end
-
---- @return string #
-function getRequiredMarker()
-    return "@Nonnull"
-end
+PARTS = require("parts")
 
 function stub()
     printBreak()

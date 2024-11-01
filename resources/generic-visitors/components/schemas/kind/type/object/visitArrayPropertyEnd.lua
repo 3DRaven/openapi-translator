@@ -8,36 +8,19 @@
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 function visitArrayPropertyEnd(arrayDescriptor, extensions, callsStack)
     --- @type ModelBase
-    local childModel = global_context.models:pop()
+    local childModel = GLOBAL_CONTEXT.models:pop()
     --- @type ModelBase?
-    local currentModel = global_context.models:peek()
+    local currentModel = GLOBAL_CONTEXT.models:peek()
+    -- drop predefined array child model name
+    GLOBAL_CONTEXT.names:pop()
 
     if childModel.name == nil then
         error("Unknown model for items")
     else
         -- if it is root object as array we must generate full model
         if currentModel == nil then
-            local arrayModelName = global_context.names:element()
-            local parameters = { className = arrayModelName, childClassName = childModel.name }
-
-            local code = interpolate(parameters, formatAndTrimIndent([[
-            import java.util.List;
-
-            public class ${className} {
-                private List<${childClassName}> items;
-                public ${className}() {}
-                public ${className}(List<${childClassName}> items) {
-                    this.items = items;
-                }
-                public List<${childClassName}> get${className}() {
-                    return items;
-                }
-                public void set${className}(List<${childClassName}> items) {
-                    this.items = items;
-                }
-            }
-            ]]))
-            return { WriteOperation.new_append(code, arrayModelName) }
+            local arrayModelName = GLOBAL_CONTEXT.names:element()
+            return { WriteOperation.new_append(PARTS.getArrayAsModel(arrayModelName, childModel.name), arrayModelName) }
         else -- if it is just property for object or additionalProperties we need to write some to parents
             if currentModel:instanceOf(ObjectModel) then
                 --- @type Property

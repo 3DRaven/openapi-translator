@@ -8,9 +8,9 @@ function visitObjectStart(objectDescriptor, extensions, callsStack)
     --- When we begin processing an schema, the model might already exist because, each time a
     --- reference is encountered in the specification, the translator starts constructing the model
     --- from scratch. However, the actual text that the reference points to is read only once and cached.
-    local model = ObjectModel.new(global_context.names:element())
+    local model = ObjectModel.new(GLOBAL_CONTEXT.names:element())
     model.required = objectDescriptor.required
-    global_context.models:push(model)
+    GLOBAL_CONTEXT.models:push(model)
     return { WriteOperation.new_remove(model.name) }
 end
 

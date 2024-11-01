@@ -5,9 +5,11 @@
 --- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 function visitSchemaEnd(schemaName, schemaDescriptor, extensions, callsStack)
-    local name = getName(extensions[Extensions.MODEL_NAME], schemaName)
+    -- In some cases (as example additionalProperties), the name might not be set initially when starting model processing, so
+    -- we'll redefine the name and reset it if found.
+    local name = getFirstExistsName(extensions[Extensions.MODEL_NAME], schemaName)
     if name then
-        global_context.names:pop()
+        GLOBAL_CONTEXT.names:pop()
     else
         print("Name is empty")
     end

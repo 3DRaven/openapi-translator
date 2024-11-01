@@ -5,12 +5,12 @@
 --- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 function visitSchemaStart(schemaName, schemaDescriptor, extensions, callsStack)
-    -- at this point we know the name of the schema, but it can be either a model or just a property
-    local name = getName(extensions[Extensions.MODEL_NAME], schemaName)
+    -- At this point, there might not be a name, for example, for additionalProperties
+    local name = getFirstExistsName(extensions[Extensions.MODEL_NAME], schemaName)
     if name then
-        global_context.names:push(name)
+        GLOBAL_CONTEXT.names:push(name)
     else
-        print("Name is empty")
+        print("Name is empty, skip")
     end
     return {}
 end

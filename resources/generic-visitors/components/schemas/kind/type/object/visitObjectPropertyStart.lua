@@ -6,7 +6,7 @@
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 function visitObjectPropertyStart(propertyName, schema, extensions, callsStack)
     --- @type ModelBase
-    local model = global_context.models:element()
+    local model = GLOBAL_CONTEXT.models:element()
     model:addModelProperty(propertyName, extensions)
     return {}
 end
