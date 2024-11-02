@@ -1,0 +1,140 @@
+openapi: 3.1.0
+info:
+  description: simplest OpenAPI 3 spec without linter warnings
+  title: Pairwise Test API
+  version: 1.0.0
+  license:
+    name: MIT License
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.test.com/v1
+    description: Production server
+  - url: https://staging.api.test.com/v1
+    description: Staging server
+
+paths:
+  /test-endpoint:
+    get:
+      operationId: getTestEndpointResponse
+      description: Test enpdpoint with long description for linter
+      security:
+        - basicAuth: []
+      summary: An endpoint for testing purposes
+      responses:
+        "400":
+          description: Bad request response
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SampleResponse"
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+  schemas:
+    # 1. String with various validations
+    StringSchema:
+      type: string
+      maxLength: 100
+      minLength: 1
+      pattern: '^[a-zA-Z]+$'
+      example: "exampleString"
+
+    # 2. Integer with various validations
+    IntegerSchema:
+      type: integer
+      minimum: 0
+      maximum: 100
+      example: 42
+
+    # 3. Object with required and optional fields
+    ObjectSchema:
+      type: object
+      properties:
+        requiredField:
+          type: string
+        optionalField:
+          type: integer
+          nullable: true
+      required:
+        - requiredField
+      example:
+        requiredField: "requiredValue"
+        optionalField: 10
+
+    # 4. Array of strings with unique items
+    StringArraySchema:
+      type: array
+      items:
+        type: string
+      uniqueItems: true
+      example: ["item1", "item2"]
+
+    # 5. Boolean Schema
+    BooleanSchema:
+      type: boolean
+      example: true
+
+    # 6. Enum Schema
+    EnumSchema:
+      type: string
+      enum:
+        - OPTION1
+        - OPTION2
+        - OPTION3
+      example: OPTION1
+
+    # 7. Nested Object Schema
+    NestedObjectSchema:
+      type: object
+      properties:
+        nestedObject:
+          $ref: '#/components/schemas/ObjectSchema'
+        nestedArray:
+          type: array
+          items:
+            $ref: '#/components/schemas/StringSchema'
+      example:
+        nestedObject:
+          requiredField: "nestedRequired"
+          optionalField: null
+        nestedArray: ["nestedItem1", "nestedItem2"]
+
+    # 8. Simple Response Schema
+    SampleResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        data:
+          type: object
+          oneOf:
+            - $ref: '#/components/schemas/StringSchema'
+            - $ref: '#/components/schemas/IntegerSchema'
+            - $ref: '#/components/schemas/ObjectSchema'
+            - $ref: '#/components/schemas/StringArraySchema'
+            - $ref: '#/components/schemas/BooleanSchema'
+            - $ref: '#/components/schemas/EnumSchema'
+            - $ref: '#/components/schemas/NestedObjectSchema'
+      example:
+        message: "This is a sample response."
+        data:
+          requiredField: "dataValue"
+    SampleAllOf:
+      allOf: # really it is just type: object with all properties from all children
+        - type: string
+        - type: object
+          additionalProperties: true
+        - type: object
+          properties:
+            tracks:
+              allOf:
+                - type: object
+                  properties:
+                    values:
+                      type: string

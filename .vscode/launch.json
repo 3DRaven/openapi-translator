@@ -12,16 +12,16 @@
             "program": "${workspaceRoot}/target/debug/openapi-translator",
             "args": [
                 "--target-scripts",
-                "resources/java-spring-boot",
+                "resources/target-java-spring-boot",
                 "--visitors-scripts",
-                "resources/generic-visitors",
+                "resources/visitors-c-like-code",
                 "-p",
                 "{\"replaces\":1}",
                 "test",
-                "-n",
-                "simple-model-with-refs",
                 // "-n",
-                // "inheritance",
+                // "simple-model-with-refs",
+                "-n",
+                "inheritance",
                 // "-`n",
                 // "simple-model",
                 // "-n",
@@ -29,7 +29,7 @@
                 // "-n",
                 // "hard"
                 "-t",
-                "resources/java-spring-boot/tests"
+                "resources/target-java-spring-boot/tests"
             ],
             "cwd": "${workspaceRoot}",
             "stopOnEntry": false,
