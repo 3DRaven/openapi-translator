@@ -14,7 +14,6 @@ use openapiv3::{
     ParameterSchemaOrContent, PasswordOAuth2Flow, PathItem, Paths, ReferenceOr, RequestBody,
     Response, Responses, Schema, SecurityRequirement, SecurityScheme, Server, StringType, Tag,
 };
-use serde::{de::DeserializeOwned, Serialize};
 
 use crate::{
     enums::common::Script,
@@ -112,16 +111,13 @@ pub fn visit_command(command: &Commands) -> Result<()> {
     }
 }
 
-pub fn visit_not<T>(
+pub fn visit_not(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
-    schema_ref: &ReferenceOr<T>,
+    schema_ref: &ReferenceOr<Schema>,
     extensions: &IndexMap<String, serde_json::Value>,
     call_stack: &CallStack,
-) -> Result<()>
-where
-    T: DeserializeOwned + Send + Sync + AsSchemaRef + From<Schema> + 'static + Serialize,
-{
+) -> Result<()> {
     Script::VisitPropertyNotStart
         .call_with_descriptor(out_path, &(schema_ref, extensions), call_stack)?
         .and_then(|it| visit_schema(parsed_spec, out_path, None, schema_ref, it))?
@@ -136,23 +132,20 @@ where
     Ok(())
 }
 
-pub fn visit_schema<T>(
+pub fn visit_schema(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
     schema_name: Option<&str>,
-    schema_ref: &ReferenceOr<T>,
+    schema_ref: &ReferenceOr<Schema>,
     call_stack: &CallStack,
-) -> Result<()>
-where
-    T: DeserializeOwned + Send + Sync + AsSchemaRef + From<Schema> + 'static,
-{
+) -> Result<()> {
     match schema_ref {
         ReferenceOr::Reference { reference } => {
             visit_schema(
                 parsed_spec,
                 out_path,
                 schema_name,
-                references::resolve_reference::<T>(reference, parsed_spec)?,
+                references::resolve_reference::<Schema>(reference, parsed_spec)?,
                 call_stack,
             )?;
         }
@@ -223,7 +216,8 @@ where
                             visit_any_of(parsed_spec, out_path, any_of, schema_extensions, it)
                         }
                         openapiv3::SchemaKind::Not { not } => {
-                            visit_not(parsed_spec, out_path, not, schema_extensions, it)
+                            let unboxed = not.as_ref();
+                            visit_not(parsed_spec, out_path, unboxed, schema_extensions, it)
                         }
                         openapiv3::SchemaKind::Any(any_schema) => {
                             visit_any_schema(out_path, any_schema, schema_extensions, it)
@@ -379,7 +373,8 @@ pub fn visit_array(
         )?
         .and_then(|call_stack| {
             if let Some(it) = &array_descriptor.items {
-                visit_schema(parsed_spec, out_path, None, it, call_stack)?;
+                let unboxed = it.clone().unbox();
+                visit_schema(parsed_spec, out_path, None, &unboxed, call_stack)?;
             }
             Ok(())
         })?
@@ -2305,23 +2300,20 @@ pub fn visit_servers(
     Ok(())
 }
 
-pub fn visit_object_property<T>(
+pub fn visit_object_property(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
     property_name: &str,
-    property_schema_ref: &ReferenceOr<T>,
+    property_schema_ref: &ReferenceOr<Schema>,
     call_stack: &CallStack,
-) -> Result<()>
-where
-    T: DeserializeOwned + Send + Sync + AsSchemaRef + From<Schema> + 'static,
-{
+) -> Result<()> {
     match property_schema_ref {
         ReferenceOr::Reference { reference } => {
             visit_object_property(
                 parsed_spec,
                 out_path,
                 property_name,
-                references::resolve_reference::<T>(reference, parsed_spec)?,
+                references::resolve_reference::<Schema>(reference, parsed_spec)?,
                 call_stack,
             )?;
             Ok(())
@@ -2377,11 +2369,12 @@ pub fn visit_object(
                     .and_then(|call_stack| {
                         object_description.properties.iter().try_for_each(
                             |(local_property_name, property_schema_ref)| -> Result<()> {
+                                let unboxed = property_schema_ref.clone().unbox();
                                 visit_object_property(
                                     parsed_spec,
                                     out_path,
                                     local_property_name,
-                                    property_schema_ref,
+                                    &unboxed,
                                     call_stack,
                                 )
                             },

@@ -746,7 +746,6 @@ function Stack:size()
     return #self.items
 end
 
-
 --- Concatenates all elements of the stack into a single string with each element's first letter capitalized.
 --- @param stack Stack # The stack whose elements will be concatenated.
 --- @return string # The concatenated string with each element's first letter capitalized.
@@ -1500,6 +1499,20 @@ function AllOfModel.new(name)
     local instance = ModelBase.new(name)
     setmetatable(instance, AllOfModel)
     ---@type AllOfModel
+    return instance
+end
+
+--- Derived class that inherits from BaseClass
+--- @class OneOfModel:ModelBase
+OneOfModel = setmetatable({}, { __index = ModelBase })
+OneOfModel.__index = OneOfModel
+
+--- @param name string
+--- @return OneOfModel
+function OneOfModel.new(name)
+    local instance = ModelBase.new(name)
+    setmetatable(instance, OneOfModel)
+    ---@type OneOfModel
     return instance
 end
 

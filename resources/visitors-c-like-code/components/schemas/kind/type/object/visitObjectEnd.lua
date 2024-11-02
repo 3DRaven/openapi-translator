@@ -36,6 +36,8 @@ function visitObjectEnd(objectDescriptor, extensions, callsStack)
             --- If the parent is allOf, we need to place all created properties and other of this object into the parent.
             parentModel:includeModel(currentModel)
             return {}
+        elseif parentModel:instanceOf(OneOfModel) then
+            -- for "oneOf" parent model we just save created model as is, because all models must be created for select one of it
         end
     end
 

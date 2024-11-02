@@ -8,6 +8,8 @@ function module.addAdditionalProperty(currentModel, type, extensions)
     -- Adding the import at the beginning of the current model file
     currentModel:adaptToIncludes({ WriteOperation.new_prepend(CODE.getAdditionalPropertiesImport(),
         currentModel.name) })
+    --- @type string
+    --- @diagnostic disable-next-line: assign-type-mismatch
     local propertyName = getFirstExistsName(extensions[Extensions.ADDITIONAL_PROPERTY_NAME], "additionalProperties")
     local code = CODE.getAdditionalPropertiesProperty(type, propertyName);
 
@@ -16,7 +18,7 @@ function module.addAdditionalProperty(currentModel, type, extensions)
     return {}
 end
 
---- @param currentModel ModelBase
+--- @param currentModel ModelBase?
 --- @param type string
 --- @param extensions table # table with free form with "x-" OpenAPI extensions for this level of spec
 --- @return WriteOperation[]

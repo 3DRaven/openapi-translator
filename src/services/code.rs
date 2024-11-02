@@ -12,6 +12,10 @@ use crate::{enums::common::WriteMode, structs::common::Code};
 pub fn save_code(out_path: &Path, code: Vec<Code>) -> Result<()> {
     code.iter().try_for_each(|it| {
         let code_path = out_path.join(&it.file);
+        // Create the directories recursively if they don't exist
+        if let Some(parent) = code_path.parent() {
+            fs::create_dir_all(parent).expect("Failed to create directories");
+        }
         modify_file(&code_path, &it.code, &it.mode).with_context(|| {
             format!(
                 "Could not write code with mode [{:?}] to [{:?}]",

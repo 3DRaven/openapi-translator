@@ -112,14 +112,8 @@ components:
         message:
           type: string
         data:
-          type: object
-          oneOf:
-            - $ref: '#/components/schemas/StringSchema'
-            - $ref: '#/components/schemas/IntegerSchema'
+          oneOf: # only objects here
             - $ref: '#/components/schemas/ObjectSchema'
-            - $ref: '#/components/schemas/StringArraySchema'
-            - $ref: '#/components/schemas/BooleanSchema'
-            - $ref: '#/components/schemas/EnumSchema'
             - $ref: '#/components/schemas/NestedObjectSchema'
       example:
         message: "This is a sample response."

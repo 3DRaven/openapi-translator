@@ -5,7 +5,7 @@
 --- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 function visitIntegerProperty(integerDescriptor, extensions, callsStack)
-    return CODEGEN.addGenericPropertyCode(GLOBAL_CONTEXT.models:element(), CODE.getIntegerType(), extensions)
+    return CODEGEN.addGenericPropertyCode(GLOBAL_CONTEXT.models:peek(), CODE.getIntegerType(), extensions)
 end
 
 return functionCallAndLog("visitIntegerProperty", visitIntegerProperty)

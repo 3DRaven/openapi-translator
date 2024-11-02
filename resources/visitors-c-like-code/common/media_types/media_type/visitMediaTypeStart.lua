@@ -6,12 +6,10 @@
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 function visitMediaTypeStart(mediaTypeName, mediaType, extensions, callsStack)
     -- here we can have application/json or an extended model name
-    local name = getFirstExistsName(extensions[Extensions.MODEL_NAME], mediaTypeName)
-    if not name then
-        error("Model name is missing: neither 'mediaTypeName' nor '" ..
-            Extensions.MODEL_NAME .. "' in extensions is provided.")
+    local name = extensions[Extensions.MODEL_NAME]
+    if name then
+        GLOBAL_CONTEXT.names:push(name)
     end
-    GLOBAL_CONTEXT.names:push(name)
     return {}
 end
 

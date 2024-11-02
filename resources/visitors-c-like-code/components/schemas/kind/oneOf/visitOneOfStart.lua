@@ -4,6 +4,7 @@
 --- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 function visitOneOfStart(schemas, extensions, callsStack)
+    GLOBAL_CONTEXT.models:push(OneOfModel.new("stub-oneOf-model-name"))
     return {}
 end
 
