@@ -16,6 +16,14 @@ use openapiv3::ReferenceOr;
 use serde::de::DeserializeOwned;
 use url::Url;
 
+pub fn get_schema_name<'a>(possible_name: Option<&'a str>, reference: &'a str) -> Option<&'a str> {
+    if possible_name.is_some() {
+        possible_name
+    } else {
+        reference.split('/').last()
+    }
+}
+
 pub fn resolve_reference<T>(uri: &str, parsed_spec: &ParsedSpec) -> Result<&'static ReferenceOr<T>>
 where
     T: DeserializeOwned + Send + Sync,

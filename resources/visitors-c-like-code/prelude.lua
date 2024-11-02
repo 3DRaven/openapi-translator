@@ -1266,6 +1266,9 @@ WriteOperation.__index = WriteOperation
 --- @param code string # produced code
 --- @param modelName string # output model name to construct file name
 function WriteOperation.new_prepend(code, modelName)
+    if modelName == nil or modelName == NULL or modelName:len() == 0 then
+        error("empty modelName")
+    end
     local instance = setmetatable({}, WriteOperation)
     instance.code = code
     instance.file = modelName .. ".java"
@@ -1275,6 +1278,9 @@ end
 
 --- @param modelName string # output model name to construct file name
 function WriteOperation.new_remove(modelName)
+    if modelName == nil or modelName == NULL or modelName:len() == 0 then
+        error("empty modelName")
+    end
     local instance = setmetatable({}, WriteOperation)
     instance.code = nil
     instance.file = modelName .. ".java"
@@ -1285,6 +1291,9 @@ end
 --- @param code string # produced code
 --- @param modelName string # data for generate file name
 function WriteOperation.new_append(code, modelName)
+    if modelName == nil or modelName == NULL or modelName:len() == 0 then
+        error("empty modelName")
+    end
     local instance = setmetatable({}, WriteOperation)
     instance.code = code
     instance.file = modelName .. ".java"
@@ -1296,6 +1305,9 @@ end
 --- @param modelName string # data for generate file name
 --- @param mode string # APPEND or PREPEND code to target file
 function WriteOperation.new_with_mode(code, modelName, mode)
+    if modelName == nil or modelName == NULL or modelName:len() == 0 then
+        error("empty modelName")
+    end
     local instance = setmetatable({}, WriteOperation)
     instance.code = code
     instance.file = modelName .. ".java"
@@ -1307,6 +1319,9 @@ end
 --- @param modelName string # data for generate file name
 --- @param writeOperation WriteOperation # produced code
 function WriteOperation.from(writeOperation, modelName)
+    if modelName == nil or modelName == NULL or modelName:len() == 0 then
+        error("empty modelName")
+    end
     local instance = setmetatable({}, WriteOperation)
     instance.code = writeOperation.code
     instance.file = modelName .. ".java"

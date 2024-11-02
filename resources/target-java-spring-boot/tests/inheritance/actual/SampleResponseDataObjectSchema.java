@@ -1,6 +1,6 @@
 import javax.annotation.Nonnull;
 
-public class DataNestedObject {
+public class SampleResponseDataObjectSchema {
 
 
     private  Integer optionalField;

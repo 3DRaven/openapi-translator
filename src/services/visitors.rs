@@ -144,7 +144,7 @@ pub fn visit_schema(
             visit_schema(
                 parsed_spec,
                 out_path,
-                schema_name,
+                references::get_schema_name(schema_name, reference),
                 references::resolve_reference::<Schema>(reference, parsed_spec)?,
                 call_stack,
             )?;
@@ -249,7 +249,7 @@ pub fn visit_response(
             visit_response(
                 parsed_spec,
                 out_path,
-                response_name,
+                references::get_schema_name(response_name, reference),
                 references::resolve_reference::<Response>(reference, parsed_spec)?,
                 call_stack,
             )?;
@@ -664,7 +664,7 @@ pub fn visit_request_body(
             visit_request_body(
                 parsed_spec,
                 out_path,
-                request_body_name,
+                references::get_schema_name(request_body_name, reference),
                 references::resolve_reference::<RequestBody>(reference, parsed_spec)?,
                 call_stack,
             )?;

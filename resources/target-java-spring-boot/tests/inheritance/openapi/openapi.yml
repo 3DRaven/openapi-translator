@@ -121,7 +121,6 @@ components:
           requiredField: "dataValue"
     SampleAllOf:
       allOf: # really it is just type: object with all properties from all children
-        - type: string
         - type: object
           additionalProperties: true
         - type: object
