@@ -1,6 +1,10 @@
+import javax.annotation.Nonnull;
+
 public class BooleanModel {
 
-    private BooleanModelinner_type inner_type;
-    private @NonNull Boolean value;
+
+    private  BooleanModelInner_type inner_type;
+
+    private @Nonnull Boolean value;
 
 }

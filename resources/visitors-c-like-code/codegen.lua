@@ -41,7 +41,7 @@ function module.addGenericPropertyCode(currentModel, type, extensions)
                     for _, it in ipairs(codeExtension) do
                         local import = it[Extensions.IMPORT]
                         if import ~= nil then
-                            currentModel.includes:push(WriteOperation.new_append(import .. "\n", currentModel.name))
+                            currentModel:adaptToIncludes({ WriteOperation.new_append(import .. "\n", currentModel.name) })
                         end
                         local code = it[Extensions.CODE]
                         if codeBefore == nil and code then
@@ -55,7 +55,8 @@ function module.addGenericPropertyCode(currentModel, type, extensions)
                 local requiredMarker
 
                 if currentModel:isPropertyRequired(property.name) then
-                    currentModel.includes:push(WriteOperation.new_prepend(CODE.getRequiredImport(), currentModel.name))
+                    currentModel:adaptToIncludes({ WriteOperation.new_prepend(CODE.getRequiredImport(), currentModel
+                    .name) })
                     requiredMarker = CODE.getRequiredMarker()
                 end
 

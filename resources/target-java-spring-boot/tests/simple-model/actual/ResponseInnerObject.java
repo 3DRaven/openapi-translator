@@ -1,5 +1,5 @@
 
-public class InnerObject {
+public class ResponseInnerObject {
 
 
     private  String someField;

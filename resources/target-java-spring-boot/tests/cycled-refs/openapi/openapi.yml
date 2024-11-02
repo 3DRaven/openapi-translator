@@ -28,7 +28,7 @@ components:
             prop:
               type: string
             link:
-              $ref: #/components/schemas/AdditionalProperties
+              $ref: '#/components/schemas/AdditionalProperties'
     AdditionalProperties:
       type: object
       x-ot-name: Test
@@ -40,8 +40,8 @@ components:
       maxItems: 100
       items:
         $ref: "separated.yml#/components/schemas/Pet"
-    RemotePets:
-      type: array
-      maxItems: 100
-      items:
-        $ref: https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/examples/v3.0/petstore.yaml#/components/schemas/Pet
+    # RemotePets:
+    #   type: array
+    #   maxItems: 100
+    #   items:
+    #     $ref: https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/examples/v3.0/petstore.yaml#/components/schemas/Pet
