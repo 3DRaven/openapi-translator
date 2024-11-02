@@ -12,7 +12,7 @@ function visitArrayPropertyStart(arrayDescriptor, extensions, callsStack)
     local itemNameSuffix = "ArrayItem"
     -- if it is root object as array we must use array model name as base for items names
     if currentModel == nil then
-        local arrayModelName = GLOBAL_CONTEXT.names:element()
+        local arrayModelName = concatStackCapitalized(GLOBAL_CONTEXT.names)
         GLOBAL_CONTEXT.names:push(arrayModelName .. itemNameSuffix)
     else
         GLOBAL_CONTEXT.names:push(concatStackCapitalized(GLOBAL_CONTEXT.names) .. itemNameSuffix)

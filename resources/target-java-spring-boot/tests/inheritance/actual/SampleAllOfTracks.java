@@ -1,5 +1,5 @@
 
-public class tracks {
+public class SampleAllOfTracks {
 
 
     private  String values;

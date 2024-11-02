@@ -19,7 +19,7 @@ function visitArrayPropertyEnd(arrayDescriptor, extensions, callsStack)
     else
         -- if it is root object as array we must generate full model
         if currentModel == nil then
-            local arrayModelName = GLOBAL_CONTEXT.names:element()
+            local arrayModelName = concatStackCapitalized(GLOBAL_CONTEXT.names)
             return { WriteOperation.new_append(CODE.getArrayAsModel(arrayModelName, childModel.name), arrayModelName) }
         else -- if it is just property for object or additionalProperties we need to write some to parents
             if currentModel:instanceOf(ObjectModel) then
