@@ -960,20 +960,29 @@ Extensions.CODE = "code"
 ---@param second string|null # it possible be NULL too
 ---@return string|nil
 function getFirstExistsName(first, second)
-    ---@type string|nil
-    local nilableFirst = nil
-    ---@type string|nil
-    local nillableSecond = nil
-    if first ~= NULL then
-        ---@diagnostic disable-next-line: cast-local-type
-        nilableFirst = first
+    return nullableAsNillable(first) or nullableAsNillable(second)
+end
+
+--- Extracts the last component from a string delimited by '/'.
+--- @param reference string # representing a path where components are separated by '/'.
+--- @return string # The last component of the string, or `nil` if the string is empty.
+function lastReferencePart(reference)
+    local last_component = nil
+    for component in string.gmatch(reference, "[^/]+") do
+        last_component = component
     end
-    if second ~= NULL then
-        ---@diagnostic disable-next-line: cast-local-type
-        nillableSecond = second
+    return last_component
+end
+
+---convert null value to nil value if need
+---@param value any|null # it possible be NULL
+---@return any|nil
+function nullableAsNillable(value)
+    if value == NULL then
+        return nil
+    else
+        return value
     end
-    ---@diagnostic disable-next-line: return-type-mismatch
-    return nilableFirst or nillableSecond
 end
 
 --- Script is an element of the visitor call chain

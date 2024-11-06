@@ -7,7 +7,7 @@
     // "rust-analyzer.diagnostics.useRustcErrorCode": true,
     "rust-analyzer.lens.enable": true,
     "rust-analyzer.checkOnSave.command": "clippy",
-    "editor.inlineSuggest.enabled": false,
+    // "editor.inlineSuggest.enabled": false,
     "editor.peekWidgetDefaultFocus": "editor",
     "editor.gotoLocation.multipleDefinitions": "peek",
     "Lua.diagnostics.globals": [
@@ -280,13 +280,17 @@
         "getFirstExistsName",
         "concatStack",
         "concatStackCapitalized",
-        "replaceNonAlphabetic"
+        "replaceNonAlphabetic",
+        "nullableAsNillable",
+        "lastReferencePart",
+        "visitAnySchemaStart"
     ],
     "terminal.integrated.scrollback": 16777216,
     "references.preferredLocation": "view",
     "cSpell.words": [
         "apikey",
         "Autowired",
+        "canonicalize",
         "chrono",
         "dicriminator",
         "diffy",

@@ -43,12 +43,14 @@ pub enum Script {
     VisitSecuritySchemeOAuth2End,
     VisitSecuritySchemeOAuth2FlowsStart,
     VisitSecuritySchemeOAuth2FlowsEnd,
+    VisitParameterReference,
     VisitQueryParameterStart,
     VisitQueryParameterEnd,
     VisitHeaderParameterStart,
     VisitHeaderParameterEnd,
     VisitPathParameterStart,
     VisitPathParameterEnd,
+    VisitPathItemReference,
     VisitPathItemStart,
     VisitPathItemEnd,
     VisitTraceOperationStart,
@@ -73,6 +75,7 @@ pub enum Script {
     VisitParametersEnd,
     VisitPathsStart,
     VisitPathsEnd,
+    VisitResponseReference,
     VisitResponseStart,
     VisitResponseEnd,
     VisitMediaTypesStart,
@@ -81,16 +84,21 @@ pub enum Script {
     VisitLinksEnd,
     VisitAsyncCallbacksStart,
     VisitAsyncCallbacksEnd,
+    VisitAsyncCallbackReference,
     VisitAsyncCallbackStart,
     VisitAsyncCallbackEnd,
     VisitHeadersStart,
     VisitHeadersEnd,
+    VisitSecuritySchemeReference,
     VisitSecuritySchemesStart,
     VisitSecuritySchemesEnd,
+    VisitHeaderReference,
     VisitHeaderStart,
     VisitHeaderEnd,
+    VisitRequestBodyReference,
     VisitRequestBodyStart,
     VisitRequestBodyEnd,
+    VisitExampleReference,
     VisitExampleStart,
     VisitExampleEnd,
     VisitExamplesStart,
@@ -104,6 +112,7 @@ pub enum Script {
     VisitParameterSchemaOrContentEnd,
     VisitMediaTypeStart,
     VisitMediaTypeEnd,
+    VisitLinkReference,
     VisitLinkStart,
     VisitLinkEnd,
     VisitComponentsStart,
@@ -118,6 +127,7 @@ pub enum Script {
     VisitSchemasEnd,
     VisitSchemaStart,
     VisitSchemaEnd,
+    VisitSchemaReference,
     VisitDefault,
     VisitDiscriminator,
     VisitSpecStart,
@@ -139,12 +149,14 @@ pub enum Script {
     VisitSecurityRequirement,
     VisitSecurityRequirementsEnd,
     VisitObjectStart,
+    VisitObjectPropertyReference,
     VisitObjectPropertyStart,
     VisitObjectPropertyEnd,
     VisitObjectPropertiesStart,
     VisitObjectPropertiesEnd,
     VisitObjectEnd,
-    VisitAnySchema,
+    VisitAnySchemaStart,
+    VisitAnySchemaEnd,
     VisitPropertyNotStart,
     VisitPropertyNotEnd,
     VisitAdditionalPropertiesAny,
@@ -372,7 +384,8 @@ impl From<&Script> for &'static str {
             }
             Script::VisitObjectStart => "components/schemas/kind/type/object/visitObjectStart",
             Script::VisitObjectEnd => "components/schemas/kind/type/object/visitObjectEnd",
-            Script::VisitAnySchema => "components/schemas/kind/any/visitAnySchema",
+            Script::VisitAnySchemaStart => "components/schemas/kind/any/visitAnySchemaStart",
+            Script::VisitAnySchemaEnd => "components/schemas/kind/any/visitAnySchemaEnd",
             Script::VisitPropertyNotStart => "components/schemas/kind/not/visitPropertyNotStart",
             Script::VisitPropertyNotEnd => "components/schemas/kind/not/visitPropertyNotEnd",
             Script::VisitAdditionalPropertiesAny => {
@@ -546,6 +559,25 @@ impl From<&Script> for &'static str {
             Script::VisitDeleteOperationEnd => "common/operation/visitDeleteOperationEnd",
             Script::VisitPathsStart => "paths/visitPathsStart",
             Script::VisitPathsEnd => "paths/visitPathsEnd",
+            Script::VisitResponseReference => "components/responses/visitResponseReference",
+            Script::VisitSchemaReference => "components/schemas/visitSchemaReference",
+            Script::VisitExampleReference => "common/examples/visitExampleReference",
+            Script::VisitRequestBodyReference => {
+                "components/request_bodies/visitRequestBodyReference"
+            }
+            Script::VisitLinkReference => "common/links/link/visitLinkReference",
+            Script::VisitAsyncCallbackReference => {
+                "common/async_callback/visitAsyncCallbackReference"
+            }
+            Script::VisitHeaderReference => "common/headers/header/visitHeaderReference",
+            Script::VisitSecuritySchemeReference => {
+                "components/security_schemes/visitSecuritySchemeReference"
+            }
+            Script::VisitPathItemReference => "common/path_item/visitPathItemReference",
+            Script::VisitParameterReference => "common/parameters/visitParameterReference",
+            Script::VisitObjectPropertyReference => {
+                "components/schemas/kind/type/object/visitObjectPropertyReference"
+            }
         }
     }
 }

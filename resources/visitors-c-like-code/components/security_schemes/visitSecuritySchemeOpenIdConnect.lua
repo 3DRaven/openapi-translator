@@ -1,5 +1,5 @@
 --- This visitor is invoked for processing OAuth2 security scheme OpenID Connect flow
---- @param securitySchemeName string
+--- @param securitySchemeName string|null
 --- @param securityScheme OpenIDConnectSecurityScheme #
 --- @param extensions table # table with free form with "x-" OpenAPI extensions for this level of spec
 --- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain

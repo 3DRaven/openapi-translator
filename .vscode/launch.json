@@ -22,12 +22,12 @@
                 // "simple-model-with-refs",
                 // "-n",
                 // "inheritance",
-                // "-n",
-                // "simple-model",
                 "-n",
-                "cycled-refs",
+                "simple-model",
                 // "-n",
-                // "hard"
+                // "cycled-refs",
+                // "-n",
+                // "hard",
                 "-t",
                 "resources/target-java-spring-boot/tests"
             ],

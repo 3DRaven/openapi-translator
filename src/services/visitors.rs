@@ -141,13 +141,24 @@ pub fn visit_schema(
 ) -> Result<()> {
     match schema_ref {
         ReferenceOr::Reference { reference } => {
-            visit_schema(
-                parsed_spec,
-                out_path,
-                references::get_schema_name(schema_name, reference),
-                references::resolve_reference::<Schema>(reference, parsed_spec)?,
-                call_stack,
-            )?;
+            let schema = references::resolve_reference::<Schema>(reference, parsed_spec)?;
+            Script::VisitSchemaReference
+                .call_with_descriptor(
+                    out_path,
+                    &(
+                        schema_name,
+                        reference,
+                        &schema
+                            .as_item()
+                            .expect("Unable to get schema from resolved reference")
+                            .schema_data
+                            .extensions,
+                    ),
+                    call_stack,
+                )?
+                .and_then(|call_stack| {
+                    visit_schema(parsed_spec, out_path, None, schema, call_stack)
+                })?;
         }
         ReferenceOr::Item(schema_item) => {
             let schema_extensions = &schema_item.as_schema().schema_data.extensions;
@@ -219,9 +230,13 @@ pub fn visit_schema(
                             let unboxed = not.as_ref();
                             visit_not(parsed_spec, out_path, unboxed, schema_extensions, it)
                         }
-                        openapiv3::SchemaKind::Any(any_schema) => {
-                            visit_any_schema(out_path, any_schema, schema_extensions, it)
-                        }
+                        openapiv3::SchemaKind::Any(any_schema) => visit_any_schema(
+                            parsed_spec,
+                            out_path,
+                            any_schema,
+                            schema_extensions,
+                            it,
+                        ),
                     }
                 })?
                 .and_then(|call_stack| {
@@ -246,13 +261,23 @@ pub fn visit_response(
 ) -> Result<()> {
     match response_ref {
         ReferenceOr::Reference { reference } => {
-            visit_response(
-                parsed_spec,
-                out_path,
-                references::get_schema_name(response_name, reference),
-                references::resolve_reference::<Response>(reference, parsed_spec)?,
-                call_stack,
-            )?;
+            let response = references::resolve_reference::<Response>(reference, parsed_spec)?;
+            Script::VisitResponseReference
+                .call_with_descriptor(
+                    out_path,
+                    &(
+                        response_name,
+                        reference,
+                        &response
+                            .as_item()
+                            .expect("Unable to get extensions from resolved response")
+                            .extensions,
+                    ),
+                    call_stack,
+                )?
+                .and_then(|call_stack| {
+                    visit_response(parsed_spec, out_path, None, response, call_stack)
+                })?;
         }
         ReferenceOr::Item(response) => {
             let response_extensions = &response.extensions;
@@ -317,16 +342,111 @@ pub fn visit_string(
 }
 
 pub fn visit_any_schema(
+    parsed_spec: &ParsedSpec,
     out_path: &Path,
     any_schema_descriptor: &AnySchema,
     extensions: &IndexMap<String, serde_json::Value>,
     call_stack: &CallStack,
 ) -> Result<()> {
-    Script::VisitAnySchema.call_with_descriptor(
-        out_path,
-        &(any_schema_descriptor, extensions),
-        call_stack,
-    )?;
+    Script::VisitAnySchemaStart
+        .call_with_descriptor(out_path, &(any_schema_descriptor, extensions), call_stack)?
+        .and_then(|call_stack| {
+            if !any_schema_descriptor.all_of.is_empty() {
+                visit_all_of(
+                    parsed_spec,
+                    out_path,
+                    &any_schema_descriptor.all_of,
+                    extensions,
+                    call_stack,
+                )?;
+            }
+            if !any_schema_descriptor.any_of.is_empty() {
+                visit_any_of(
+                    parsed_spec,
+                    out_path,
+                    &any_schema_descriptor.any_of,
+                    extensions,
+                    call_stack,
+                )?;
+            }
+            if !any_schema_descriptor.one_of.is_empty() {
+                visit_one_of(
+                    parsed_spec,
+                    out_path,
+                    &any_schema_descriptor.one_of,
+                    extensions,
+                    call_stack,
+                )?;
+            }
+            if let Some(schema) = any_schema_descriptor.not.as_ref() {
+                visit_not(parsed_spec, out_path, schema, extensions, call_stack)?;
+            }
+            // visit_object(parsed_spec, out_path, object_description, extensions, call_stack)
+            if let Some(schema) = any_schema_descriptor.typ.as_ref() {
+                match schema.as_str() {
+                    "string" => {
+                        visit_string(
+                            out_path,
+                            &serde_json::from_value(serde_json::to_value(any_schema_descriptor)?)?,
+                            extensions,
+                            call_stack,
+                        )?;
+                    }
+                    "number" => {
+                        visit_number(
+                            out_path,
+                            &serde_json::from_value(serde_json::to_value(any_schema_descriptor)?)?,
+                            extensions,
+                            call_stack,
+                        )?;
+                    }
+                    "integer" => {
+                        visit_integer(
+                            out_path,
+                            &serde_json::from_value(serde_json::to_value(any_schema_descriptor)?)?,
+                            extensions,
+                            call_stack,
+                        )?;
+                    }
+                    "boolean" => {
+                        visit_boolean(
+                            out_path,
+                            &serde_json::from_value(serde_json::to_value(any_schema_descriptor)?)?,
+                            extensions,
+                            call_stack,
+                        )?;
+                    }
+                    "array" => {
+                        visit_array(
+                            parsed_spec,
+                            out_path,
+                            &serde_json::from_value(serde_json::to_value(any_schema_descriptor)?)?,
+                            extensions,
+                            call_stack,
+                        )?;
+                    }
+                    "object" => {
+                        visit_object(
+                            parsed_spec,
+                            out_path,
+                            &serde_json::from_value(serde_json::to_value(any_schema_descriptor)?)?,
+                            extensions,
+                            call_stack,
+                        )?;
+                    }
+                    _ => {}
+                }
+            }
+            Ok(())
+        })?
+        .and_then(|call_stack| {
+            Script::VisitAnySchemaEnd.call_with_descriptor(
+                out_path,
+                &(any_schema_descriptor, extensions),
+                call_stack,
+            )?;
+            Ok(())
+        })?;
     Ok(())
 }
 
@@ -615,19 +735,29 @@ pub fn visit_media_type_encoding(
 pub fn visit_example(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
-    example_name: &str,
+    example_name: Option<&str>,
     example_ref: &ReferenceOr<Example>,
     call_stack: &CallStack,
 ) -> Result<()> {
     match example_ref {
         ReferenceOr::Reference { reference } => {
-            visit_example(
-                parsed_spec,
-                out_path,
-                example_name,
-                references::resolve_reference::<Example>(reference, parsed_spec)?,
-                call_stack,
-            )?;
+            let example = references::resolve_reference::<Example>(reference, parsed_spec)?;
+            Script::VisitExampleReference
+                .call_with_descriptor(
+                    out_path,
+                    &(
+                        example_name,
+                        reference,
+                        &example
+                            .as_item()
+                            .expect("Unable to get example from resolved reference")
+                            .extensions,
+                    ),
+                    call_stack,
+                )?
+                .and_then(|call_stack| {
+                    visit_example(parsed_spec, out_path, None, example, call_stack)
+                })?;
         }
         ReferenceOr::Item(example) => {
             Script::VisitExampleStart
@@ -661,13 +791,24 @@ pub fn visit_request_body(
 ) -> Result<()> {
     match request_body_ref {
         ReferenceOr::Reference { reference } => {
-            visit_request_body(
-                parsed_spec,
-                out_path,
-                references::get_schema_name(request_body_name, reference),
-                references::resolve_reference::<RequestBody>(reference, parsed_spec)?,
-                call_stack,
-            )?;
+            let request_body =
+                references::resolve_reference::<RequestBody>(reference, parsed_spec)?;
+            Script::VisitRequestBodyReference
+                .call_with_descriptor(
+                    out_path,
+                    &(
+                        &request_body_name,
+                        &reference,
+                        &request_body
+                            .as_item()
+                            .expect("Unable to get extensions from resolved request body")
+                            .extensions,
+                    ),
+                    call_stack,
+                )?
+                .and_then(|call_stack| {
+                    visit_request_body(parsed_spec, out_path, None, request_body, call_stack)
+                })?;
         }
         ReferenceOr::Item(request_body) => {
             Script::VisitRequestBodyStart
@@ -788,7 +929,7 @@ pub fn visit_callbacks(
                     visit_callback(
                         parsed_spec,
                         out_path,
-                        callbacks.0,
+                        Some(callbacks.0),
                         callbacks.1,
                         extensions,
                         call_stack,
@@ -819,7 +960,7 @@ pub fn visit_links(
             .call_with_descriptor(out_path, &(links, &extensions), call_stack)?
             .and_then(|call_stack| {
                 links.iter().try_for_each(|link| {
-                    visit_link(parsed_spec, out_path, link.0, link.1, call_stack)
+                    visit_link(parsed_spec, out_path, Some(link.0), link.1, call_stack)
                 })
             })?
             .and_then(|call_stack| {
@@ -837,19 +978,27 @@ pub fn visit_links(
 pub fn visit_link(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
-    link_name: &str,
-    link: &ReferenceOr<Link>,
+    link_name: Option<&str>,
+    link_ref: &ReferenceOr<Link>,
     call_stack: &CallStack,
 ) -> Result<()> {
-    match link {
+    match link_ref {
         ReferenceOr::Reference { reference } => {
-            visit_link(
-                parsed_spec,
-                out_path,
-                link_name,
-                references::resolve_reference::<Link>(reference, parsed_spec)?,
-                call_stack,
-            )?;
+            let link = references::resolve_reference::<Link>(reference, parsed_spec)?;
+            Script::VisitLinkReference
+                .call_with_descriptor(
+                    out_path,
+                    &(
+                        link_name,
+                        reference,
+                        &link
+                            .as_item()
+                            .expect("Unable to get extensions from resolved link reference")
+                            .extensions,
+                    ),
+                    call_stack,
+                )?
+                .and_then(|call_stack| visit_link(parsed_spec, out_path, None, link, call_stack))?;
         }
         ReferenceOr::Item(link) => {
             Script::VisitLinkStart
@@ -890,21 +1039,30 @@ pub fn visit_link(
 pub fn visit_callback(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
-    callbacks_name: &str,
+    callbacks_name: Option<&str>,
     callbacks: &ReferenceOr<Callback>,
     extensions: &IndexMap<String, serde_json::Value>,
     call_stack: &CallStack,
 ) -> Result<()> {
     match callbacks {
         ReferenceOr::Reference { reference } => {
-            visit_callback(
-                parsed_spec,
-                out_path,
-                callbacks_name,
-                references::resolve_reference::<Callback>(reference, parsed_spec)?,
-                extensions,
-                call_stack,
-            )?;
+            let callback = references::resolve_reference::<Callback>(reference, parsed_spec)?;
+            Script::VisitAsyncCallbackReference
+                .call_with_descriptor(
+                    out_path,
+                    &(callbacks_name, reference, &extensions),
+                    call_stack,
+                )?
+                .and_then(|call_stack| {
+                    visit_callback(
+                        parsed_spec,
+                        out_path,
+                        None,
+                        callback,
+                        extensions,
+                        call_stack,
+                    )
+                })?;
         }
         ReferenceOr::Item(callback) => {
             Script::VisitAsyncCallbackStart
@@ -915,7 +1073,7 @@ pub fn visit_callback(
                 )?
                 .and_then(|call_stack| {
                     callback.iter().try_for_each(|it| {
-                        visit_path_item(parsed_spec, out_path, it.0, it.1, call_stack)
+                        visit_path_item(parsed_spec, out_path, Some(it.0), it.1, call_stack)
                     })
                 })?
                 .and_then(|call_stack| {
@@ -995,9 +1153,9 @@ pub fn visit_examples(
         Script::VisitExamplesStart
             .call_with_descriptor(out_path, &(&examples, extensions), call_stack)?
             .and_then(|call_stack| {
-                examples
-                    .iter()
-                    .try_for_each(|it| visit_example(parsed_spec, out_path, it.0, it.1, call_stack))
+                examples.iter().try_for_each(|it| {
+                    visit_example(parsed_spec, out_path, Some(it.0), it.1, call_stack)
+                })
             })?
             .and_then(|call_stack| {
                 Script::VisitExamplesEnd.call_with_descriptor(
@@ -1068,19 +1226,29 @@ pub fn visit_generic_parameters(
 pub fn visit_header(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
-    header_name: &str,
+    header_name: Option<&str>,
     header: &ReferenceOr<Header>,
     call_stack: &CallStack,
 ) -> Result<()> {
     match header {
         ReferenceOr::Reference { reference } => {
-            visit_header(
-                parsed_spec,
-                out_path,
-                header_name,
-                references::resolve_reference::<Header>(reference, parsed_spec)?,
-                call_stack,
-            )?;
+            let header = references::resolve_reference::<Header>(reference, parsed_spec)?;
+            Script::VisitHeaderReference
+                .call_with_descriptor(
+                    out_path,
+                    &(
+                        &header_name,
+                        reference,
+                        &header
+                            .as_item()
+                            .expect("Unable to get extensions from resolved header reference")
+                            .extensions,
+                    ),
+                    call_stack,
+                )?
+                .and_then(|call_stack| {
+                    visit_header(parsed_spec, out_path, None, header, call_stack)
+                })?;
         }
         ReferenceOr::Item(header) => {
             Script::VisitHeaderStart
@@ -1130,19 +1298,33 @@ pub fn visit_header(
 pub fn visit_security_scheme(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
-    scheme_name: &str,
+    scheme_name: Option<&str>,
     security_scheme: &ReferenceOr<SecurityScheme>,
     call_stack: &CallStack,
 ) -> Result<()> {
     match security_scheme {
         ReferenceOr::Reference { reference } => {
-            visit_security_scheme(
-                parsed_spec,
-                out_path,
-                scheme_name,
-                references::resolve_reference::<SecurityScheme>(reference, parsed_spec)?,
-                call_stack,
-            )?;
+            let scheme = references::resolve_reference::<SecurityScheme>(reference, parsed_spec)?;
+            Script::VisitSecuritySchemeReference
+                .call_with_descriptor(
+                    out_path,
+                    &(
+                        &scheme_name,
+                        reference,
+                        match &scheme.as_item().expect(
+                            "Unable to get extensions from resolved security scheme reference",
+                        ) {
+                            SecurityScheme::APIKey { extensions, .. } => extensions,
+                            SecurityScheme::HTTP { extensions, .. } => extensions,
+                            SecurityScheme::OAuth2 { extensions, .. } => extensions,
+                            SecurityScheme::OpenIDConnect { extensions, .. } => extensions,
+                        },
+                    ),
+                    call_stack,
+                )?
+                .and_then(|call_stack| {
+                    visit_security_scheme(parsed_spec, out_path, None, scheme, call_stack)
+                })?;
         }
         ReferenceOr::Item(security_scheme) => match security_scheme {
             SecurityScheme::APIKey { .. } => {
@@ -1178,9 +1360,9 @@ pub fn visit_headers(
         Script::VisitHeadersStart
             .call_with_descriptor(out_path, &(headers, extensions), call_stack)?
             .and_then(|call_stack| {
-                headers
-                    .iter()
-                    .try_for_each(|it| visit_header(parsed_spec, out_path, it.0, it.1, call_stack))
+                headers.iter().try_for_each(|it| {
+                    visit_header(parsed_spec, out_path, Some(it.0), it.1, call_stack)
+                })
             })?
             .and_then(|call_stack| {
                 Script::VisitHeadersEnd.call_with_descriptor(
@@ -1206,7 +1388,7 @@ pub fn visit_security_schemes(
             .call_with_descriptor(out_path, &(&security_schemes, extensions), call_stack)?
             .and_then(|call_stack| {
                 security_schemes.iter().try_for_each(|it| {
-                    visit_security_scheme(parsed_spec, out_path, it.0, it.1, call_stack)
+                    visit_security_scheme(parsed_spec, out_path, Some(it.0), it.1, call_stack)
                 })
             })?
             .and_then(|call_stack| {
@@ -1409,7 +1591,7 @@ pub fn visit_parameters(
                         visit_parameter(
                             parsed_spec,
                             out_path,
-                            parameter_name,
+                            Some(parameter_name),
                             parameter_ref,
                             extensions,
                             call_stack,
@@ -1440,7 +1622,7 @@ pub fn visit_paths(
             .call_with_descriptor(out_path, &(&paths, &paths.extensions), call_stack)?
             .and_then(|call_stack| {
                 paths.paths.iter().try_for_each(|it| {
-                    visit_path_item_ref(parsed_spec, out_path, it.0, it.1, call_stack)
+                    visit_path_item_ref(parsed_spec, out_path, Some(it.0), it.1, call_stack)
                 })
             })?
             .and_then(|call_stack| {
@@ -1458,19 +1640,29 @@ pub fn visit_paths(
 pub fn visit_path_item_ref(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
-    path_item_name: &str,
+    path_item_name: Option<&str>,
     path_item_ref: &ReferenceOr<PathItem>,
     call_stack: &CallStack,
 ) -> Result<()> {
     match path_item_ref {
         ReferenceOr::Reference { reference } => {
-            visit_path_item_ref(
-                parsed_spec,
-                out_path,
-                path_item_name,
-                references::resolve_reference::<PathItem>(reference, parsed_spec)?,
-                call_stack,
-            )?;
+            let path_item = references::resolve_reference::<PathItem>(reference, parsed_spec)?;
+            Script::VisitPathItemReference
+                .call_with_descriptor(
+                    out_path,
+                    &(
+                        &path_item_name,
+                        reference,
+                        &path_item
+                            .as_item()
+                            .expect("Unable to get extensions from resolved path item reference")
+                            .extensions,
+                    ),
+                    call_stack,
+                )?
+                .and_then(|call_stack| {
+                    visit_path_item_ref(parsed_spec, out_path, None, path_item, call_stack)
+                })?;
         }
         ReferenceOr::Item(path_item) => {
             visit_path_item(parsed_spec, out_path, path_item_name, path_item, call_stack)?;
@@ -1479,24 +1671,34 @@ pub fn visit_path_item_ref(
     Ok(())
 }
 
+//TODO: check, may be need switch from external extensions to Parameter.parameter_data.extensions
 pub fn visit_parameter(
-    parsed_spec: &ParsedSpec,
+    parsed_spec: &ParsedSpec, /*  */
     out_path: &Path,
-    parameter_name: &str,
+    parameter_name: Option<&str>,
     parameter_ref: &ReferenceOr<Parameter>,
     extensions: &IndexMap<String, serde_json::Value>,
     call_stack: &CallStack,
 ) -> Result<()> {
     match parameter_ref {
         ReferenceOr::Reference { reference } => {
-            visit_parameter(
-                parsed_spec,
-                out_path,
-                parameter_name,
-                references::resolve_reference::<Parameter>(reference, parsed_spec)?,
-                extensions,
-                call_stack,
-            )?;
+            let parameter = references::resolve_reference::<Parameter>(reference, parsed_spec)?;
+            Script::VisitParameterReference
+                .call_with_descriptor(
+                    out_path,
+                    &(&parameter_name, reference, extensions),
+                    call_stack,
+                )?
+                .and_then(|call_stack| {
+                    visit_parameter(
+                        parsed_spec,
+                        out_path,
+                        None,
+                        parameter,
+                        extensions,
+                        call_stack,
+                    )
+                })?;
         }
         ReferenceOr::Item(parameter) => match parameter {
             Parameter::Query { .. } => {
@@ -1546,7 +1748,7 @@ pub fn visit_parameter(
 
 pub fn visit_security_scheme_http(
     out_path: &Path,
-    scheme_name: &str,
+    scheme_name: Option<&str>,
     http: &SecurityScheme,
     call_stack: &CallStack,
 ) -> Result<()> {
@@ -1564,7 +1766,7 @@ pub fn visit_security_scheme_http(
 
 pub fn visit_security_scheme_oauth2(
     out_path: &Path,
-    scheme_name: &str,
+    scheme_name: Option<&str>,
     oauth2: &SecurityScheme,
     call_stack: &CallStack,
 ) -> Result<()> {
@@ -1683,7 +1885,7 @@ pub fn visit_security_scheme_oauth2_flows_authorization_code(
 
 pub fn visit_security_scheme_apikey(
     out_path: &Path,
-    scheme_name: &str,
+    scheme_name: Option<&str>,
     api_key: &SecurityScheme,
     call_stack: &CallStack,
 ) -> Result<()> {
@@ -1701,7 +1903,7 @@ pub fn visit_security_scheme_apikey(
 
 pub fn visit_security_scheme_openid_connect(
     out_path: &Path,
-    scheme_name: &str,
+    scheme_name: Option<&str>,
     openid_connect: &SecurityScheme,
     call_stack: &CallStack,
 ) -> Result<()> {
@@ -1767,7 +1969,7 @@ pub fn visit_parameter_data(
 pub fn visit_query_parameter(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
-    parameter_name: &str,
+    parameter_name: Option<&str>,
     parameter: &Parameter,
     extensions: &IndexMap<String, serde_json::Value>,
     call_stack: &CallStack,
@@ -1800,7 +2002,7 @@ pub fn visit_query_parameter(
 pub fn visit_header_parameter(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
-    parameter_name: &str,
+    parameter_name: Option<&str>,
     parameter: &Parameter,
     extensions: &IndexMap<String, serde_json::Value>,
     call_stack: &CallStack,
@@ -1833,7 +2035,7 @@ pub fn visit_header_parameter(
 pub fn visit_path_parameter(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
-    parameter_name: &str,
+    parameter_name: Option<&str>,
     parameter: &Parameter,
     extensions: &IndexMap<String, serde_json::Value>,
     call_stack: &CallStack,
@@ -1866,7 +2068,7 @@ pub fn visit_path_parameter(
 pub fn visit_path_item(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
-    path_item_name: &str,
+    path_item_name: Option<&str>,
     path_item: &PathItem,
     call_stack: &CallStack,
 ) -> Result<()> {
@@ -2063,7 +2265,7 @@ pub fn visit_operation(
 pub fn visit_cookie_parameter(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
-    parameter_name: &str,
+    parameter_name: Option<&str>,
     parameter: &Parameter,
     extensions: &IndexMap<String, serde_json::Value>,
     call_stack: &CallStack,
@@ -2303,19 +2505,30 @@ pub fn visit_servers(
 pub fn visit_object_property(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
-    property_name: &str,
+    property_name: Option<&str>,
     property_schema_ref: &ReferenceOr<Schema>,
     call_stack: &CallStack,
 ) -> Result<()> {
     match property_schema_ref {
         ReferenceOr::Reference { reference } => {
-            visit_object_property(
-                parsed_spec,
-                out_path,
-                property_name,
-                references::resolve_reference::<Schema>(reference, parsed_spec)?,
-                call_stack,
-            )?;
+            let property_schema = references::resolve_reference::<Schema>(reference, parsed_spec)?;
+            Script::VisitObjectPropertyReference
+                .call_with_descriptor(
+                    out_path,
+                    &(
+                        property_name,
+                        reference,
+                        &property_schema
+                            .as_item()
+                            .expect("Unable to get extensions from resolved property schema")
+                            .schema_data
+                            .extensions,
+                    ),
+                    call_stack,
+                )?
+                .and_then(|call_stack| {
+                    visit_object_property(parsed_spec, out_path, None, property_schema, call_stack)
+                })?;
             Ok(())
         }
         ReferenceOr::Item(schema) => {
@@ -2331,7 +2544,7 @@ pub fn visit_object_property(
                     visit_schema(
                         parsed_spec,
                         out_path,
-                        Some(property_name),
+                        property_name,
                         property_schema_ref,
                         call_stack,
                     )
@@ -2373,7 +2586,7 @@ pub fn visit_object(
                                 visit_object_property(
                                     parsed_spec,
                                     out_path,
-                                    local_property_name,
+                                    Some(local_property_name),
                                     &unboxed,
                                     call_stack,
                                 )

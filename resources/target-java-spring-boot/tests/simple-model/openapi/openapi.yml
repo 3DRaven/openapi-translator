@@ -35,7 +35,7 @@ paths:
             application/json:
               x-ot-model-name: SuccessResponse
               schema:
-                $ref: "#/components/schemas/Response"
+                $ref: "#/components/schemas/PagingSimplifiedTrackObject"
 
 components:
   securitySchemes:
@@ -43,6 +43,16 @@ components:
       type: http
       scheme: basic
   schemas:
+    PagingSimplifiedTrackObject:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/CustomCode"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/CustomCode"
     CustomCode:
       type: object
       properties:
@@ -55,44 +65,44 @@ components:
           type: string
         another_field:
           type: string
-    AllOf:
-      x-ot-model-name: CompositeObject
-      allOf:
-        - $ref: "#/components/schemas/FreeForm"
-        - type: object
-          properties:
-            some_field:
-              x-ot-property-name: someField
-              type: string
-    FreeForm:
-      type: object
-      additionalProperties: true
-    Response:
-      type: object
-      required:
-        - code
-      properties:
-        simple_array:
-          type: array
-          x-ot-property-name: simpleArray
-          items:
-            type: string
-        inner_array:
-          type: array
-          x-ot-property-name: innerArray
-          items:
-            type: array
-            items:
-              type: string
-              format: date
-        code:
-          type: integer
-        message:
-          type: integer
-        inner_object:
-          type: object
-          x-ot-model-name: InnerObject
-          properties:
-            some_field:
-              x-ot-property-name: someField
-              type: string
+    # AllOf:
+    #   x-ot-model-name: CompositeObject
+    #   allOf:
+    #     - $ref: "#/components/schemas/FreeForm"
+    #     - type: object
+    #       properties:
+    #         some_field:
+    #           x-ot-property-name: someField
+    #           type: string
+    # FreeForm:
+    #   type: object
+    #   additionalProperties: true
+    # Response:
+    #   type: object
+    #   required:
+    #     - code
+    #   properties:
+    #     simple_array:
+    #       type: array
+    #       x-ot-property-name: simpleArray
+    #       items:
+    #         type: string
+    #     inner_array:
+    #       type: array
+    #       x-ot-property-name: innerArray
+    #       items:
+    #         type: array
+    #         items:
+    #           type: string
+    #           format: date
+    #     code:
+    #       type: integer
+    #     message:
+    #       type: integer
+    #     inner_object:
+    #       type: object
+    #       x-ot-model-name: InnerObject
+    #       properties:
+    #         some_field:
+    #           x-ot-property-name: someField
+    #           type: string

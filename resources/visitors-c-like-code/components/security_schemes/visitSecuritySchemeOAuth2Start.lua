@@ -1,5 +1,5 @@
 --- This visitor is invoked before processing OAuth2 security scheme
---- @param securitySchemeName string #
+--- @param securitySchemeName string|null #
 --- @param securityScheme OAuth2SecurityScheme #
 --- @param extensions table # table with free form with "x-" OpenAPI extensions for this level of spec
 --- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
