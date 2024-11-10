@@ -6,13 +6,11 @@
 --- @param extensions table # table with free form with "x-" OpenAPI extensions for this level of spec
 --- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
-function visitArrayPropertyEnd(arrayDescriptor, extensions, callsStack)
+local function visitArrayPropertyEnd(arrayDescriptor, extensions, callsStack)
     --- @type ModelBase
     local childModel = GLOBAL_CONTEXT.models:pop()
     --- @type ModelBase?
     local currentModel = GLOBAL_CONTEXT.models:peek()
-    -- drop predefined array child model name
-    GLOBAL_CONTEXT.names:pop()
 
     if childModel.name == nil then
         error("Unknown model for items")

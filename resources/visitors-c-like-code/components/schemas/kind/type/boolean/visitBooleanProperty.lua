@@ -4,7 +4,7 @@
 --- @param booleanDescriptor BooleanType # boolean property descriptor
 --- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
-function visitBooleanProperty(booleanDescriptor, extensions, callsStack)
+local function visitBooleanProperty(booleanDescriptor, extensions, callsStack)
     return CODEGEN.addGenericPropertyCode(GLOBAL_CONTEXT.models:peek(), CODE.getBooleanType(), extensions)
 end
 

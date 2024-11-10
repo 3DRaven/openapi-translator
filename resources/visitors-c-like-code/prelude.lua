@@ -800,6 +800,40 @@ function printBreak()
         "-------------------------------------------------------------------------------------------------------------------")
 end
 
+--- Customized print function for the last argument if it's a table
+--- @param t table # table to print with customized format
+--- @param indent number # indentation level
+local function printLastArgTable(t, indent)
+    indent = indent or 8
+
+    if t == NULL or t == nil then
+        print(string.rep(" ", indent) .. "Argument is nil or NULL!")
+        return
+    end
+
+    if type(t) ~= "table" then
+        print(string.rep(" ", indent) .. "Argument is not a table type with value [" .. tostring(t) .. "]")
+        return
+    end
+
+    for key, value in ipairs(t) do
+        if type(value) == "table" then
+            local combined = {}
+            for nestedKey = #value, 1, -1 do
+                local nestedElem = value[nestedKey]
+                if nestedElem == NULL then
+                    combined[#combined + 1] = "no-id"
+                else
+                    combined[#combined + 1] = tostring(nestedElem)
+                end
+            end
+            print(string.format("%s%d: %s", string.rep(" ", indent), key, table.concat(combined, " (") .. ")"))
+        else
+            print(string.format("%s%d: %s", string.rep(" ", indent), key, tostring(value)))
+        end
+    end
+end
+
 --- Print table to console
 --- @param t table # table for conversion
 --- @param indent number|nil # level of incapsulation
@@ -900,12 +934,20 @@ function functionCallAndLog(funcName, mainFunc, beforeDecorator, afterDecorator)
         print("CALL <- [" .. funcName .. "]")
 
         local args = { ... }
+        local argsCount = #args
+
         for i, v in ipairs(args) do
+            local indent = "    "
             if type(v) == "table" then
-                print("    arg" .. i .. " = [table]")
-                printTable(v, 8)
+                print(indent .. "arg" .. i .. " = [table]")
+                if i == argsCount then
+                    -- Call custom print function for the last argument
+                    printLastArgTable(v, 8)
+                else
+                    printTable(v, 8)
+                end
             else
-                print("    arg" .. i .. " = " .. tostring(v))
+                print(indent .. "arg" .. i .. " = " .. tostring(v))
             end
         end
         if beforeDecorator ~= nil then
@@ -920,6 +962,12 @@ function functionCallAndLog(funcName, mainFunc, beforeDecorator, afterDecorator)
             printTable(result, 8)
         else
             print("RETURN <- [" .. funcName .. "] " .. tostring(result))
+        end
+
+        for _, v in ipairs(args) do
+            if type(v) == "table" and v[Extensions.DEBUG_STOP] then
+                error("Found debug stop in spec")
+            end
         end
         return result
     end
@@ -945,6 +993,7 @@ WriteMode.REMOVE = "REMOVE"
 --- @field CODE_BEFORE string #
 --- @field IMPORT string #
 --- @field CODE string #
+--- @field DEBUG_STOP string #
 Extensions = {}
 
 Extensions.MODEL_NAME = "x-ot-model-name"
@@ -954,14 +1003,7 @@ Extensions.ADDITIONAL_PROPERTY_MODEL_NAME = "x-ot-additional-property-model-name
 Extensions.CODE_BEFORE = "x-ot-code-before"
 Extensions.IMPORT = "import"
 Extensions.CODE = "code"
-
----select first not NULL or nil value
----@param first string|null # it possible be NULL too
----@param second string|null # it possible be NULL too
----@return string|nil
-function getFirstExistsName(first, second)
-    return nullableAsNillable(first) or nullableAsNillable(second)
-end
+Extensions.DEBUG_STOP = "x-ot-debug-stop"
 
 --- Extracts the last component from a string delimited by '/'.
 --- @param reference string # representing a path where components are separated by '/'.

@@ -4,10 +4,12 @@
 --- @param extensions table # table with free form with "x-" OpenAPI extensions for this level of spec
 --- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
-function visitObjectStart(objectDescriptor, extensions, callsStack)
+local function visitObjectStart(objectDescriptor, extensions, callsStack)
     --- When we begin processing an schema, the model might already exist because, each time a
     --- reference is encountered in the specification, the translator starts constructing the model
     --- from scratch. However, the actual text that the reference points to is read only once and cached.
+    printBreak()
+    printTable(GLOBAL_CONTEXT.names)
     local model = ObjectModel.new(concatStackCapitalized(GLOBAL_CONTEXT.names))
     model.required = objectDescriptor.required
     GLOBAL_CONTEXT.models:push(model)

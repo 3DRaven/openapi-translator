@@ -80,7 +80,7 @@ pub fn set_global_lua_parameters(openapi: &OpenAPI) -> Result<CallStack> {
     //It is drop of mutex lock
     drop(lua_vm);
     check_scripts()?;
-    Script::Target.call_func(Some(&Script::Prelude.call_func(None)?))
+    Script::Target.call_func(None, Some(&Script::Prelude.call_func(None, None)?))
 }
 
 pub fn visit_commands() -> Result<()> {

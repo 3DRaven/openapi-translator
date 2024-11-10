@@ -8,7 +8,7 @@ use strum::EnumIter;
 use crate::{
     holders::context::get_lua_vm,
     services::{code, scripts},
-    structs::common::CallStack,
+    structs::common::{Call, CallStack},
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -179,8 +179,9 @@ pub enum Script {
 impl Script {
     pub fn call_with_descriptor<T>(
         &self,
+        call_id: Option<&str>,
         out_path: &Path,
-        descriptor: &T,
+        args: &T,
         call_stack: &CallStack,
     ) -> Result<CallStack>
     where
@@ -189,7 +190,7 @@ impl Script {
         let lua_vm = get_lua_vm();
         let func = scripts::get_lua_function(self, &lua_vm)?;
 
-        let args_value = serde_json::to_value(descriptor)?;
+        let args_value = serde_json::to_value(args)?;
 
         let args_vec = if args_value.is_array() {
             args_value
@@ -294,10 +295,14 @@ impl Script {
 
         code::save_code(out_path, lua_vm.from_value(code)?)?;
 
-        Ok(call_stack + self)
+        Ok(call_stack + Call(call_id.map(|s| s.to_string()), self.clone()))
     }
 
-    pub fn call_func(&self, call_stack: Option<&CallStack>) -> Result<CallStack> {
+    pub fn call_func(
+        &self,
+        call_id: Option<&str>,
+        call_stack: Option<&CallStack>,
+    ) -> Result<CallStack> {
         let lua_vm = get_lua_vm();
         let func = scripts::get_lua_function(self, &lua_vm)?;
         if let Some(call_stack) = call_stack {
@@ -308,8 +313,11 @@ impl Script {
                 .with_context(|| format!("Could not call lua function [{}]", self))?;
         }
         Ok(call_stack
-            .map(|it| it + self)
-            .unwrap_or(CallStack::new(self.clone())))
+            .map(|it| it + Call(call_id.map(|s| s.to_string()), self.clone()))
+            .unwrap_or(CallStack::new(Call(
+                call_id.map(|s| s.to_string()),
+                self.clone(),
+            ))))
     }
 }
 
