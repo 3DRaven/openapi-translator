@@ -1,13 +1,9 @@
 use ansi_term::Color;
 use anyhow::{anyhow, Context, Result};
 use enums::common::Script;
-use env_logger::Env;
-use holders::context::{
-    get_lua_vm, CLI, DEFAULT_LOGS_COLOR_MODE, DEFAULT_LOGS_LOG_LEVEL, LOG_CONTEXT,
-};
+use holders::context::{get_lua_vm, CLI, LOG_CONTEXT};
 use serde_json::Value;
 use services::scripts;
-use std::io::Write;
 use std::path::PathBuf;
 use std::{collections::HashMap, path::Path};
 use strum::IntoEnumIterator;
@@ -139,43 +135,39 @@ pub enum Commands {
     },
 }
 
-pub fn init_logger() {
-    env_logger::Builder::from_env(
-        Env::default()
-            .default_filter_or(DEFAULT_LOGS_LOG_LEVEL)
-            .default_write_style_or(DEFAULT_LOGS_COLOR_MODE),
-    )
-    .format(move |buf, record| {
-        let dynamic_value = LOG_CONTEXT.lock().unwrap();
+pub fn init_logger() -> Result<()> {
+    fern::Dispatch::new()
+        .chain(std::io::stderr())
+        .format(|out, message, record| {
+            let dynamic_value = LOG_CONTEXT.lock().unwrap();
 
-        if dynamic_value.is_empty() {
-            writeln!(
-                buf,
-                "\n{}{} {}:{} {}{}:\n\n{}",
-                Color::Green.paint("["),
-                chrono::Local::now().format("%Y-%m-%dT%H:%M:%S"),
-                Color::Blue.paint(record.level().to_string()),
-                record.file().unwrap_or("unknown source"),
-                record.line().unwrap_or(u32::MAX),
-                Color::Green.paint("]"),
-                record.args()
-            )
-        } else {
-            writeln!(
-                buf,
-                "\n{}{} {} {}:{} {}{}:\n\n{}",
-                Color::Green.paint("["),
-                chrono::Local::now().format("%Y-%m-%dT%H:%M:%S"),
-                Color::Blue.paint(record.level().to_string()),
-                record.file().unwrap_or("unknown source"),
-                record.line().unwrap_or(u32::MAX),
-                *dynamic_value,
-                Color::Green.paint("]"),
-                record.args()
-            )
-        }
-    })
-    .init();
+            if dynamic_value.is_empty() {
+                out.finish(format_args!(
+                    "{}{}{} {} {}:{}:\n{}",
+                    Color::Green.paint("["),
+                    chrono::Local::now().format("%Y-%m-%dT%H:%M:%S"),
+                    Color::Green.paint("]"),
+                    Color::Blue.paint(record.level().to_string()),
+                    record.file().unwrap_or("unknown source"),
+                    record.line().unwrap_or(u32::MAX),
+                    message
+                ));
+            } else {
+                out.finish(format_args!(
+                    "{}{}{} {} {}:{} {}:\n{}",
+                    Color::Green.paint("["),
+                    chrono::Local::now().format("%Y-%m-%dT%H:%M:%S"),
+                    Color::Green.paint("]"),
+                    Color::Blue.paint(record.level().to_string()),
+                    record.file().unwrap_or("unknown source"),
+                    record.line().unwrap_or(u32::MAX),
+                    *dynamic_value,
+                    message
+                ));
+            }
+        })
+        .apply()
+        .with_context(|| "Unable to initialize logger")
 }
 
 pub fn check_scripts() -> Result<()> {

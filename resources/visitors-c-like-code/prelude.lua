@@ -4,6 +4,12 @@
 --- package.path concatenated with VISITORS_PATH and TARGET_PATH, modules can be placed to this paths
 CODEGEN = require("codegen")
 
+local callsCounter = 0
+
+function incrementCallNumber()
+    callsCounter = callsCounter + 1
+end
+
 -----------------------------------------------------------------------------------------------------------------
 --- Constructions below is used solely to inform the Lua language server
 --- about the existence of the global variable for convenience when writing scripts.
@@ -815,21 +821,25 @@ local function printLastArgTable(t, indent)
         print(string.rep(" ", indent) .. "Argument is not a table type with value [" .. tostring(t) .. "]")
         return
     end
+    local indentStr = string.rep(" ", indent)
+    for callNumber, callDecriptor in ipairs(t) do
+        if type(callDecriptor) == "table" then
+            --# link-1
+            --CALL <- [visitSchemaEnd]
+            --[visitSchemaEnd](#link-1)
+            local funcName = callDecriptor[2]
+            local id = callDecriptor[1]
+            local combined = "[" .. callNumber .. "](#link-" .. callNumber .. ") " .. funcName
 
-    for key, value in ipairs(t) do
-        if type(value) == "table" then
-            local combined = {}
-            for nestedKey = #value, 1, -1 do
-                local nestedElem = value[nestedKey]
-                if nestedElem == NULL then
-                    combined[#combined + 1] = "no-id"
-                else
-                    combined[#combined + 1] = tostring(nestedElem)
-                end
+            if id == NULL then
+                combined = combined .. " -> {no-id}"
+            else
+                combined = combined .. " -> {" .. tostring(id) .. "}"
             end
-            print(string.format("%s%d: %s", string.rep(" ", indent), key, table.concat(combined, " (") .. ")"))
+
+            print(indentStr .. combined)
         else
-            print(string.format("%s%d: %s", string.rep(" ", indent), key, tostring(value)))
+            print(indentStr .. tostring(callDecriptor))
         end
     end
 end
@@ -931,7 +941,8 @@ end
 --- @param afterDecorator function? # decorator for calling after mainFunc with same args as mainFunc
 function functionCallAndLog(funcName, mainFunc, beforeDecorator, afterDecorator)
     return function(...)
-        print("CALL <- [" .. funcName .. "]")
+        callsCounter = callsCounter + 1
+        print("# link-" .. tostring(callsCounter) .. "\nCALL <- [" .. funcName .. "]")
 
         local args = { ... }
         local argsCount = #args
@@ -1696,17 +1707,10 @@ end
 --- passed to the script either from the OpenAPI specification or from the command line. Command line
 --- parameters take precedence and override the specification parameters. Parameters are stored in the
 --- global variable `targetParameters` created by the translator (Rust code) in the Lua context
-function stub()
-    printBreak()
-    print("Prelude script called")
-    print("targetParamaters type: " .. type(TARGET_PARAMETERS))
-    print("targetParamaters value:")
-    if type(TARGET_PARAMETERS) == "table" then
-        printTable(TARGET_PARAMETERS)
-    else
-        print(TARGET_PARAMETERS)
-    end
-    printBreak()
+local function prelude()
+    print("    targetParamaters type: " .. type(TARGET_PARAMETERS))
+    print("    targetParamaters value:")
+    printTable(TARGET_PARAMETERS)
 end
 
-return stub
+return functionCallAndLog("prelude", prelude)

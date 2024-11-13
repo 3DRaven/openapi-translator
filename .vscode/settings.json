@@ -82,7 +82,8 @@
         "replaceNonAlphabetic",
         "nullableAsNillable",
         "lastReferencePart",
-        "printLastArgTable"
+        "printLastArgTable",
+        "incrementCallNumber"
     ],
     "terminal.integrated.scrollback": 16777216,
     "references.preferredLocation": "view",
@@ -102,5 +103,6 @@
         "reqwest",
         "springframework"
     ],
-    "CodeGPT.apiKey": "OpenAI"
+    "CodeGPT.apiKey": "OpenAI",
+    "lldb.launch.stdio": [null, "openapi-translator.log", null]
 }
