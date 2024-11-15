@@ -4,6 +4,13 @@ use std::fs;
 
 use crate::{enums::common::Script, holders::context::CLI};
 
+pub fn get_call_id(schema_name: Option<&str>, reference: &String) -> Option<String> {
+    Some(schema_name.map_or_else(
+        || reference.to_owned(),
+        |name| format!("{}->{}", name, reference),
+    ))
+}
+
 //TODO: cached compilation
 pub fn get_lua_function<'a>(script: &Script, lua: &'a Lua) -> Result<Function<'a>> {
     let scripts_dir = match script {

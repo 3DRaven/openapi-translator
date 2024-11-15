@@ -14,13 +14,12 @@ use crate::{
         NULL_VALUE_VARIABLE_NAME_IN_LUA, TARGET_PARAMETERS_VARIABLE_NAME_IN_LUA,
         TARGET_PATH_VARIABLE_NAME_IN_LUA, VISITORS_PATH_VARIABLE_NAME_IN_LUA,
     },
-    structs::common::CallStack,
     Commands,
 };
 
 use super::visitors;
 
-pub fn set_global_lua_parameters(openapi: &OpenAPI) -> Result<CallStack> {
+pub fn set_global_lua_parameters(openapi: &OpenAPI) -> Result<()> {
     recreate_lua_vm();
     let lua_vm = get_lua_vm();
 
@@ -80,7 +79,8 @@ pub fn set_global_lua_parameters(openapi: &OpenAPI) -> Result<CallStack> {
     //It is drop of mutex lock
     drop(lua_vm);
     check_scripts()?;
-    Script::Target.call_func(None, Some(&Script::Prelude.call_func(None, None)?))
+    Script::Prelude.call_func(None)?;
+    Script::Target.call_func(None)
 }
 
 pub fn visit_commands() -> Result<()> {

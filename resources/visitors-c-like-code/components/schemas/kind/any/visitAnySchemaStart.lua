@@ -3,9 +3,9 @@
 --- Returns a model name with unknown structure (it is {} in OpenAPI)
 --- @param anySchemaDescriptor AnySchema # object descriptor
 --- @param extensions table # table with free form with "x-" OpenAPI extensions for this level of spec
---- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
+--- @param callId string? # some usefull identifier of this visitor call
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
-local function visitAnySchemaStart(anySchemaDescriptor, extensions, callsStack)
+local function visitAnySchemaStart(anySchemaDescriptor, extensions, callId)
     --- @type ModelBase?
     local currentModel = GLOBAL_CONTEXT.models:peek()
     if currentModel ~= nil then

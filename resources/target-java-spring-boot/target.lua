@@ -5,8 +5,8 @@
 
 CODE = require("code")
 
---- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
-local function target(callsStack)
+--- @param callId string? # some usefull identifier of this visitor call
+local function target(callId)
     print("Target script called")
 end
 

@@ -1,9 +1,9 @@
 --- This visitor is invoked at the start of OpenAPI scpec in inf section if it exists
 --- @param license License # License information
 --- @param extensions table<string, any> # table with free form with "x-" OpenAPI extensions for this level of spec
---- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
+--- @param callId string? # some usefull identifier of this visitor call
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
-local function visitSpecInfoLicense(license, extensions, callsStack)
+local function visitSpecInfoLicense(license, extensions, callId)
     return {}
 end
 

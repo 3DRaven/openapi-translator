@@ -2,9 +2,9 @@
 --- @param parameterName string|null #
 --- @param parameterReference string #
 --- @param extensions table # table with free form with "x-" OpenAPI extensions for this level of spec
---- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
+--- @param callId string? # some usefull identifier of this visitor call
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
-local function visitParameterReference(parameterName, parameterReference, extensions, callsStack)
+local function visitParameterReference(parameterName, parameterReference, extensions, callId)
     return {}
 end
 

@@ -83,7 +83,8 @@
         "nullableAsNillable",
         "lastReferencePart",
         "printLastArgTable",
-        "incrementCallNumber"
+        "incrementCallNumber",
+        "errorHandler"
     ],
     "terminal.integrated.scrollback": 16777216,
     "references.preferredLocation": "view",

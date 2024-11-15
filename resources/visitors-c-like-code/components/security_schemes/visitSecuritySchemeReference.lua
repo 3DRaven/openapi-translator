@@ -2,9 +2,9 @@
 --- @param securitySchemeName string|null #
 --- @param securitySchemeReference string #
 --- @param extensions table # table with free form with "x-" OpenAPI extensions for this level of spec
---- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
+--- @param callId string? # some usefull identifier of this visitor call
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
-local function visitSecuritySchemeReference(securitySchemeName, securitySchemeReference, extensions, callsStack)
+local function visitSecuritySchemeReference(securitySchemeName, securitySchemeReference, extensions, callId)
     return {}
 end
 

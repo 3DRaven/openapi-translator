@@ -1,9 +1,9 @@
 --- This visitor is invoked at the start of OpenAPI scpec for every described tag
 --- @param tag Tag #
 --- @param extensions table<string, any> # Inline extensions to this object.
---- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
+--- @param callId string? # some usefull identifier of this visitor call
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
-local function visitSpecTag(tag, extensions, callsStack)
+local function visitSpecTag(tag, extensions, callId)
     return {}
 end
 

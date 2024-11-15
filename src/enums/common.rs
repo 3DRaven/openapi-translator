@@ -8,7 +8,6 @@ use strum::EnumIter;
 use crate::{
     holders::context::get_lua_vm,
     services::{code, scripts},
-    structs::common::{Call, CallStack},
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -182,8 +181,7 @@ impl Script {
         call_id: Option<&str>,
         out_path: &Path,
         args: &T,
-        call_stack: &CallStack,
-    ) -> Result<CallStack>
+    ) -> Result<()>
     where
         T: Serialize,
     {
@@ -203,26 +201,22 @@ impl Script {
             vec![lua_vm.to_value(&args_value)?]
         };
 
+        let call_id_value = lua_vm.to_value(&call_id);
+
         let code: mlua::Value = match &args_vec {
-            args if args.len() == 1 => func.call((&args[0], lua_vm.to_value(call_stack))),
-            args if args.len() == 2 => func.call((&args[0], &args[1], lua_vm.to_value(call_stack))),
-            args if args.len() == 3 => {
-                func.call((&args[0], &args[1], &args[2], lua_vm.to_value(call_stack)))
+            args if args.len() == 1 => func.call((&args[0], call_id_value)),
+            args if args.len() == 2 => func.call((&args[0], &args[1], call_id_value)),
+            args if args.len() == 3 => func.call((&args[0], &args[1], &args[2], call_id_value)),
+            args if args.len() == 4 => {
+                func.call((&args[0], &args[1], &args[2], &args[3], call_id_value))
             }
-            args if args.len() == 4 => func.call((
-                &args[0],
-                &args[1],
-                &args[2],
-                &args[3],
-                lua_vm.to_value(call_stack),
-            )),
             args if args.len() == 5 => func.call((
                 &args[0],
                 &args[1],
                 &args[2],
                 &args[3],
                 &args[4],
-                lua_vm.to_value(call_stack),
+                call_id_value,
             )),
             args if args.len() == 6 => func.call((
                 &args[0],
@@ -231,7 +225,7 @@ impl Script {
                 &args[3],
                 &args[4],
                 &args[5],
-                lua_vm.to_value(call_stack),
+                call_id_value,
             )),
             args if args.len() == 7 => func.call((
                 &args[0],
@@ -241,7 +235,7 @@ impl Script {
                 &args[4],
                 &args[5],
                 &args[6],
-                lua_vm.to_value(call_stack),
+                call_id_value,
             )),
             args if args.len() == 8 => func.call((
                 &args[0],
@@ -252,7 +246,7 @@ impl Script {
                 &args[5],
                 &args[6],
                 &args[7],
-                lua_vm.to_value(call_stack),
+                call_id_value,
             )),
             args if args.len() == 9 => func.call((
                 &args[0],
@@ -264,7 +258,7 @@ impl Script {
                 &args[6],
                 &args[7],
                 &args[8],
-                lua_vm.to_value(call_stack),
+                call_id_value,
             )),
             args if args.len() == 10 => func.call((
                 &args[0],
@@ -277,7 +271,7 @@ impl Script {
                 &args[7],
                 &args[8],
                 &args[9],
-                lua_vm.to_value(call_stack),
+                call_id_value,
             )),
             _ => {
                 panic!(
@@ -289,35 +283,21 @@ impl Script {
         .with_context(|| {
             format!(
                 "Failed to call lua script [{}] with args [{:?}]",
-                self, args_vec
+                self, args_value
             )
         })?;
 
         code::save_code(out_path, lua_vm.from_value(code)?)?;
 
-        Ok(call_stack + Call(call_id.map(|s| s.to_string()), self.clone()))
+        Ok(())
     }
 
-    pub fn call_func(
-        &self,
-        call_id: Option<&str>,
-        call_stack: Option<&CallStack>,
-    ) -> Result<CallStack> {
+    pub fn call_func(&self, call_id: Option<&str>) -> Result<()> {
         let lua_vm = get_lua_vm();
         let func = scripts::get_lua_function(self, &lua_vm)?;
-        if let Some(call_stack) = call_stack {
-            func.call::<_, ()>(lua_vm.to_value(call_stack))
-                .with_context(|| format!("Could not call lua function [{}]", self))?;
-        } else {
-            func.call::<_, ()>(())
-                .with_context(|| format!("Could not call lua function [{}]", self))?;
-        }
-        Ok(call_stack
-            .map(|it| it + Call(call_id.map(|s| s.to_string()), self.clone()))
-            .unwrap_or(CallStack::new(Call(
-                call_id.map(|s| s.to_string()),
-                self.clone(),
-            ))))
+        func.call::<_, ()>(lua_vm.to_value(&call_id))
+            .with_context(|| format!("Could not call lua function [{}]", self))?;
+        Ok(())
     }
 }
 

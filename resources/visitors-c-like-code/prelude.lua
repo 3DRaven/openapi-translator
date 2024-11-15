@@ -4,11 +4,7 @@
 --- package.path concatenated with VISITORS_PATH and TARGET_PATH, modules can be placed to this paths
 CODEGEN = require("codegen")
 
-local callsCounter = 0
-
-function incrementCallNumber()
-    callsCounter = callsCounter + 1
-end
+local calls = {}
 
 -----------------------------------------------------------------------------------------------------------------
 --- Constructions below is used solely to inform the Lua language server
@@ -809,7 +805,7 @@ end
 --- Customized print function for the last argument if it's a table
 --- @param t table # table to print with customized format
 --- @param indent number # indentation level
-local function printLastArgTable(t, indent)
+local function printCalls(t, indent)
     indent = indent or 8
 
     if t == NULL or t == nil then
@@ -934,6 +930,23 @@ function isTableEmpty(tbl)
     return count == 0
 end
 
+local function callWithErrorHandler(callable, args)
+    local function errorHandler(err)
+        printBreak()
+        print("Error handled: ", err)
+        print("Calls stack:")
+        printTable(calls)
+        return err
+    end
+
+    local status, result = xpcall(callable, errorHandler, args)
+    if status then
+        return result
+    else
+        error(result)
+    end
+end
+
 --- Function decorator for logging
 --- @param funcName string # name of called function
 --- @param mainFunc function # main function with arguments from Rust code
@@ -941,33 +954,37 @@ end
 --- @param afterDecorator function? # decorator for calling after mainFunc with same args as mainFunc
 function functionCallAndLog(funcName, mainFunc, beforeDecorator, afterDecorator)
     return function(...)
-        callsCounter = callsCounter + 1
-        print("# link-" .. tostring(callsCounter) .. "\nCALL <- [" .. funcName .. "]")
-
         local args = { ... }
-        local argsCount = #args
+        local callNumber = tostring(#calls)
+        local callId = args[#args]
+
+        if callId == NULL then
+            callId = "no-id"
+        end
+
+        table.insert(calls, "[" .. callNumber .. "](#link-" .. callNumber .. ") " .. funcName .. " -> {" .. callId .. "}")
+        print("# link-" .. callNumber .. "\nCALL <- [" .. funcName .. "]")
 
         for i, v in ipairs(args) do
             local indent = "    "
             if type(v) == "table" then
                 print(indent .. "arg" .. i .. " = [table]")
-                if i == argsCount then
-                    -- Call custom print function for the last argument
-                    printLastArgTable(v, 8)
-                else
-                    printTable(v, 8)
-                end
+                printTable(v, 8)
             else
                 print(indent .. "arg" .. i .. " = " .. tostring(v))
             end
         end
+
         if beforeDecorator ~= nil then
-            beforeDecorator(...)
+            callWithErrorHandler(beforeDecorator, ...)
         end
-        local result = mainFunc(...)
+
+        local result = callWithErrorHandler(mainFunc, ...)
+
         if afterDecorator ~= nil then
-            afterDecorator(...)
+            callWithErrorHandler(afterDecorator, ...)
         end
+
         if type(result) == "table" then
             print("RETURN <- [" .. funcName .. "] [table]")
             printTable(result, 8)
@@ -1707,7 +1724,8 @@ end
 --- passed to the script either from the OpenAPI specification or from the command line. Command line
 --- parameters take precedence and override the specification parameters. Parameters are stored in the
 --- global variable `targetParameters` created by the translator (Rust code) in the Lua context
-local function prelude()
+--- @param callId string? # some usefull identifier of this visitor call
+local function prelude(callId)
     print("    targetParamaters type: " .. type(TARGET_PARAMETERS))
     print("    targetParamaters value:")
     printTable(TARGET_PARAMETERS)

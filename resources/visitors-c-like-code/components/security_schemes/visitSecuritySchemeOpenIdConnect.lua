@@ -2,9 +2,9 @@
 --- @param securitySchemeName string|null
 --- @param securityScheme OpenIDConnectSecurityScheme #
 --- @param extensions table # table with free form with "x-" OpenAPI extensions for this level of spec
---- @param callsStack Script[] # An array of Script objects representing the sequence of scripts executed in the visitor call chain
+--- @param callId string? # some usefull identifier of this visitor call
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
-local function visitSecuritySchemeOpenIdConnect(securitySchemeName, securityScheme, extensions, callsStack)
+local function visitSecuritySchemeOpenIdConnect(securitySchemeName, securityScheme, extensions, callId)
     return {}
 end
 
