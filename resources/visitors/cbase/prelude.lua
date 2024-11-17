@@ -1,6 +1,8 @@
 --- This section contains all global functions and variables that are created before the visitors
 --- start working.
 
+local DEFAULT_PRINT_ARGS_INDENT = 8
+
 local calls = {}
 
 -----------------------------------------------------------------------------------------------------------------
@@ -819,29 +821,33 @@ function printTable(t, indent)
         print(string.rep(" ", indent) .. "Argument is not a table type with value [" .. tostring(t) .. "]")
         return
     end
-
     if isTableEmpty(t) then
-        local formatting = string.rep(" ", indent+4) .. "empty"
-        print(formatting)
+        -- print(string.rep(" ", indent) .. "empty")
     else
         for key, value in pairs(t) do
-            local formatting = string.rep(" ", indent) .. tostring(key) .. ": "
-
+            local formatting = string.rep(" ", indent) .. tostring(key) .. ":"
             if type(value) == "table" then
                 print(formatting)
                 printTable(value, indent + 2)
             else
-                print(formatting .. tostring(value))
+                print(formatting .. " " .. tostring(value))
             end
         end
     end
 end
 
 --- Table into string
---- @param tbl table|nil # table for conversion
---- @param indent number|nil # level of incapsulation
+--- @param tbl table? # table for conversion
+--- @param indent number? # level of incapsulation
 --- @return string # string interpretation of table
 function tableToString(tbl, indent)
+    local result = {}
+    local rootCall = indent == nil
+    if rootCall then
+        table.insert(result, "```yaml")
+    end
+
+    ---@type number
     indent = indent or 0
 
     if tbl == NULL then
@@ -856,26 +862,27 @@ function tableToString(tbl, indent)
         return string.rep(" ", indent) .. "Argument is not a table type with value [" .. tostring(tbl) .. "]"
     end
 
-    local result = {}
     local spacing = string.rep(" ", indent)
 
-    if isTableEmpty(tbl) then
-        local formatting = spacing .. "empty"
-        table.insert(result, formatting)
-    else
-        for key, value in pairs(tbl) do
-            local formatting = spacing .. tostring(key) .. ": "
-            if type(value) == "table" then
+    for key, value in pairs(tbl) do
+        local formatting = spacing .. tostring(key) .. ":"
+        if type(value) == "table" then
+            if isTableEmpty(value) then
+                table.insert(result, formatting .. " empty")
+            else
                 table.insert(result, formatting)
                 table.insert(result, tableToString(value, indent + 2))
-            else
-                table.insert(result, formatting .. tostring(value))
             end
+        else
+            table.insert(result, formatting .. " " .. tostring(value))
         end
     end
 
-
-    return table.concat(result, "\n")
+    if rootCall then
+        return table.concat(result, "\n") .. "\n```"
+    else
+        return table.concat(result, "\n")
+    end
 end
 
 ---@param tbl table # source table
@@ -930,8 +937,12 @@ function functionCallAndLog(funcName, mainFunc, beforeDecorator, afterDecorator)
         for i, v in ipairs(args) do
             local indent = "    "
             if type(v) == "table" then
-                print(indent .. "arg" .. i .. " = [table]")
-                printTable(v, 8)
+                if isTableEmpty(v) then
+                    print(indent .. "arg" .. i .. " = [table] empty")
+                else
+                    print(indent .. "arg" .. i .. " = [table]")
+                    printTable(v, DEFAULT_PRINT_ARGS_INDENT)
+                end
             else
                 print(indent .. "arg" .. i .. " = " .. tostring(v))
             end
@@ -948,10 +959,15 @@ function functionCallAndLog(funcName, mainFunc, beforeDecorator, afterDecorator)
         end
 
         if type(result) == "table" then
-            print("RETURN <- [" .. funcName .. "] [table]")
-            printTable(result, 8)
+            if isTableEmpty(result) then
+                print("RETURN <- [" .. funcName .. "] [table] empty\n")
+            else
+                print("RETURN <- [" .. funcName .. "] [table]")
+                printTable(result, 8)
+                print()
+            end
         else
-            print("RETURN <- [" .. funcName .. "] " .. tostring(result))
+            print("RETURN <- [" .. funcName .. "] " .. tostring(result) .. "\n")
         end
 
         for _, v in ipairs(args) do
@@ -1016,285 +1032,6 @@ function nullableAsNillable(value)
         return value
     end
 end
-
---- Script is an element of the visitor call chain
---- @class Script
---- @field PRELUDE string
---- @field VISIT_OPERATION_RESPONSES_START string
---- @field VISIT_OPERATION_RESPONSES_END string
---- @field VISIT_RESPONSES_START string
---- @field VISIT_RESPONSES_END string
---- @field VISIT_PARAMETER_DATA_START string
---- @field VISIT_PARAMETER_DATA_END string
---- @field VISIT_SECURITY_SCHEME_API_KEY string
---- @field VISIT_SECURITY_SCHEME_OPEN_ID_CONNECT string
---- @field VISIT_SECURITY_SCHEME_O_AUTH2_FLOW_IMPLICIT string
---- @field VISIT_SECURITY_SCHEME_O_AUTH2_FLOW_PASSWORD string
---- @field VISIT_SECURITY_SCHEME_O_AUTH2_FLOW_CLIENT_CREDENTIALS string
---- @field VISIT_SECURITY_SCHEME_O_AUTH2_FLOW_AUTHORIZATION_CODE string
---- @field VISIT_SECURITY_SCHEME_HTTP string
---- @field VISIT_SECURITY_SCHEME_O_AUTH2_START string
---- @field VISIT_SECURITY_SCHEME_O_AUTH2_END string
---- @field VISIT_SECURITY_SCHEME_O_AUTH2_FLOWS_START string
---- @field VISIT_SECURITY_SCHEME_O_AUTH2_FLOWS_END string
---- @field VISIT_QUERY_PARAMETER_START string
---- @field VISIT_QUERY_PARAMETER_END string
---- @field VISIT_HEADER_PARAMETER_START string
---- @field VISIT_HEADER_PARAMETER_END string
---- @field VISIT_PATH_PARAMETER_START string
---- @field VISIT_PATH_PARAMETER_END string
---- @field VISIT_PATH_ITEM_START string
---- @field VISIT_PATH_ITEM_END string
---- @field VISIT_TRACE_OPERATION_START string
---- @field VISIT_TRACE_OPERATION_END string
---- @field VISIT_PUT_OPERATION_START string
---- @field VISIT_PUT_OPERATION_END string
---- @field VISIT_POST_OPERATION_START string
---- @field VISIT_POST_OPERATION_END string
---- @field VISIT_PATCH_OPERATION_START string
---- @field VISIT_PATCH_OPERATION_END string
---- @field VISIT_OPTIONS_OPERATION_START string
---- @field VISIT_OPTIONS_OPERATION_END string
---- @field VISIT_HEAD_OPERATION_START string
---- @field VISIT_HEAD_OPERATION_END string
---- @field VISIT_GET_OPERATION_START string
---- @field VISIT_GET_OPERATION_END string
---- @field VISIT_DELETE_OPERATION_START string
---- @field VISIT_DELETE_OPERATION_END string
---- @field VISIT_COOKIE_PARAMETER_START string
---- @field VISIT_COOKIE_PARAMETER_END string
---- @field VISIT_PARAMETERS_START string
---- @field VISIT_PARAMETERS_END string
---- @field VISIT_PATHS_START string
---- @field VISIT_PATHS_END string
---- @field VISIT_RESPONSE_START string
---- @field VISIT_RESPONSE_END string
---- @field VISIT_MEDIA_TYPES_START string
---- @field VISIT_MEDIA_TYPES_END string
---- @field VISIT_LINKS_START string
---- @field VISIT_LINKS_END string
---- @field VISIT_ASYNC_CALLBACKS_START string
---- @field VISIT_ASYNC_CALLBACKS_END string
---- @field VISIT_ASYNC_CALLBACK_START string
---- @field VISIT_ASYNC_CALLBACK_END string
---- @field VISIT_HEADERS_START string
---- @field VISIT_HEADERS_END string
---- @field VISIT_SECURITY_SCHEMES_START string
---- @field VISIT_SECURITY_SCHEMES_END string
---- @field VISIT_HEADER_START string
---- @field VISIT_HEADER_END string
---- @field VISIT_REQUEST_BODY_START string
---- @field VISIT_REQUEST_BODY_END string
---- @field VISIT_EXAMPLE_START string
---- @field VISIT_EXAMPLE_END string
---- @field VISIT_EXAMPLES_START string
---- @field VISIT_EXAMPLES_END string
---- @field VISIT_REQUEST_BODIES_START string
---- @field VISIT_REQUEST_BODIES_END string
---- @field VISIT_GENERIC_PARAMETERS_START string
---- @field VISIT_GENERIC_PARAMETER string
---- @field VISIT_GENERIC_PARAMETERS_END string
---- @field VISIT_PARAMETER_SCHEMA_OR_CONTENT_START string
---- @field VISIT_PARAMETER_SCHEMA_OR_CONTENT_END string
---- @field VISIT_MEDIA_TYPE_START string
---- @field VISIT_MEDIA_TYPE_END string
---- @field VISIT_LINK_START string
---- @field VISIT_LINK_END string
---- @field VISIT_COMPONENTS_START string
---- @field VISIT_COMPONENTS_END string
---- @field VISIT_GENERIC_EXAMPLE string
---- @field VISIT_GENERIC_REQUEST_BODY string
---- @field VISIT_ENCODING_START string
---- @field VISIT_ENCODING_END string
---- @field VISIT_ENCODINGS_START string
---- @field VISIT_ENCODINGS_END string
---- @field VISIT_SCHEMAS_START string
---- @field VISIT_SCHEMAS_END string
---- @field VISIT_SCHEMA_START string
---- @field VISIT_SCHEMA_END string
---- @field VISIT_DEFAULT string
---- @field VISIT_DISCRIMINATOR string
---- @field VISIT_SPEC_START string
---- @field VISIT_SPEC_END string
---- @field VISIT_EXTERNAL_DOCS string
---- @field VISIT_SPEC_TAG string
---- @field VISIT_SPEC_TAGS_END string
---- @field VISIT_SPEC_TAGS_START string
---- @field VISIT_SERVERS_START string
---- @field VISIT_SERVERS_END string
---- @field VISIT_SERVER_START string
---- @field VISIT_SERVER_END string
---- @field VISIT_SERVER_VARIABLE string
---- @field VISIT_SPEC_INFO_START string
---- @field VISIT_SPEC_INFO_END string
---- @field VISIT_SPEC_INFO_CONTACT string
---- @field VISIT_SPEC_INFO_LICENSE string
---- @field VISIT_SECURITY_REQUIREMENTS_START string
---- @field VISIT_SECURITY_REQUIREMENT string
---- @field VISIT_SECURITY_REQUIREMENTS_END string
---- @field VISIT_OBJECT_START string
---- @field VISIT_OBJECT_PROPERTY_START string
---- @field VISIT_OBJECT_PROPERTY_END string
---- @field VISIT_OBJECT_PROPERTIES_START string
---- @field VISIT_OBJECT_PROPERTIES_END string
---- @field VISIT_OBJECT_END string
---- @field VISIT_ANY_SCHEMA string
---- @field VISIT_PROPERTY_NOT_START string
---- @field VISIT_PROPERTY_NOT_END string
---- @field VISIT_ADDITIONAL_PROPERTIES_ANY string
---- @field VISIT_ADDITIONAL_PROPERTIES_START string
---- @field VISIT_ADDITIONAL_PROPERTIES_END string
---- @field VISIT_STRING_PROPERTY string
---- @field VISIT_NUMBER_PROPERTY string
---- @field VISIT_INTEGER_PROPERTY string
---- @field VISIT_ARRAY_PROPERTY_START string
---- @field VISIT_ARRAY_PROPERTY_END string
---- @field VISIT_BOOLEAN_PROPERTY string
---- @field VISIT_ONE_OF_START string
---- @field VISIT_ONE_OF_END string
---- @field VISIT_ALL_OF_START string
---- @field VISIT_ALL_OF_END string
---- @field VISIT_ANY_OF_START string
---- @field VISIT_ANY_OF_END string
-Script = {}
-
-Script.PRELUDE = "prelude"
-Script.VISIT_OPERATION_RESPONSES_START = "visitOperationResponsesStart"
-Script.VISIT_OPERATION_RESPONSES_END = "visitOperationResponsesEnd"
-Script.VISIT_RESPONSES_START = "visitResponsesStart"
-Script.VISIT_RESPONSES_END = "visitResponsesEnd"
-Script.VISIT_PARAMETER_DATA_START = "visitParameterDataStart"
-Script.VISIT_PARAMETER_DATA_END = "visitParameterDataEnd"
-Script.VISIT_SECURITY_SCHEME_API_KEY = "visitSecuritySchemeApiKey"
-Script.VISIT_SECURITY_SCHEME_OPEN_ID_CONNECT = "visitSecuritySchemeOpenIdConnect"
-Script.VISIT_SECURITY_SCHEME_O_AUTH2_FLOW_IMPLICIT = "visitSecuritySchemeOAuth2FlowImplicit"
-Script.VISIT_SECURITY_SCHEME_O_AUTH2_FLOW_PASSWORD = "visitSecuritySchemeOAuth2FlowPassword"
-Script.VISIT_SECURITY_SCHEME_O_AUTH2_FLOW_CLIENT_CREDENTIALS = "visitSecuritySchemeOAuth2FlowClientCredentials"
-Script.VISIT_SECURITY_SCHEME_O_AUTH2_FLOW_AUTHORIZATION_CODE = "visitSecuritySchemeOAuth2FlowAuthorizationCode"
-Script.VISIT_SECURITY_SCHEME_HTTP = "visitSecuritySchemeHttp"
-Script.VISIT_SECURITY_SCHEME_O_AUTH2_START = "visitSecuritySchemeOAuth2Start"
-Script.VISIT_SECURITY_SCHEME_O_AUTH2_END = "visitSecuritySchemeOAuth2End"
-Script.VISIT_SECURITY_SCHEME_O_AUTH2_FLOWS_START = "visitSecuritySchemeOAuth2FlowsStart"
-Script.VISIT_SECURITY_SCHEME_O_AUTH2_FLOWS_END = "visitSecuritySchemeOAuth2FlowsEnd"
-Script.VISIT_QUERY_PARAMETER_START = "visitQueryParameterStart"
-Script.VISIT_QUERY_PARAMETER_END = "visitQueryParameterEnd"
-Script.VISIT_HEADER_PARAMETER_START = "visitHeaderParameterStart"
-Script.VISIT_HEADER_PARAMETER_END = "visitHeaderParameterEnd"
-Script.VISIT_PATH_PARAMETER_START = "visitPathParameterStart"
-Script.VISIT_PATH_PARAMETER_END = "visitPathParameterEnd"
-Script.VISIT_PATH_ITEM_START = "visitPathItemStart"
-Script.VISIT_PATH_ITEM_END = "visitPathItemEnd"
-Script.VISIT_TRACE_OPERATION_START = "visitTraceOperationStart"
-Script.VISIT_TRACE_OPERATION_END = "visitTraceOperationEnd"
-Script.VISIT_PUT_OPERATION_START = "visitPutOperationStart"
-Script.VISIT_PUT_OPERATION_END = "visitPutOperationEnd"
-Script.VISIT_POST_OPERATION_START = "visitPostOperationStart"
-Script.VISIT_POST_OPERATION_END = "visitPostOperationEnd"
-Script.VISIT_PATCH_OPERATION_START = "visitPatchOperationStart"
-Script.VISIT_PATCH_OPERATION_END = "visitPatchOperationEnd"
-Script.VISIT_OPTIONS_OPERATION_START = "visitOptionsOperationStart"
-Script.VISIT_OPTIONS_OPERATION_END = "visitOptionsOperationEnd"
-Script.VISIT_HEAD_OPERATION_START = "visitHeadOperationStart"
-Script.VISIT_HEAD_OPERATION_END = "visitHeadOperationEnd"
-Script.VISIT_GET_OPERATION_START = "visitGetOperationStart"
-Script.VISIT_GET_OPERATION_END = "visitGetOperationEnd"
-Script.VISIT_DELETE_OPERATION_START = "visitDeleteOperationStart"
-Script.VISIT_DELETE_OPERATION_END = "visitDeleteOperationEnd"
-Script.VISIT_COOKIE_PARAMETER_START = "visitCookieParameterStart"
-Script.VISIT_COOKIE_PARAMETER_END = "visitCookieParameterEnd"
-Script.VISIT_PARAMETERS_START = "visitParametersStart"
-Script.VISIT_PARAMETERS_END = "visitParametersEnd"
-Script.VISIT_PATHS_START = "visitPathsStart"
-Script.VISIT_PATHS_END = "visitPathsEnd"
-Script.VISIT_RESPONSE_START = "visitResponseStart"
-Script.VISIT_RESPONSE_END = "visitResponseEnd"
-Script.VISIT_MEDIA_TYPES_START = "visitMediaTypesStart"
-Script.VISIT_MEDIA_TYPES_END = "visitMediaTypesEnd"
-Script.VISIT_LINKS_START = "visitLinksStart"
-Script.VISIT_LINKS_END = "visitLinksEnd"
-Script.VISIT_ASYNC_CALLBACKS_START = "visitAsyncCallbacksStart"
-Script.VISIT_ASYNC_CALLBACKS_END = "visitAsyncCallbacksEnd"
-Script.VISIT_ASYNC_CALLBACK_START = "visitAsyncCallbackStart"
-Script.VISIT_ASYNC_CALLBACK_END = "visitAsyncCallbackEnd"
-Script.VISIT_HEADERS_START = "visitHeadersStart"
-Script.VISIT_HEADERS_END = "visitHeadersEnd"
-Script.VISIT_SECURITY_SCHEMES_START = "visitSecuritySchemesStart"
-Script.VISIT_SECURITY_SCHEMES_END = "visitSecuritySchemesEnd"
-Script.VISIT_HEADER_START = "visitHeaderStart"
-Script.VISIT_HEADER_END = "visitHeaderEnd"
-Script.VISIT_REQUEST_BODY_START = "visitRequestBodyStart"
-Script.VISIT_REQUEST_BODY_END = "visitRequestBodyEnd"
-Script.VISIT_EXAMPLE_START = "visitExampleStart"
-Script.VISIT_EXAMPLE_END = "visitExampleEnd"
-Script.VISIT_EXAMPLES_START = "visitExamplesStart"
-Script.VISIT_EXAMPLES_END = "visitExamplesEnd"
-Script.VISIT_REQUEST_BODIES_START = "visitRequestBodiesStart"
-Script.VISIT_REQUEST_BODIES_END = "visitRequestBodiesEnd"
-Script.VISIT_GENERIC_PARAMETERS_START = "visitGenericParametersStart"
-Script.VISIT_GENERIC_PARAMETER = "visitGenericParameter"
-Script.VISIT_GENERIC_PARAMETERS_END = "visitGenericParametersEnd"
-Script.VISIT_PARAMETER_SCHEMA_OR_CONTENT_START = "visitParameterSchemaOrContentStart"
-Script.VISIT_PARAMETER_SCHEMA_OR_CONTENT_END = "visitParameterSchemaOrContentEnd"
-Script.VISIT_MEDIA_TYPE_START = "visitMediaTypeStart"
-Script.VISIT_MEDIA_TYPE_END = "visitMediaTypeEnd"
-Script.VISIT_LINK_START = "visitLinkStart"
-Script.VISIT_LINK_END = "visitLinkEnd"
-Script.VISIT_COMPONENTS_START = "visitComponentsStart"
-Script.VISIT_COMPONENTS_END = "visitComponentsEnd"
-Script.VISIT_GENERIC_EXAMPLE = "visitGenericExample"
-Script.VISIT_GENERIC_REQUEST_BODY = "visitGenericRequestBody"
-Script.VISIT_ENCODING_START = "visitEncodingStart"
-Script.VISIT_ENCODING_END = "visitEncodingEnd"
-Script.VISIT_ENCODINGS_START = "visitEncodingsStart"
-Script.VISIT_ENCODINGS_END = "visitEncodingsEnd"
-Script.VISIT_SCHEMAS_START = "visitSchemasStart"
-Script.VISIT_SCHEMAS_END = "visitSchemasEnd"
-Script.VISIT_SCHEMA_START = "visitSchemaStart"
-Script.VISIT_SCHEMA_END = "visitSchemaEnd"
-Script.VISIT_DEFAULT = "visitDefault"
-Script.VISIT_DISCRIMINATOR = "visitDiscriminator"
-Script.VISIT_SPEC_START = "visitSpecStart"
-Script.VISIT_SPEC_END = "visitSpecEnd"
-Script.VISIT_EXTERNAL_DOCS = "visitExternalDocs"
-Script.VISIT_SPEC_TAG = "visitSpecTag"
-Script.VISIT_SPEC_TAGS_END = "visitSpecTagsEnd"
-Script.VISIT_SPEC_TAGS_START = "visitSpecTagsStart"
-Script.VISIT_SERVERS_START = "visitServersStart"
-Script.VISIT_SERVERS_END = "visitServersEnd"
-Script.VISIT_SERVER_START = "visitServerStart"
-Script.VISIT_SERVER_END = "visitServerEnd"
-Script.VISIT_SERVER_VARIABLE = "visitServerVariable"
-Script.VISIT_SPEC_INFO_START = "visitSpecInfoStart"
-Script.VISIT_SPEC_INFO_END = "visitSpecInfoEnd"
-Script.VISIT_SPEC_INFO_CONTACT = "visitSpecInfoContact"
-Script.VISIT_SPEC_INFO_LICENSE = "visitSpecInfoLicense"
-Script.VISIT_SECURITY_REQUIREMENTS_START = "visitSecurityRequirementsStart"
-Script.VISIT_SECURITY_REQUIREMENT = "visitSecurityRequirement"
-Script.VISIT_SECURITY_REQUIREMENTS_END = "visitSecurityRequirementsEnd"
-Script.VISIT_OBJECT_START = "visitObjectStart"
-Script.VISIT_OBJECT_PROPERTY_START = "visitObjectPropertyStart"
-Script.VISIT_OBJECT_PROPERTY_END = "visitObjectPropertyEnd"
-Script.VISIT_OBJECT_PROPERTIES_START = "visitObjectPropertiesStart"
-Script.VISIT_OBJECT_PROPERTIES_END = "visitObjectPropertiesEnd"
-Script.VISIT_OBJECT_END = "visitObjectEnd"
-Script.VISIT_ANY_SCHEMA = "visitAnySchema"
-Script.VISIT_PROPERTY_NOT_START = "visitPropertyNotStart"
-Script.VISIT_PROPERTY_NOT_END = "visitPropertyNotEnd"
-Script.VISIT_ADDITIONAL_PROPERTIES_ANY = "visitAdditionalPropertiesAny"
-Script.VISIT_ADDITIONAL_PROPERTIES_START = "visitAdditionalPropertiesStart"
-Script.VISIT_ADDITIONAL_PROPERTIES_END = "visitAdditionalPropertiesEnd"
-Script.VISIT_STRING_PROPERTY = "visitStringProperty"
-Script.VISIT_NUMBER_PROPERTY = "visitNumberProperty"
-Script.VISIT_INTEGER_PROPERTY = "visitIntegerProperty"
-Script.VISIT_ARRAY_PROPERTY_START = "visitArrayPropertyStart"
-Script.VISIT_ARRAY_PROPERTY_END = "visitArrayPropertyEnd"
-Script.VISIT_BOOLEAN_PROPERTY = "visitBooleanProperty"
-Script.VISIT_ONE_OF_START = "visitOneOfStart"
-Script.VISIT_ONE_OF_END = "visitOneOfEnd"
-Script.VISIT_ALL_OF_START = "visitAllOfStart"
-Script.VISIT_ALL_OF_END = "visitAllOfEnd"
-Script.VISIT_ANY_OF_START = "visitAnyOfStart"
-Script.VISIT_ANY_OF_END = "visitAnyOfEnd"
 
 --- Output text and target file name to write
 --- @class WriteOperation
