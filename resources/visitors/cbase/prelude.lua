@@ -901,8 +901,7 @@ local function callWithErrorHandler(callable, args)
         printCalls()
         return err
     end
-
-    local status, result = xpcall(callable, errorHandler, args)
+    local status, result = xpcall(callable, errorHandler, table.unpack(args))
     if status then
         return result
     else
@@ -939,13 +938,13 @@ function functionCallAndLog(funcName, mainFunc, beforeDecorator, afterDecorator)
         end
 
         if beforeDecorator ~= nil then
-            callWithErrorHandler(beforeDecorator, ...)
+            callWithErrorHandler(beforeDecorator, args)
         end
 
-        local result = callWithErrorHandler(mainFunc, ...)
+        local result = callWithErrorHandler(mainFunc, args)
 
         if afterDecorator ~= nil then
-            callWithErrorHandler(afterDecorator, ...)
+            callWithErrorHandler(afterDecorator, args)
         end
 
         if type(result) == "table" then
