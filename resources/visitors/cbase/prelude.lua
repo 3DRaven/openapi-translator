@@ -890,7 +890,7 @@ function isTableEmpty(tbl)
 end
 
 function printCalls()
-    print("Calls stack:")
+    print("The call stack, markdown links (#link-x) work and are clickable:")
     printTable(calls)
 end
 
