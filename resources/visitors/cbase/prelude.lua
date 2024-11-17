@@ -803,7 +803,7 @@ end
 --- @param t table # table for conversion
 --- @param indent number|nil # level of incapsulation
 function printTable(t, indent)
-    indent = indent or 10
+    indent = indent or 4
 
     if t == NULL then
         print(string.rep(" ", indent) .. "Argument is NULL!")
@@ -821,7 +821,7 @@ function printTable(t, indent)
     end
 
     if isTableEmpty(t) then
-        local formatting = string.rep(" ", indent) .. "empty"
+        local formatting = string.rep(" ", indent+4) .. "empty"
         print(formatting)
     else
         for key, value in pairs(t) do
@@ -829,7 +829,7 @@ function printTable(t, indent)
 
             if type(value) == "table" then
                 print(formatting)
-                printTable(value, indent + 4)
+                printTable(value, indent + 2)
             else
                 print(formatting .. tostring(value))
             end
@@ -842,7 +842,7 @@ end
 --- @param indent number|nil # level of incapsulation
 --- @return string # string interpretation of table
 function tableToString(tbl, indent)
-    indent = indent or 10
+    indent = indent or 0
 
     if tbl == NULL then
         return string.rep(" ", indent) .. "Argument is NULL!"
@@ -867,7 +867,7 @@ function tableToString(tbl, indent)
             local formatting = spacing .. tostring(key) .. ": "
             if type(value) == "table" then
                 table.insert(result, formatting)
-                table.insert(result, tableToString(value, indent + 4))
+                table.insert(result, tableToString(value, indent + 2))
             else
                 table.insert(result, formatting .. tostring(value))
             end

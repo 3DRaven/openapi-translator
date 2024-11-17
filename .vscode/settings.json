@@ -105,6 +105,5 @@
         "reqwest",
         "springframework"
     ],
-    "CodeGPT.apiKey": "OpenAI",
-    // "lldb.launch.stdio": [null, "openapi-translator.log", null]
+    "lldb.launch.stdio": [null, "openapi-translator.log", null]
 }
