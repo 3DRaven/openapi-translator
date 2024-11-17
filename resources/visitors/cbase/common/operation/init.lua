@@ -1,0 +1,20 @@
+local M = {}
+M.visitPutOperationEnd = require("cbase.common.operation.visitPutOperationEnd")
+M.visitTraceOperationEnd = require("cbase.common.operation.visitTraceOperationEnd")
+M.visitHeadOperationStart = require("cbase.common.operation.visitHeadOperationStart")
+M.visitTraceOperationStart = require("cbase.common.operation.visitTraceOperationStart")
+M.visitDeleteOperationEnd = require("cbase.common.operation.visitDeleteOperationEnd")
+M.visitPatchOperationEnd = require("cbase.common.operation.visitPatchOperationEnd")
+M.visitPostOperationStart = require("cbase.common.operation.visitPostOperationStart")
+M.visitDeleteOperationStart = require("cbase.common.operation.visitDeleteOperationStart")
+M.visitOptionsOperationStart = require("cbase.common.operation.visitOptionsOperationStart")
+M.visitHeadOperationEnd = require("cbase.common.operation.visitHeadOperationEnd")
+M.visitGetOperationStart = require("cbase.common.operation.visitGetOperationStart")
+M.visitPostOperationEnd = require("cbase.common.operation.visitPostOperationEnd")
+M.visitGetOperationEnd = require("cbase.common.operation.visitGetOperationEnd")
+M.visitOptionsOperationEnd = require("cbase.common.operation.visitOptionsOperationEnd")
+M.visitPutOperationStart = require("cbase.common.operation.visitPutOperationStart")
+M.visitPatchOperationStart = require("cbase.common.operation.visitPatchOperationStart")
+
+M.responses = require("cbase.common.operation.responses")
+return M

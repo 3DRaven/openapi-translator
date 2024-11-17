@@ -24,7 +24,6 @@ pub enum WriteMode {
 #[serde(rename_all = "camelCase")]
 pub enum Script {
     Target,
-    Prelude,
     VisitOperationResponsesStart,
     VisitOperationResponsesEnd,
     VisitResponsesStart,
@@ -282,7 +281,7 @@ impl Script {
         }
         .with_context(|| {
             format!(
-                "Failed to call lua script [{}] with args [{:?}]",
+                "Failed to call lua script {} with args {:?}",
                 self, args_value
             )
         })?;
@@ -314,257 +313,256 @@ impl Display for Script {
 impl From<&Script> for &'static str {
     fn from(script: &Script) -> &'static str {
         match script {
-            Script::Target => "target",
-            Script::Prelude => "prelude",
-            Script::VisitResponsesStart => "components/responses/visitResponsesStart",
-            Script::VisitResponsesEnd => "components/responses/visitResponsesEnd",
-            Script::VisitResponseStart => "components/responses/visitResponseStart",
-            Script::VisitResponseEnd => "components/responses/visitResponseEnd",
-            Script::VisitHeadersStart => "common/headers/visitHeadersStart",
-            Script::VisitHeadersEnd => "common/headers/visitHeadersEnd",
-            Script::VisitHeaderStart => "common/headers/header/visitHeaderStart",
-            Script::VisitHeaderEnd => "common/headers/header/visitHeaderEnd",
-            Script::VisitExamplesStart => "common/examples/visitExamplesStart",
-            Script::VisitExampleStart => "common/examples/visitExampleStart",
-            Script::VisitExampleEnd => "common/examples/visitExampleEnd",
-            Script::VisitExamplesEnd => "common/examples/visitExamplesEnd",
+            Script::Target => r#"return require("target")"#,
+            Script::VisitResponsesStart => "return VISITORS.components.responses.visitResponsesStart",
+            Script::VisitResponsesEnd => "return VISITORS.components.responses.visitResponsesEnd",
+            Script::VisitResponseStart => "return VISITORS.components.responses.visitResponseStart",
+            Script::VisitResponseEnd => "return VISITORS.components.responses.visitResponseEnd",
+            Script::VisitHeadersStart => "return VISITORS.common.headers.visitHeadersStart",
+            Script::VisitHeadersEnd => "return VISITORS.common.headers.visitHeadersEnd",
+            Script::VisitHeaderStart => "return VISITORS.common.headers.header.visitHeaderStart",
+            Script::VisitHeaderEnd => "return VISITORS.common.headers.header.visitHeaderEnd",
+            Script::VisitExamplesStart => "return VISITORS.common.examples.visitExamplesStart",
+            Script::VisitExampleStart => "return VISITORS.common.examples.visitExampleStart",
+            Script::VisitExampleEnd => "return VISITORS.common.examples.visitExampleEnd",
+            Script::VisitExamplesEnd => "return VISITORS.common.examples.visitExamplesEnd",
             Script::VisitParameterSchemaOrContentStart => {
-                "common/parameter_schema_or_content/visitParameterSchemaOrContentStart"
+                "return VISITORS.common.parameter_schema_or_content.visitParameterSchemaOrContentStart"
             }
             Script::VisitParameterSchemaOrContentEnd => {
-                "common/parameter_schema_or_content/visitParameterSchemaOrContentEnd"
+                "return VISITORS.common.parameter_schema_or_content.visitParameterSchemaOrContentEnd"
             }
-            Script::VisitMediaTypeStart => "common/media_types/media_type/visitMediaTypeStart",
-            Script::VisitMediaTypeEnd => "common/media_types/media_type/visitMediaTypeEnd",
+            Script::VisitMediaTypeStart => "return VISITORS.common.media_types.media_type.visitMediaTypeStart",
+            Script::VisitMediaTypeEnd => "return VISITORS.common.media_types.media_type.visitMediaTypeEnd",
             Script::VisitEncodingStart => {
-                "common/media_types/media_type/encoding/visitEncodingStart"
+                "return VISITORS.common.media_types.media_type.encoding.visitEncodingStart"
             }
-            Script::VisitEncodingEnd => "common/media_types/media_type/encoding/visitEncodingEnd",
-            Script::VisitSchemasStart => "components/schemas/visitSchemasStart",
-            Script::VisitSchemasEnd => "components/schemas/visitSchemasEnd",
-            Script::VisitSchemaStart => "components/schemas/visitSchemaStart",
-            Script::VisitSchemaEnd => "components/schemas/visitSchemaEnd",
-            Script::VisitDefault => "components/schemas/visitDefault",
-            Script::VisitDiscriminator => "components/schemas/visitDiscriminator",
-            Script::VisitSpecStart => "visitSpecStart",
-            Script::VisitSpecEnd => "visitSpecEnd",
-            Script::VisitExternalDocs => "common/external_docs/visitExternalDocs",
-            Script::VisitSpecTag => "tags/visitSpecTag",
-            Script::VisitSpecTagsStart => "tags/visitSpecTagsStart",
-            Script::VisitSpecTagsEnd => "tags/visitSpecTagsEnd",
-            Script::VisitServersStart => "common/servers/visitServersStart",
-            Script::VisitServersEnd => "common/servers/visitServersEnd",
-            Script::VisitServerStart => "common/servers/server/visitServerStart",
-            Script::VisitServerEnd => "common/servers/server/visitServerEnd",
-            Script::VisitServerVariable => "common/servers/server/visitServerVariable",
-            Script::VisitSpecInfoStart => "info/visitSpecInfoStart",
-            Script::VisitSpecInfoEnd => "info/visitSpecInfoEnd",
-            Script::VisitSpecInfoContact => "info/visitSpecInfoContact",
-            Script::VisitSpecInfoLicense => "info/visitSpecInfoLicense",
+            Script::VisitEncodingEnd => "return VISITORS.common.media_types.media_type.encoding.visitEncodingEnd",
+            Script::VisitSchemasStart => "return VISITORS.components.schemas.visitSchemasStart",
+            Script::VisitSchemasEnd => "return VISITORS.components.schemas.visitSchemasEnd",
+            Script::VisitSchemaStart => "return VISITORS.components.schemas.visitSchemaStart",
+            Script::VisitSchemaEnd => "return VISITORS.components.schemas.visitSchemaEnd",
+            Script::VisitDefault => "return VISITORS.components.schemas.visitDefault",
+            Script::VisitDiscriminator => "return VISITORS.components.schemas.visitDiscriminator",
+            Script::VisitSpecStart => "return VISITORS.visitSpecStart",
+            Script::VisitSpecEnd => "return VISITORS.visitSpecEnd",
+            Script::VisitExternalDocs => "return VISITORS.common.external_docs.visitExternalDocs",
+            Script::VisitSpecTag => "return VISITORS.tags.visitSpecTag",
+            Script::VisitSpecTagsStart => "return VISITORS.tags.visitSpecTagsStart",
+            Script::VisitSpecTagsEnd => "return VISITORS.tags.visitSpecTagsEnd",
+            Script::VisitServersStart => "return VISITORS.common.servers.visitServersStart",
+            Script::VisitServersEnd => "return VISITORS.common.servers.visitServersEnd",
+            Script::VisitServerStart => "return VISITORS.common.servers.server.visitServerStart",
+            Script::VisitServerEnd => "return VISITORS.common.servers.server.visitServerEnd",
+            Script::VisitServerVariable => "return VISITORS.common.servers.server.visitServerVariable",
+            Script::VisitSpecInfoStart => "return VISITORS.info.visitSpecInfoStart",
+            Script::VisitSpecInfoEnd => "return VISITORS.info.visitSpecInfoEnd",
+            Script::VisitSpecInfoContact => "return VISITORS.info.visitSpecInfoContact",
+            Script::VisitSpecInfoLicense => "return VISITORS.info.visitSpecInfoLicense",
             Script::VisitSecurityRequirementsStart => {
-                "common/security_requirements/visitSecurityRequirementsStart"
+                "return VISITORS.common.security_requirements.visitSecurityRequirementsStart"
             }
             Script::VisitSecurityRequirementsEnd => {
-                "common/security_requirements/visitSecurityRequirementsEnd"
+                "return VISITORS.common.security_requirements.visitSecurityRequirementsEnd"
             }
             Script::VisitSecurityRequirement => {
-                "common/security_requirements/visitSecurityRequirement"
+                "return VISITORS.common.security_requirements.visitSecurityRequirement"
             }
-            Script::VisitObjectStart => "components/schemas/kind/type/object/visitObjectStart",
-            Script::VisitObjectEnd => "components/schemas/kind/type/object/visitObjectEnd",
-            Script::VisitAnySchemaStart => "components/schemas/kind/any/visitAnySchemaStart",
-            Script::VisitAnySchemaEnd => "components/schemas/kind/any/visitAnySchemaEnd",
-            Script::VisitPropertyNotStart => "components/schemas/kind/not/visitPropertyNotStart",
-            Script::VisitPropertyNotEnd => "components/schemas/kind/not/visitPropertyNotEnd",
+            Script::VisitObjectStart => "return VISITORS.components.schemas.kind.type.object.visitObjectStart",
+            Script::VisitObjectEnd => "return VISITORS.components.schemas.kind.type.object.visitObjectEnd",
+            Script::VisitAnySchemaStart => "return VISITORS.components.schemas.kind.any.visitAnySchemaStart",
+            Script::VisitAnySchemaEnd => "return VISITORS.components.schemas.kind.any.visitAnySchemaEnd",
+            Script::VisitPropertyNotStart => "return VISITORS.components.schemas.kind.not.visitPropertyNotStart",
+            Script::VisitPropertyNotEnd => "return VISITORS.components.schemas.kind.not.visitPropertyNotEnd",
             Script::VisitAdditionalPropertiesAny => {
-                "components/schemas/kind/type/object/visitAdditionalPropertiesAny"
+                "return VISITORS.components.schemas.kind.type.object.visitAdditionalPropertiesAny"
             }
             Script::VisitStringProperty => {
-                "components/schemas/kind/type/string/visitStringProperty"
+                "return VISITORS.components.schemas.kind.type.string.visitStringProperty"
             }
             Script::VisitNumberProperty => {
-                "components/schemas/kind/type/number/visitNumberProperty"
+                "return VISITORS.components.schemas.kind.type.number.visitNumberProperty"
             }
             Script::VisitIntegerProperty => {
-                "components/schemas/kind/type/integer/visitIntegerProperty"
+                "return VISITORS.components.schemas.kind.type.integer.visitIntegerProperty"
             }
             Script::VisitArrayPropertyStart => {
-                "components/schemas/kind/type/object/visitArrayPropertyStart"
+                "return VISITORS.components.schemas.kind.type.object.visitArrayPropertyStart"
             }
             Script::VisitArrayPropertyEnd => {
-                "components/schemas/kind/type/object/visitArrayPropertyEnd"
+                "return VISITORS.components.schemas.kind.type.object.visitArrayPropertyEnd"
             }
             Script::VisitBooleanProperty => {
-                "components/schemas/kind/type/boolean/visitBooleanProperty"
+                "return VISITORS.components.schemas.kind.type.boolean.visitBooleanProperty"
             }
-            Script::VisitOneOfStart => "components/schemas/kind/oneOf/visitOneOfStart",
-            Script::VisitOneOfEnd => "components/schemas/kind/oneOf/visitOneOfEnd",
-            Script::VisitAllOfStart => "components/schemas/kind/allOf/visitAllOfStart",
-            Script::VisitAllOfEnd => "components/schemas/kind/allOf/visitAllOfEnd",
-            Script::VisitAnyOfStart => "components/schemas/kind/anyOf/visitAnyOfStart",
-            Script::VisitAnyOfEnd => "components/schemas/kind/anyOf/visitAnyOfEnd",
+            Script::VisitOneOfStart => "return VISITORS.components.schemas.kind.oneOf.visitOneOfStart",
+            Script::VisitOneOfEnd => "return VISITORS.components.schemas.kind.oneOf.visitOneOfEnd",
+            Script::VisitAllOfStart => "return VISITORS.components.schemas.kind.allOf.visitAllOfStart",
+            Script::VisitAllOfEnd => "return VISITORS.components.schemas.kind.allOf.visitAllOfEnd",
+            Script::VisitAnyOfStart => "return VISITORS.components.schemas.kind.anyOf.visitAnyOfStart",
+            Script::VisitAnyOfEnd => "return VISITORS.components.schemas.kind.anyOf.visitAnyOfEnd",
             Script::VisitAdditionalPropertiesStart => {
-                "components/schemas/kind/type/object/visitAdditionalPropertiesStart"
+                "return VISITORS.components.schemas.kind.type.object.visitAdditionalPropertiesStart"
             }
             Script::VisitAdditionalPropertiesEnd => {
-                "components/schemas/kind/type/object/visitAdditionalPropertiesEnd"
+                "return VISITORS.components.schemas.kind.type.object.visitAdditionalPropertiesEnd"
             }
             Script::VisitObjectPropertyStart => {
-                "components/schemas/kind/type/object/visitObjectPropertyStart"
+                "return VISITORS.components.schemas.kind.type.object.visitObjectPropertyStart"
             }
             Script::VisitObjectPropertyEnd => {
-                "components/schemas/kind/type/object/visitObjectPropertyEnd"
+                "return VISITORS.components.schemas.kind.type.object.visitObjectPropertyEnd"
             }
-            Script::VisitGenericExample => "common/generic_example/visitGenericExample",
+            Script::VisitGenericExample => "return VISITORS.common.generic_example.visitGenericExample",
             Script::VisitEncodingsStart => {
-                "common/media_types/media_type/visitMediaTypeEncodingsStart"
+                "return VISITORS.common.media_types.media_type.visitMediaTypeEncodingsStart"
             }
-            Script::VisitEncodingsEnd => "common/media_types/media_type/visitMediaTypeEncodingsEnd",
+            Script::VisitEncodingsEnd => "return VISITORS.common.media_types.media_type.visitMediaTypeEncodingsEnd",
             Script::VisitObjectPropertiesStart => {
-                "components/schemas/kind/type/object/visitObjectPropertiesStart"
+                "return VISITORS.components.schemas.kind.type.object.visitObjectPropertiesStart"
             }
             Script::VisitObjectPropertiesEnd => {
-                "components/schemas/kind/type/object/visitObjectPropertiesEnd"
+                "return VISITORS.components.schemas.kind.type.object.visitObjectPropertiesEnd"
             }
-            Script::VisitMediaTypesStart => "common/media_types/visitMediaTypesStart",
-            Script::VisitMediaTypesEnd => "common/media_types/visitMediaTypesEnd",
-            Script::VisitLinkStart => "common/links/link/visitLinkStart",
-            Script::VisitLinkEnd => "common/links/link/visitLinkEnd",
+            Script::VisitMediaTypesStart => "return VISITORS.common.media_types.visitMediaTypesStart",
+            Script::VisitMediaTypesEnd => "return VISITORS.common.media_types.visitMediaTypesEnd",
+            Script::VisitLinkStart => "return VISITORS.common.links.link.visitLinkStart",
+            Script::VisitLinkEnd => "return VISITORS.common.links.link.visitLinkEnd",
             Script::VisitGenericRequestBody => {
-                "common/generic_request_body/visitGenericRequestBody"
+                "return VISITORS.common.generic_request_body.visitGenericRequestBody"
             }
             Script::VisitGenericParametersStart => {
-                "common/generic_parameters/visitGenericParametersStart"
+                "return VISITORS.common.generic_parameters.visitGenericParametersStart"
             }
             Script::VisitGenericParametersEnd => {
-                "common/generic_parameters/visitGenericParametersEnd"
+                "return VISITORS.common.generic_parameters.visitGenericParametersEnd"
             }
-            Script::VisitGenericParameter => "common/generic_parameters/visitGenericParameter",
-            Script::VisitLinksStart => "common/links/visitLinksStart",
-            Script::VisitLinksEnd => "common/links/visitLinksEnd",
-            Script::VisitParametersStart => "common/parameters/visitParametersStart",
-            Script::VisitParametersEnd => "common/parameters/visitParametersEnd",
+            Script::VisitGenericParameter => "return VISITORS.common.generic_parameters.visitGenericParameter",
+            Script::VisitLinksStart => "return VISITORS.common.links.visitLinksStart",
+            Script::VisitLinksEnd => "return VISITORS.common.links.visitLinksEnd",
+            Script::VisitParametersStart => "return VISITORS.common.parameters.visitParametersStart",
+            Script::VisitParametersEnd => "return VISITORS.common.parameters.visitParametersEnd",
             Script::VisitQueryParameterStart => {
-                "common/parameters/query_parameter/visitQueryParameterStart"
+                "return VISITORS.common.parameters.query_parameter.visitQueryParameterStart"
             }
             Script::VisitQueryParameterEnd => {
-                "common/parameters/query_parameter/visitQueryParameterEnd"
+                "return VISITORS.common.parameters.query_parameter.visitQueryParameterEnd"
             }
-            Script::VisitParameterDataStart => "common/parameter_data/visitParameterDataStart",
-            Script::VisitParameterDataEnd => "common/parameter_data/visitParameterDataEnd",
+            Script::VisitParameterDataStart => "return VISITORS.common.parameter_data.visitParameterDataStart",
+            Script::VisitParameterDataEnd => "return VISITORS.common.parameter_data.visitParameterDataEnd",
             Script::VisitHeaderParameterStart => {
-                "common/parameters/header_parameter/visitHeaderParameterStart"
+                "return VISITORS.common.parameters.header_parameter.visitHeaderParameterStart"
             }
             Script::VisitHeaderParameterEnd => {
-                "common/parameters/header_parameter/visitHeaderParameterEnd"
+                "return VISITORS.common.parameters.header_parameter.visitHeaderParameterEnd"
             }
             Script::VisitPathParameterStart => {
-                "common/parameters/path_parameter/visitPathParameterStart"
+                "return VISITORS.common.parameters.path_parameter.visitPathParameterStart"
             }
             Script::VisitPathParameterEnd => {
-                "common/parameters/path_parameter/visitPathParameterEnd"
+                "return VISITORS.common.parameters.path_parameter.visitPathParameterEnd"
             }
             Script::VisitCookieParameterStart => {
-                "common/parameters/cookie_parameter/visitCookieParameterStart"
+                "return VISITORS.common.parameters.cookie_parameter.visitCookieParameterStart"
             }
             Script::VisitCookieParameterEnd => {
-                "common/parameters/cookie_parameter/visitCookieParameterEnd"
+                "return VISITORS.common.parameters.cookie_parameter.visitCookieParameterEnd"
             }
-            Script::VisitRequestBodiesStart => "components/request_bodies/visitRequestBodiesStart",
-            Script::VisitRequestBodiesEnd => "components/request_bodies/visitRequestBodiesEnd",
-            Script::VisitRequestBodyStart => "components/request_bodies/visitRequestBodyStart",
-            Script::VisitRequestBodyEnd => "components/request_bodies/visitRequestBodyEnd",
+            Script::VisitRequestBodiesStart => "return VISITORS.components.request_bodies.visitRequestBodiesStart",
+            Script::VisitRequestBodiesEnd => "return VISITORS.components.request_bodies.visitRequestBodiesEnd",
+            Script::VisitRequestBodyStart => "return VISITORS.components.request_bodies.visitRequestBodyStart",
+            Script::VisitRequestBodyEnd => "return VISITORS.components.request_bodies.visitRequestBodyEnd",
             Script::VisitSecuritySchemesStart => {
-                "components/security_schemes/visitSecuritySchemesStart"
+                "return VISITORS.components.security_schemes.visitSecuritySchemesStart"
             }
             Script::VisitSecuritySchemesEnd => {
-                "components/security_schemes/visitSecuritySchemesEnd"
+                "return VISITORS.components.security_schemes.visitSecuritySchemesEnd"
             }
             Script::VisitSecuritySchemeApiKey => {
-                "components/security_schemes/visitSecuritySchemeApiKey"
+                "return VISITORS.components.security_schemes.visitSecuritySchemeApiKey"
             }
             Script::VisitSecuritySchemeHttp => {
-                "components/security_schemes/visitSecuritySchemeHttp"
+                "return VISITORS.components.security_schemes.visitSecuritySchemeHttp"
             }
             Script::VisitSecuritySchemeOAuth2Start => {
-                "components/security_schemes/visitSecuritySchemeOAuth2Start"
+                "return VISITORS.components.security_schemes.visitSecuritySchemeOAuth2Start"
             }
             Script::VisitSecuritySchemeOAuth2End => {
-                "components/security_schemes/visitSecuritySchemeOAuth2End"
+                "return VISITORS.components.security_schemes.visitSecuritySchemeOAuth2End"
             }
             Script::VisitSecuritySchemeOAuth2FlowsStart => {
-                "components/security_schemes/visitSecuritySchemeOAuth2FlowsStart"
+                "return VISITORS.components.security_schemes.visitSecuritySchemeOAuth2FlowsStart"
             }
             Script::VisitSecuritySchemeOAuth2FlowsEnd => {
-                "components/security_schemes/visitSecuritySchemeOAuth2FlowsEnd"
+                "return VISITORS.components.security_schemes.visitSecuritySchemeOAuth2FlowsEnd"
             }
             Script::VisitSecuritySchemeOAuth2FlowImplicit => {
-                "components/security_schemes/visitSecuritySchemeOAuth2FlowImplicit"
+                "return VISITORS.components.security_schemes.visitSecuritySchemeOAuth2FlowImplicit"
             }
             Script::VisitSecuritySchemeOAuth2FlowPassword => {
-                "components/security_schemes/visitSecuritySchemeOAuth2FlowPassword"
+                "return VISITORS.components.security_schemes.visitSecuritySchemeOAuth2FlowPassword"
             }
             Script::VisitSecuritySchemeOAuth2FlowClientCredentials => {
-                "components/security_schemes/visitSecuritySchemeOAuth2FlowClientCredentials"
+                "return VISITORS.components.security_schemes.visitSecuritySchemeOAuth2FlowClientCredentials"
             }
             Script::VisitSecuritySchemeOAuth2FlowAuthorizationCode => {
-                "components/security_schemes/visitSecuritySchemeOAuth2FlowAuthorizationCode"
+                "return VISITORS.components.security_schemes.visitSecuritySchemeOAuth2FlowAuthorizationCode"
             }
             Script::VisitSecuritySchemeOpenIdConnect => {
-                "components/security_schemes/visitSecuritySchemeOpenIdConnect"
+                "return VISITORS.components.security_schemes.visitSecuritySchemeOpenIdConnect"
             }
-            Script::VisitComponentsStart => "components/visitComponentsStart",
-            Script::VisitComponentsEnd => "components/visitComponentsEnd",
+            Script::VisitComponentsStart => "return VISITORS.components.visitComponentsStart",
+            Script::VisitComponentsEnd => "return VISITORS.components.visitComponentsEnd",
             Script::VisitAsyncCallbacksStart => {
-                "components/async_callbacks/visitAsyncCallbacksStart"
+                "return VISITORS.components.async_callbacks.visitAsyncCallbacksStart"
             }
-            Script::VisitAsyncCallbacksEnd => "components/async_callbacks/visitAsyncCallbacksEnd",
-            Script::VisitAsyncCallbackStart => "common/async_callback/visitAsyncCallbackStart",
-            Script::VisitAsyncCallbackEnd => "common/async_callback/visitAsyncCallbackEnd",
-            Script::VisitPathItemStart => "common/path_item/visitPathItemStart",
-            Script::VisitPathItemEnd => "common/path_item/visitPathItemEnd",
+            Script::VisitAsyncCallbacksEnd => "return VISITORS.components.async_callbacks.visitAsyncCallbacksEnd",
+            Script::VisitAsyncCallbackStart => "return VISITORS.common.async_callback.visitAsyncCallbackStart",
+            Script::VisitAsyncCallbackEnd => "return VISITORS.common.async_callback.visitAsyncCallbackEnd",
+            Script::VisitPathItemStart => "return VISITORS.common.path_item.visitPathItemStart",
+            Script::VisitPathItemEnd => "return VISITORS.common.path_item.visitPathItemEnd",
             Script::VisitOperationResponsesStart => {
-                "common/operation/responses/visitOperationResponsesStart"
+                "return VISITORS.common.operation.responses.visitOperationResponsesStart"
             }
             Script::VisitOperationResponsesEnd => {
-                "common/operation/responses/visitOperationResponsesEnd"
+                "return VISITORS.common.operation.responses.visitOperationResponsesEnd"
             }
-            Script::VisitTraceOperationStart => "common/operation/visitTraceOperationStart",
-            Script::VisitTraceOperationEnd => "common/operation/visitTraceOperationEnd",
-            Script::VisitPutOperationStart => "common/operation/visitPutOperationStart",
-            Script::VisitPutOperationEnd => "common/operation/visitPutOperationEnd",
-            Script::VisitPostOperationStart => "common/operation/visitPostOperationStart",
-            Script::VisitPostOperationEnd => "common/operation/visitPostOperationEnd",
-            Script::VisitPatchOperationStart => "common/operation/visitPatchOperationStart",
-            Script::VisitPatchOperationEnd => "common/operation/visitPatchOperationEnd",
-            Script::VisitOptionsOperationStart => "common/operation/visitOptionsOperationStart",
-            Script::VisitOptionsOperationEnd => "common/operation/visitOptionsOperationEnd",
-            Script::VisitHeadOperationStart => "common/operation/visitHeadOperationStart",
-            Script::VisitHeadOperationEnd => "common/operation/visitHeadOperationEnd",
-            Script::VisitGetOperationStart => "common/operation/visitGetOperationStart",
-            Script::VisitGetOperationEnd => "common/operation/visitGetOperationEnd",
-            Script::VisitDeleteOperationStart => "common/operation/visitDeleteOperationStart",
-            Script::VisitDeleteOperationEnd => "common/operation/visitDeleteOperationEnd",
-            Script::VisitPathsStart => "paths/visitPathsStart",
-            Script::VisitPathsEnd => "paths/visitPathsEnd",
-            Script::VisitResponseReference => "components/responses/visitResponseReference",
-            Script::VisitSchemaReference => "components/schemas/visitSchemaReference",
-            Script::VisitExampleReference => "common/examples/visitExampleReference",
+            Script::VisitTraceOperationStart => "return VISITORS.common.operation.visitTraceOperationStart",
+            Script::VisitTraceOperationEnd => "return VISITORS.common.operation.visitTraceOperationEnd",
+            Script::VisitPutOperationStart => "return VISITORS.common.operation.visitPutOperationStart",
+            Script::VisitPutOperationEnd => "return VISITORS.common.operation.visitPutOperationEnd",
+            Script::VisitPostOperationStart => "return VISITORS.common.operation.visitPostOperationStart",
+            Script::VisitPostOperationEnd => "return VISITORS.common.operation.visitPostOperationEnd",
+            Script::VisitPatchOperationStart => "return VISITORS.common.operation.visitPatchOperationStart",
+            Script::VisitPatchOperationEnd => "return VISITORS.common.operation.visitPatchOperationEnd",
+            Script::VisitOptionsOperationStart => "return VISITORS.common.operation.visitOptionsOperationStart",
+            Script::VisitOptionsOperationEnd => "return VISITORS.common.operation.visitOptionsOperationEnd",
+            Script::VisitHeadOperationStart => "return VISITORS.common.operation.visitHeadOperationStart",
+            Script::VisitHeadOperationEnd => "return VISITORS.common.operation.visitHeadOperationEnd",
+            Script::VisitGetOperationStart => "return VISITORS.common.operation.visitGetOperationStart",
+            Script::VisitGetOperationEnd => "return VISITORS.common.operation.visitGetOperationEnd",
+            Script::VisitDeleteOperationStart => "return VISITORS.common.operation.visitDeleteOperationStart",
+            Script::VisitDeleteOperationEnd => "return VISITORS.common.operation.visitDeleteOperationEnd",
+            Script::VisitPathsStart => "return VISITORS.paths.visitPathsStart",
+            Script::VisitPathsEnd => "return VISITORS.paths.visitPathsEnd",
+            Script::VisitResponseReference => "return VISITORS.components.responses.visitResponseReference",
+            Script::VisitSchemaReference => "return VISITORS.components.schemas.visitSchemaReference",
+            Script::VisitExampleReference => "return VISITORS.common.examples.visitExampleReference",
             Script::VisitRequestBodyReference => {
-                "components/request_bodies/visitRequestBodyReference"
+                "return VISITORS.components.request_bodies.visitRequestBodyReference"
             }
-            Script::VisitLinkReference => "common/links/link/visitLinkReference",
+            Script::VisitLinkReference => "return VISITORS.common.links.link.visitLinkReference",
             Script::VisitAsyncCallbackReference => {
-                "common/async_callback/visitAsyncCallbackReference"
+                "return VISITORS.common.async_callback.visitAsyncCallbackReference"
             }
-            Script::VisitHeaderReference => "common/headers/header/visitHeaderReference",
+            Script::VisitHeaderReference => "return VISITORS.common.headers.header.visitHeaderReference",
             Script::VisitSecuritySchemeReference => {
-                "components/security_schemes/visitSecuritySchemeReference"
+                "return VISITORS.components.security_schemes.visitSecuritySchemeReference"
             }
-            Script::VisitPathItemReference => "common/path_item/visitPathItemReference",
-            Script::VisitParameterReference => "common/parameters/visitParameterReference",
+            Script::VisitPathItemReference => "return VISITORS.common.path_item.visitPathItemReference",
+            Script::VisitParameterReference => "return VISITORS.common.parameters.visitParameterReference",
             Script::VisitObjectPropertyReference => {
-                "components/schemas/kind/type/object/visitObjectPropertyReference"
+                "return VISITORS.components.schemas.kind.type.object.visitObjectPropertyReference"
             }
         }
     }

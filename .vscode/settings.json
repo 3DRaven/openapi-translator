@@ -84,7 +84,8 @@
         "lastReferencePart",
         "printLastArgTable",
         "incrementCallNumber",
-        "errorHandler"
+        "errorHandler",
+        "printCalls"
     ],
     "terminal.integrated.scrollback": 16777216,
     "references.preferredLocation": "view",
@@ -105,5 +106,5 @@
         "springframework"
     ],
     "CodeGPT.apiKey": "OpenAI",
-    "lldb.launch.stdio": [null, "openapi-translator.log", null]
+    // "lldb.launch.stdio": [null, "openapi-translator.log", null]
 }

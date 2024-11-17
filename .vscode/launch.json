@@ -14,7 +14,7 @@
                 "--target-scripts",
                 "resources/target-java-spring-boot",
                 "--visitors-scripts",
-                "resources/visitors-c-like-code",
+                "resources/visitors",
                 "-p",
                 "{\"replaces\":1}",
                 "test",

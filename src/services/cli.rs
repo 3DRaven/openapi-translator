@@ -5,7 +5,6 @@ use openapiv3::OpenAPI;
 use std::ffi::OsStr;
 
 use crate::{
-    check_scripts,
     enums::common::Script,
     holders::context::{
         get_lua_vm, recreate_lua_vm, CLI, DEFAULT_TESTS_EXPECTED_DIR_NAME,
@@ -70,16 +69,14 @@ pub fn set_global_lua_parameters(openapi: &OpenAPI) -> Result<()> {
     //Add relative paths to scripts to use with lua require
     let code = format!(
         r#"
-        package.path = "./{}/?.lua;" .. "./{}/?.lua;" .. package.path
+        package.path = "./{}/?.lua;./{}/?/init.lua;" .. "./{}/?.lua;./{}/?/init.lua;" .. package.path
         "#,
-        visitors_path_str, target_path_str
+        visitors_path_str, visitors_path_str, target_path_str, target_path_str
     );
     lua_vm.load(&code).exec()?;
 
     //It is drop of mutex lock
     drop(lua_vm);
-    check_scripts()?;
-    Script::Prelude.call_func(None)?;
     Script::Target.call_func(None)
 }
 

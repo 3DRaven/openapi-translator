@@ -1,0 +1,18 @@
+local M = {}
+M.async_callback = require("cbase.common.async_callback")
+M.examples = require("cbase.common.examples")
+M.external_docs = require("cbase.common.external_docs")
+M.generic_example = require("cbase.common.generic_example")
+M.generic_parameters = require("cbase.common.generic_parameters")
+M.generic_request_body = require("cbase.common.generic_request_body")
+M.headers = require("cbase.common.headers")
+M.links = require("cbase.common.links")
+M.media_types = require("cbase.common.media_types")
+M.operation = require("cbase.common.operation")
+M.parameter_data = require("cbase.common.parameter_data")
+M.parameter_schema_or_content = require("cbase.common.parameter_schema_or_content")
+M.parameters = require("cbase.common.parameters")
+M.path_item = require("cbase.common.path_item")
+M.security_requirements = require("cbase.common.security_requirements")
+M.servers = require("cbase.common.servers")
+return M
