@@ -5,17 +5,18 @@
 --- @param callId string? # some usefull identifier of this visitor call
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 local function visitSchemaStart(schemaName, schemaDescriptor, extensions, callId)
-    -- At this point, there might not be a name, for example, for additionalProperties
-    -- If schemaName is null, it is reference and name already set
+    --- At this point, there might not be a name set
+    --- Variants:
+    --- 1. additionalProperties, can be object,primitive,$ref
+    ---     schemaName is NULL, reference script may be called
+    ---     if reference script called name already set in global stack
+    ---     if reference script does't called name is unknown!!!
+    --- 2. schema without reference
+    ---     name in schemaName, schemaReference script not called
+    --- 3. schema reference
+    ---     schemaName is NULL, schemaReference script called
     if nullableAsNillable(schemaName) ~= nil then
-        local name = extensions[Extensions.MODEL_NAME] or nullableAsNillable(schemaName)
-        if name then
-            GLOBAL_CONTEXT.names:push(name)
-        else
-            -- if name is unknown then it is additionalProperties
-            -- we set here dummy-name only for deleting it at visitSchemaEnd
-            GLOBAL_CONTEXT.names:push("dummy-name")
-        end
+        GLOBAL_CONTEXT.names:push(extensions[Extensions.MODEL_NAME] or schemaName)
     end
     return {}
 end

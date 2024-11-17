@@ -41,14 +41,16 @@ pub enum Script {
     VisitSecuritySchemeOAuth2End,
     VisitSecuritySchemeOAuth2FlowsStart,
     VisitSecuritySchemeOAuth2FlowsEnd,
-    VisitParameterReference,
+    VisitParameterReferenceStart,
+    VisitParameterReferenceEnd,
     VisitQueryParameterStart,
     VisitQueryParameterEnd,
     VisitHeaderParameterStart,
     VisitHeaderParameterEnd,
     VisitPathParameterStart,
     VisitPathParameterEnd,
-    VisitPathItemReference,
+    VisitPathItemReferenceStart,
+    VisitPathItemReferenceEnd,
     VisitPathItemStart,
     VisitPathItemEnd,
     VisitTraceOperationStart,
@@ -73,7 +75,8 @@ pub enum Script {
     VisitParametersEnd,
     VisitPathsStart,
     VisitPathsEnd,
-    VisitResponseReference,
+    VisitResponseReferenceStart,
+    VisitResponseReferenceEnd,
     VisitResponseStart,
     VisitResponseEnd,
     VisitMediaTypesStart,
@@ -82,21 +85,26 @@ pub enum Script {
     VisitLinksEnd,
     VisitAsyncCallbacksStart,
     VisitAsyncCallbacksEnd,
-    VisitAsyncCallbackReference,
+    VisitAsyncCallbackReferenceStart,
+    VisitAsyncCallbackReferenceEnd,
     VisitAsyncCallbackStart,
     VisitAsyncCallbackEnd,
     VisitHeadersStart,
     VisitHeadersEnd,
-    VisitSecuritySchemeReference,
+    VisitSecuritySchemeReferenceStart,
+    VisitSecuritySchemeReferenceEnd,
     VisitSecuritySchemesStart,
     VisitSecuritySchemesEnd,
-    VisitHeaderReference,
+    VisitHeaderReferenceStart,
+    VisitHeaderReferenceEnd,
     VisitHeaderStart,
     VisitHeaderEnd,
-    VisitRequestBodyReference,
+    VisitRequestBodyReferenceStart,
+    VisitRequestBodyReferenceEnd,
     VisitRequestBodyStart,
     VisitRequestBodyEnd,
-    VisitExampleReference,
+    VisitExampleReferenceStart,
+    VisitExampleReferenceEnd,
     VisitExampleStart,
     VisitExampleEnd,
     VisitExamplesStart,
@@ -110,7 +118,8 @@ pub enum Script {
     VisitParameterSchemaOrContentEnd,
     VisitMediaTypeStart,
     VisitMediaTypeEnd,
-    VisitLinkReference,
+    VisitLinkReferenceStart,
+    VisitLinkReferenceEnd,
     VisitLinkStart,
     VisitLinkEnd,
     VisitComponentsStart,
@@ -125,7 +134,8 @@ pub enum Script {
     VisitSchemasEnd,
     VisitSchemaStart,
     VisitSchemaEnd,
-    VisitSchemaReference,
+    VisitSchemaReferenceStart,
+    VisitSchemaReferenceEnd,
     VisitDefault,
     VisitDiscriminator,
     VisitSpecStart,
@@ -147,7 +157,8 @@ pub enum Script {
     VisitSecurityRequirement,
     VisitSecurityRequirementsEnd,
     VisitObjectStart,
-    VisitObjectPropertyReference,
+    VisitObjectPropertyReferenceStart,
+    VisitObjectPropertyReferenceEnd,
     VisitObjectPropertyStart,
     VisitObjectPropertyEnd,
     VisitObjectPropertiesStart,
@@ -545,25 +556,46 @@ impl From<&Script> for &'static str {
             Script::VisitDeleteOperationEnd => "return VISITORS.common.operation.visitDeleteOperationEnd",
             Script::VisitPathsStart => "return VISITORS.paths.visitPathsStart",
             Script::VisitPathsEnd => "return VISITORS.paths.visitPathsEnd",
-            Script::VisitResponseReference => "return VISITORS.components.responses.visitResponseReference",
-            Script::VisitSchemaReference => "return VISITORS.components.schemas.visitSchemaReference",
-            Script::VisitExampleReference => "return VISITORS.common.examples.visitExampleReference",
-            Script::VisitRequestBodyReference => {
-                "return VISITORS.components.request_bodies.visitRequestBodyReference"
+            //References
+            Script::VisitResponseReferenceStart => "return VISITORS.components.responses.visitResponseReferenceStart",
+            Script::VisitResponseReferenceEnd => "return VISITORS.components.responses.visitResponseReferenceEnd",
+            Script::VisitSchemaReferenceStart => "return VISITORS.components.schemas.visitSchemaReferenceStart",
+            Script::VisitSchemaReferenceEnd => "return VISITORS.components.schemas.visitSchemaReferenceEnd",
+            Script::VisitExampleReferenceStart => "return VISITORS.common.examples.visitExampleReferenceStart",
+            Script::VisitExampleReferenceEnd => "return VISITORS.common.examples.visitExampleReferenceEnd",
+            Script::VisitRequestBodyReferenceStart => {
+                "return VISITORS.components.request_bodies.visitRequestBodyReferenceStart"
             }
-            Script::VisitLinkReference => "return VISITORS.common.links.link.visitLinkReference",
-            Script::VisitAsyncCallbackReference => {
-                "return VISITORS.common.async_callback.visitAsyncCallbackReference"
+            Script::VisitRequestBodyReferenceEnd => {
+                "return VISITORS.components.request_bodies.visitRequestBodyReferenceEnd"
             }
-            Script::VisitHeaderReference => "return VISITORS.common.headers.header.visitHeaderReference",
-            Script::VisitSecuritySchemeReference => {
-                "return VISITORS.components.security_schemes.visitSecuritySchemeReference"
+            Script::VisitLinkReferenceStart => "return VISITORS.common.links.link.visitLinkReferenceStart",
+            Script::VisitLinkReferenceEnd => "return VISITORS.common.links.link.visitLinkReferenceEnd",
+            Script::VisitAsyncCallbackReferenceStart => {
+                "return VISITORS.common.async_callback.visitAsyncCallbackReferenceStart"
             }
-            Script::VisitPathItemReference => "return VISITORS.common.path_item.visitPathItemReference",
-            Script::VisitParameterReference => "return VISITORS.common.parameters.visitParameterReference",
-            Script::VisitObjectPropertyReference => {
-                "return VISITORS.components.schemas.kind.type.object.visitObjectPropertyReference"
+            Script::VisitAsyncCallbackReferenceEnd => {
+                "return VISITORS.common.async_callback.visitAsyncCallbackReferenceEnd"
             }
+            Script::VisitHeaderReferenceStart => "return VISITORS.common.headers.header.visitHeaderReferenceStart",
+            Script::VisitHeaderReferenceEnd => "return VISITORS.common.headers.header.visitHeaderReferenceEnd",
+            Script::VisitSecuritySchemeReferenceStart => {
+                "return VISITORS.components.security_schemes.visitSecuritySchemeReferenceStart"
+            }
+            Script::VisitSecuritySchemeReferenceEnd => {
+                "return VISITORS.components.security_schemes.visitSecuritySchemeReferenceEnd"
+            }
+            Script::VisitPathItemReferenceStart => "return VISITORS.common.path_item.visitPathItemReferenceStart",
+            Script::VisitPathItemReferenceEnd => "return VISITORS.common.path_item.visitPathItemReferenceEnd",
+            Script::VisitParameterReferenceStart => "return VISITORS.common.parameters.visitParameterReferenceStart",
+            Script::VisitParameterReferenceEnd => "return VISITORS.common.parameters.visitParameterReferenceEnd",
+            Script::VisitObjectPropertyReferenceStart => {
+                "return VISITORS.components.schemas.kind.type.object.visitObjectPropertyReferenceStart"
+            },
+            Script::VisitObjectPropertyReferenceEnd => {
+                "return VISITORS.components.schemas.kind.type.object.visitObjectPropertyReferenceEnd"
+            }
+
         }
     }
 }

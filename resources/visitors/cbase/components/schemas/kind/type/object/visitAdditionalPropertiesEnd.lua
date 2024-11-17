@@ -11,6 +11,8 @@ local function visitAdditionalPropertiesEnd(schema, minProperties, maxProperties
     local childModel = GLOBAL_CONTEXT.models:pop()
     --- @type ModelBase
     local currentModel = GLOBAL_CONTEXT.models:element()
+    --- removed name part prepared in visitAdditionalPropertiesStart
+    GLOBAL_CONTEXT.names:pop()
 
     if currentModel:instanceOf(ObjectModel) then
         if childModel:instanceOf(TypeTransferModel) then

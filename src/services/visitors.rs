@@ -125,7 +125,7 @@ pub fn visit_schema(
     match schema_ref {
         ReferenceOr::Reference { reference } => {
             let schema = references::resolve_reference::<Schema>(reference, parsed_spec)?;
-            Script::VisitSchemaReference.call_with_descriptor(
+            Script::VisitSchemaReferenceStart.call_with_descriptor(
                 get_call_id(schema_name, reference).as_deref(),
                 out_path,
                 &(
@@ -139,7 +139,20 @@ pub fn visit_schema(
                 ),
             )?;
 
-            visit_schema(parsed_spec, out_path, None, schema)
+            visit_schema(parsed_spec, out_path, None, schema)?;
+            Script::VisitSchemaReferenceEnd.call_with_descriptor(
+                get_call_id(schema_name, reference).as_deref(),
+                out_path,
+                &(
+                    schema_name,
+                    reference,
+                    &schema
+                        .as_item()
+                        .expect("Unable to get schema from resolved reference")
+                        .schema_data
+                        .extensions,
+                ),
+            )
         }
         ReferenceOr::Item(schema_item) => {
             let schema_extensions = &schema_item.as_schema().schema_data.extensions;
@@ -216,9 +229,13 @@ pub fn visit_schema(
                     let unboxed = not.as_ref();
                     visit_not(parsed_spec, out_path, unboxed, schema_extensions)
                 }
-                openapiv3::SchemaKind::Any(any_schema) => {
-                    visit_any_schema(parsed_spec, out_path, any_schema, schema_extensions)
-                }
+                openapiv3::SchemaKind::Any(any_schema) => visit_any_schema(
+                    parsed_spec,
+                    out_path,
+                    schema_name,
+                    any_schema,
+                    schema_extensions,
+                ),
             }?;
 
             Script::VisitSchemaEnd.call_with_descriptor(
@@ -239,7 +256,7 @@ pub fn visit_response(
     match response_ref {
         ReferenceOr::Reference { reference } => {
             let response = references::resolve_reference::<Response>(reference, parsed_spec)?;
-            Script::VisitResponseReference.call_with_descriptor(
+            Script::VisitResponseReferenceStart.call_with_descriptor(
                 get_call_id(response_name, reference).as_deref(),
                 out_path,
                 &(
@@ -252,7 +269,19 @@ pub fn visit_response(
                 ),
             )?;
 
-            visit_response(parsed_spec, out_path, None, response)
+            visit_response(parsed_spec, out_path, None, response)?;
+            Script::VisitResponseReferenceEnd.call_with_descriptor(
+                get_call_id(response_name, reference).as_deref(),
+                out_path,
+                &(
+                    response_name,
+                    reference,
+                    &response
+                        .as_item()
+                        .expect("Unable to get extensions from resolved response")
+                        .extensions,
+                ),
+            )
         }
         ReferenceOr::Item(response) => {
             let response_extensions = &response.extensions;
@@ -303,11 +332,12 @@ pub fn visit_string(
 pub fn visit_any_schema(
     parsed_spec: &ParsedSpec,
     out_path: &Path,
+    schema_name: Option<&str>,
     any_schema_descriptor: &AnySchema,
     extensions: &IndexMap<String, serde_json::Value>,
 ) -> Result<()> {
     Script::VisitAnySchemaStart.call_with_descriptor(
-        any_schema_descriptor.typ.as_deref(),
+        schema_name,
         out_path,
         &(any_schema_descriptor, extensions),
     )?;
@@ -393,7 +423,7 @@ pub fn visit_any_schema(
     }
 
     Script::VisitAnySchemaEnd.call_with_descriptor(
-        any_schema_descriptor.typ.as_deref(),
+        schema_name,
         out_path,
         &(any_schema_descriptor, extensions),
     )
@@ -591,7 +621,7 @@ pub fn visit_example(
     match example_ref {
         ReferenceOr::Reference { reference } => {
             let example = references::resolve_reference::<Example>(reference, parsed_spec)?;
-            Script::VisitExampleReference.call_with_descriptor(
+            Script::VisitExampleReferenceStart.call_with_descriptor(
                 get_call_id(example_name, reference).as_deref(),
                 out_path,
                 &(
@@ -604,7 +634,19 @@ pub fn visit_example(
                 ),
             )?;
 
-            visit_example(parsed_spec, out_path, None, example)
+            visit_example(parsed_spec, out_path, None, example)?;
+            Script::VisitExampleReferenceEnd.call_with_descriptor(
+                get_call_id(example_name, reference).as_deref(),
+                out_path,
+                &(
+                    example_name,
+                    reference,
+                    &example
+                        .as_item()
+                        .expect("Unable to get example from resolved reference")
+                        .extensions,
+                ),
+            )
         }
         ReferenceOr::Item(example) => {
             Script::VisitExampleStart.call_with_descriptor(
@@ -634,7 +676,7 @@ pub fn visit_request_body(
         ReferenceOr::Reference { reference } => {
             let request_body =
                 references::resolve_reference::<RequestBody>(reference, parsed_spec)?;
-            Script::VisitRequestBodyReference.call_with_descriptor(
+            Script::VisitRequestBodyReferenceStart.call_with_descriptor(
                 get_call_id(request_body_name, reference).as_deref(),
                 out_path,
                 &(
@@ -647,7 +689,19 @@ pub fn visit_request_body(
                 ),
             )?;
 
-            visit_request_body(parsed_spec, out_path, None, request_body)
+            visit_request_body(parsed_spec, out_path, None, request_body)?;
+            Script::VisitRequestBodyReferenceEnd.call_with_descriptor(
+                get_call_id(request_body_name, reference).as_deref(),
+                out_path,
+                &(
+                    &request_body_name,
+                    &reference,
+                    &request_body
+                        .as_item()
+                        .expect("Unable to get extensions from resolved request body")
+                        .extensions,
+                ),
+            )
         }
         ReferenceOr::Item(request_body) => {
             Script::VisitRequestBodyStart.call_with_descriptor(
@@ -784,7 +838,7 @@ pub fn visit_link(
     match link_ref {
         ReferenceOr::Reference { reference } => {
             let link = references::resolve_reference::<Link>(reference, parsed_spec)?;
-            Script::VisitLinkReference.call_with_descriptor(
+            Script::VisitLinkReferenceStart.call_with_descriptor(
                 get_call_id(link_name, reference).as_deref(),
                 out_path,
                 &(
@@ -796,7 +850,19 @@ pub fn visit_link(
                         .extensions,
                 ),
             )?;
-            visit_link(parsed_spec, out_path, None, link)
+            visit_link(parsed_spec, out_path, None, link)?;
+            Script::VisitLinkReferenceEnd.call_with_descriptor(
+                get_call_id(link_name, reference).as_deref(),
+                out_path,
+                &(
+                    link_name,
+                    reference,
+                    &link
+                        .as_item()
+                        .expect("Unable to get extensions from resolved link reference")
+                        .extensions,
+                ),
+            )
         }
         ReferenceOr::Item(link) => {
             Script::VisitLinkStart.call_with_descriptor(
@@ -832,13 +898,18 @@ pub fn visit_callback(
     match callbacks {
         ReferenceOr::Reference { reference } => {
             let callback = references::resolve_reference::<Callback>(reference, parsed_spec)?;
-            Script::VisitAsyncCallbackReference.call_with_descriptor(
+            Script::VisitAsyncCallbackReferenceStart.call_with_descriptor(
                 get_call_id(callbacks_name, reference).as_deref(),
                 out_path,
                 &(callbacks_name, reference, &extensions),
             )?;
 
-            visit_callback(parsed_spec, out_path, None, callback, extensions)
+            visit_callback(parsed_spec, out_path, None, callback, extensions)?;
+            Script::VisitAsyncCallbackReferenceEnd.call_with_descriptor(
+                get_call_id(callbacks_name, reference).as_deref(),
+                out_path,
+                &(callbacks_name, reference, &extensions),
+            )
         }
         ReferenceOr::Item(callback) => {
             Script::VisitAsyncCallbackStart.call_with_descriptor(
@@ -983,7 +1054,7 @@ pub fn visit_header(
     match header {
         ReferenceOr::Reference { reference } => {
             let header = references::resolve_reference::<Header>(reference, parsed_spec)?;
-            Script::VisitHeaderReference.call_with_descriptor(
+            Script::VisitHeaderReferenceStart.call_with_descriptor(
                 get_call_id(header_name, reference).as_deref(),
                 out_path,
                 &(
@@ -996,7 +1067,19 @@ pub fn visit_header(
                 ),
             )?;
 
-            visit_header(parsed_spec, out_path, None, header)
+            visit_header(parsed_spec, out_path, None, header)?;
+            Script::VisitHeaderReferenceEnd.call_with_descriptor(
+                get_call_id(header_name, reference).as_deref(),
+                out_path,
+                &(
+                    &header_name,
+                    reference,
+                    &header
+                        .as_item()
+                        .expect("Unable to get extensions from resolved header reference")
+                        .extensions,
+                ),
+            )
         }
         ReferenceOr::Item(header) => {
             Script::VisitHeaderStart.call_with_descriptor(
@@ -1035,7 +1118,7 @@ pub fn visit_security_scheme(
     match security_scheme {
         ReferenceOr::Reference { reference } => {
             let scheme = references::resolve_reference::<SecurityScheme>(reference, parsed_spec)?;
-            Script::VisitSecuritySchemeReference.call_with_descriptor(
+            Script::VisitSecuritySchemeReferenceStart.call_with_descriptor(
                 get_call_id(scheme_name, reference).as_deref(),
                 out_path,
                 &(
@@ -1053,7 +1136,25 @@ pub fn visit_security_scheme(
                 ),
             )?;
 
-            visit_security_scheme(parsed_spec, out_path, None, scheme)
+            visit_security_scheme(parsed_spec, out_path, None, scheme)?;
+
+            Script::VisitSecuritySchemeReferenceEnd.call_with_descriptor(
+                get_call_id(scheme_name, reference).as_deref(),
+                out_path,
+                &(
+                    &scheme_name,
+                    reference,
+                    match &scheme
+                        .as_item()
+                        .expect("Unable to get extensions from resolved security scheme reference")
+                    {
+                        SecurityScheme::APIKey { extensions, .. } => extensions,
+                        SecurityScheme::HTTP { extensions, .. } => extensions,
+                        SecurityScheme::OAuth2 { extensions, .. } => extensions,
+                        SecurityScheme::OpenIDConnect { extensions, .. } => extensions,
+                    },
+                ),
+            )
         }
         ReferenceOr::Item(security_scheme) => match security_scheme {
             SecurityScheme::APIKey { .. } => {
@@ -1318,7 +1419,7 @@ pub fn visit_path_item_ref(
     match path_item_ref {
         ReferenceOr::Reference { reference } => {
             let path_item = references::resolve_reference::<PathItem>(reference, parsed_spec)?;
-            Script::VisitPathItemReference.call_with_descriptor(
+            Script::VisitPathItemReferenceStart.call_with_descriptor(
                 get_call_id(path_item_name, reference).as_deref(),
                 out_path,
                 &(
@@ -1331,7 +1432,20 @@ pub fn visit_path_item_ref(
                 ),
             )?;
 
-            visit_path_item_ref(parsed_spec, out_path, None, path_item)
+            visit_path_item_ref(parsed_spec, out_path, None, path_item)?;
+
+            Script::VisitPathItemReferenceEnd.call_with_descriptor(
+                get_call_id(path_item_name, reference).as_deref(),
+                out_path,
+                &(
+                    &path_item_name,
+                    reference,
+                    &path_item
+                        .as_item()
+                        .expect("Unable to get extensions from resolved path item reference")
+                        .extensions,
+                ),
+            )
         }
         ReferenceOr::Item(path_item) => {
             visit_path_item(parsed_spec, out_path, path_item_name, path_item)
@@ -1350,13 +1464,19 @@ pub fn visit_parameter(
     match parameter_ref {
         ReferenceOr::Reference { reference } => {
             let parameter = references::resolve_reference::<Parameter>(reference, parsed_spec)?;
-            Script::VisitParameterReference.call_with_descriptor(
+            Script::VisitParameterReferenceStart.call_with_descriptor(
                 get_call_id(parameter_name, reference).as_deref(),
                 out_path,
                 &(&parameter_name, reference, extensions),
             )?;
 
-            visit_parameter(parsed_spec, out_path, None, parameter, extensions)
+            visit_parameter(parsed_spec, out_path, None, parameter, extensions)?;
+
+            Script::VisitParameterReferenceEnd.call_with_descriptor(
+                get_call_id(parameter_name, reference).as_deref(),
+                out_path,
+                &(&parameter_name, reference, extensions),
+            )
         }
         ReferenceOr::Item(parameter) => match parameter {
             Parameter::Query { .. } => {
@@ -2026,7 +2146,7 @@ pub fn visit_object_property(
     match property_schema_ref {
         ReferenceOr::Reference { reference } => {
             let property_schema = references::resolve_reference::<Schema>(reference, parsed_spec)?;
-            Script::VisitObjectPropertyReference.call_with_descriptor(
+            Script::VisitObjectPropertyReferenceStart.call_with_descriptor(
                 get_call_id(property_name, reference).as_deref(),
                 out_path,
                 &(
@@ -2040,7 +2160,20 @@ pub fn visit_object_property(
                 ),
             )?;
 
-            visit_object_property(parsed_spec, out_path, None, property_schema)
+            visit_object_property(parsed_spec, out_path, None, property_schema)?;
+            Script::VisitObjectPropertyReferenceEnd.call_with_descriptor(
+                get_call_id(property_name, reference).as_deref(),
+                out_path,
+                &(
+                    property_name,
+                    reference,
+                    &property_schema
+                        .as_item()
+                        .expect("Unable to get extensions from resolved property schema")
+                        .schema_data
+                        .extensions,
+                ),
+            )
         }
         ReferenceOr::Item(schema) => {
             let schema = schema.as_schema();

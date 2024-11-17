@@ -1,6 +1,7 @@
 local M = {}
 M.visitParametersStart = require("cbase.common.parameters.visitParametersStart")
-M.visitParameterReference = require("cbase.common.parameters.visitParameterReference")
+M.visitParameterReferenceStart = require("cbase.common.parameters.visitParameterReferenceStart")
+M.visitParameterReferenceEnd = require("cbase.common.parameters.visitParameterReferenceEnd")
 M.visitParametersEnd = require("cbase.common.parameters.visitParametersEnd")
 
 M.cookie_parameter = require("cbase.common.parameters.cookie_parameter")

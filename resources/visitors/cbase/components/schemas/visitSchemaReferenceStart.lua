@@ -4,10 +4,10 @@
 --- @param extensions table # table with free form with "x-" OpenAPI extensions for this level of spec
 --- @param callId string? # some usefull identifier of this visitor call
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
-local function visitSchemaReference(schemaName, schemaReference, extensions, callId)
+local function visitSchemaReferenceStart(schemaName, schemaReference, extensions, callId)
     -- if it called then we can set name
     GLOBAL_CONTEXT.names:push(extensions[Extensions.MODEL_NAME] or lastReferencePart(schemaReference))
     return {}
 end
 
-return functionCallAndLog("visitSchemaReference", visitSchemaReference)
+return functionCallAndLog("visitSchemaReferenceStart", visitSchemaReferenceStart)

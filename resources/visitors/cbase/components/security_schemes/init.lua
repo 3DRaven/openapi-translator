@@ -12,6 +12,7 @@ M.visitSecuritySchemesStart = require("cbase.components.security_schemes.visitSe
 M.visitSecuritySchemeOAuth2FlowsStart = require("cbase.components.security_schemes.visitSecuritySchemeOAuth2FlowsStart")
 M.visitSecuritySchemeHttp = require("cbase.components.security_schemes.visitSecuritySchemeHttp")
 M.visitSecuritySchemeOAuth2FlowsEnd = require("cbase.components.security_schemes.visitSecuritySchemeOAuth2FlowsEnd")
-M.visitSecuritySchemeReference = require("cbase.components.security_schemes.visitSecuritySchemeReference")
+M.visitSecuritySchemeReferenceStart = require("cbase.components.security_schemes.visitSecuritySchemeReferenceStart")
+M.visitSecuritySchemeReferenceEnd = require("cbase.components.security_schemes.visitSecuritySchemeReferenceEnd")
 
 return M

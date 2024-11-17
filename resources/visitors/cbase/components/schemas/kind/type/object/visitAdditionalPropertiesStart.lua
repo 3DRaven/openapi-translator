@@ -7,6 +7,8 @@
 --- @param callId string? # some usefull identifier of this visitor call
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 local function visitAdditionalPropertiesStart(schema, minProperties, maxProperties, extensions, callId)
+    --- Here we prepare name part for inner models if they exists
+    GLOBAL_CONTEXT.names:push("AdditionalProperties")
     -- This is a temporary model for collecting information about the schemas inside the additionalProperties
     GLOBAL_CONTEXT.models:push(TypeTransferModel.new("unknown-additional-properties"))
     return {}
