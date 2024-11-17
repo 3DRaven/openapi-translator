@@ -897,7 +897,7 @@ end
 local function callWithErrorHandler(callable, args)
     local function errorHandler(err)
         printBreak()
-        print("Error handled: ", err)
+        print("Error handled")
         printCalls()
         return err
     end
