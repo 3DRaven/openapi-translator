@@ -5,7 +5,7 @@
 --- @param callId string? # some usefull identifier of this visitor call
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 local function visitIntegerProperty(integerDescriptor, extensions, callId)
-    return VISITORS.struct.addGenericPropertyCode(GLOBAL_CONTEXT.models:peek(), CODE.getIntegerType(), extensions)
+    return STRUCT.addGenericPropertyCode(GLOBAL_CONTEXT.models:peek(), CODE.getIntegerType(), extensions)
 end
 
 return functionCallAndLog("visitIntegerProperty", visitIntegerProperty)

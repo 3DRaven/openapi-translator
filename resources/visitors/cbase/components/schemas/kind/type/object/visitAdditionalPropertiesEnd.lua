@@ -16,7 +16,7 @@ local function visitAdditionalPropertiesEnd(schema, minProperties, maxProperties
 
     if currentModel:instanceOf(ObjectModel) then
         if childModel:instanceOf(TypeTransferModel) then
-            return VISITORS.struct.addAdditionalProperty(currentModel, childModel.name, extensions)
+            return STRUCT.addAdditionalProperty(currentModel, childModel.name, extensions)
         else
             error("Child type for additionalProperties not found")
         end

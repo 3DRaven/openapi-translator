@@ -13,7 +13,7 @@ local function visitAdditionalPropertiesAny(flag, minProperties, maxProperties, 
     if currentModel == nil then
         error("additionalProperties with type any in unknown position")
     else
-        return VISITORS.struct.addAdditionalProperty(currentModel, CODE.getAnyType(), extensions)
+        return STRUCT.addAdditionalProperty(currentModel, CODE.getAnyType(), extensions)
     end
 end
 

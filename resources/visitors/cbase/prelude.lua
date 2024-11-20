@@ -642,11 +642,11 @@ end
 function Stack:push(item)
     table.insert(self.items, item)
     print(string.format([[
-CONTEXT <- push to stack, after
+CONTEXT <- push to stack [%s], after
 [
 %s
 ]
-]], tableToString(self)))
+]], self.stackName, tableToString(self)))
     return item
 end
 
@@ -654,20 +654,20 @@ end
 --- @param elements any[] # A table containing elements to be pushed onto the stack
 function Stack:pushAll(elements)
     for _, element in ipairs(elements) do
-        self:push(element)
+        table.insert(self.items, element)
     end
 end
 
 function Stack:pop()
     if #self.items == 0 then
-        error("Stack is empty")
+        error(string.format("Stack [%s] is empty", self.stackName))
     end
     print(string.format([[
-CONTEXT -> pop from stack, before
+CONTEXT -> pop from stack [%s], before
 [
 %s
 ]
-]], tableToString(self)))
+]], self.stackName, tableToString(self)))
     local item = table.remove(self.items)
     return item
 end
@@ -678,11 +678,11 @@ function Stack:peek()
     end
     local item = self.items[#self.items]
     print(string.format([[
-CONTEXT -> peek from stack
+CONTEXT -> peek from stack [%s]
 [
 %s
 ]
-]], tableToString(self)))
+]], self.stackName, tableToString(self)))
     return item
 end
 
@@ -691,15 +691,15 @@ end
 --- @return any # The head of this stack
 function Stack:element()
     if #self.items == 0 then
-        error("Stack '" .. self.stackName .. "' is empty.")
+        error(string.format("Stack [%s] is empty.", self.stackName))
     end
     local item = self.items[#self.items]
     print(string.format([[
-CONTEXT -> element from stack
+CONTEXT -> element from stack [%s]
 [
 %s
 ]
-]], tableToString(self)))
+]], self.stackName, tableToString(self)))
     return item
 end
 
@@ -712,11 +712,11 @@ function Stack:penultimate()
     end
     local item = self.items[#self.items - 1]
     print(string.format([[
-CONTEXT -> penultimate from stack
+CONTEXT -> penultimate from stack [%s]
 [
 %s
 ]
-]], tableToString(self)))
+]], self.stackName, tableToString(self)))
     return item
 end
 
@@ -743,6 +743,10 @@ function Stack:isEmpty()
     return #self.items == 0
 end
 
+function Stack:clear()
+    self.items = {}
+end
+
 function Stack:size()
     return #self.items
 end
@@ -760,6 +764,7 @@ end
 --- Class for storing variables across scripts with loggable access manner for all chain of models
 --- @class GlobalContext
 --- @field names Stack # stack of names of processed schemas
+--- @field savedNames Stack # stack of names for temporary save when reference processing executed
 --- @field models Stack # stack of models in processing
 GlobalContext = {}
 GlobalContext.__index = GlobalContext
@@ -771,6 +776,8 @@ function GlobalContext:new()
     local instance = setmetatable({}, GlobalContext)
     --- @type Stack
     instance.names = Stack.new("modelsNames")
+    --- @type Stack
+    instance.savedNames = Stack.new("savedNames")
     --- @type Stack
     instance.models = Stack.new("models")
     return instance
@@ -905,6 +912,12 @@ local function callWithErrorHandler(callable, args)
     local function errorHandler(err)
         printBreak()
         print("Error handled")
+        print("Names stack")
+        printTable(GLOBAL_CONTEXT.names)
+        print("Saved names stack")
+        printTable(GLOBAL_CONTEXT.savedNames)
+        print("Models stack")
+        printTable(GLOBAL_CONTEXT.models)
         printCalls()
         return err
     end

@@ -10,7 +10,7 @@ function module.addAdditionalProperty(currentModel, type, extensions)
         currentModel.name) })
     --- @type string
     --- @diagnostic disable-next-line: assign-type-mismatch
-    local propertyName = getFirstExistsName(extensions[Extensions.ADDITIONAL_PROPERTY_NAME], "additionalProperties")
+    local propertyName = extensions[Extensions.ADDITIONAL_PROPERTY_NAME] or "additionalProperties"
     local code = CODE.getAdditionalPropertiesProperty(type, propertyName);
 
     currentModel:addModelProperty(propertyName, extensions)

@@ -5,7 +5,10 @@
 --- @param callId string? # some usefull identifier of this visitor call
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 local function visitSchemaEnd(schemaName, schemaDescriptor, extensions, callId)
-    GLOBAL_CONTEXT.names:pop()
+    -- see visitSchemaStart script to comments
+    if nullableAsNillable(schemaName) ~= nil then
+        GLOBAL_CONTEXT.names:pop()
+    end
     return {}
 end
 

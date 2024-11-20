@@ -7,10 +7,11 @@
 local function visitSchemaStart(schemaName, schemaDescriptor, extensions, callId)
     --- At this point, there might not be a name set
     --- Variants:
-    --- 1. additionalProperties, can be object,primitive,$ref
-    ---     schemaName is NULL, reference script may be called
-    ---     if reference script called name already set in global stack
-    ---     if reference script does't called name is unknown!!!
+    --- 1. additionalProperties, can be object, primitive, $ref
+    ---    schemaName is NULL, reference script may be called after visitAdditionalPropertiesStart script
+    ---    if reference script called, name already replced in global stack from reference
+    ---    if reference script does't called, name is "collected names .. AdditionalProperties"
+    ---    it set by visitAdditionalPropertiesStart script
     --- 2. schema without reference
     ---     name in schemaName, schemaReference script not called
     --- 3. schema reference

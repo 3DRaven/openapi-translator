@@ -28,7 +28,7 @@ local function visitObjectEnd(objectDescriptor, extensions, callId)
     if parentModel ~= nil then
         -- For parent OBJECT we need to write property to it
         if parentModel:instanceOf(ObjectModel) then
-            VISITORS.struct.addGenericPropertyCode(parentModel, currentModel.name, extensions)
+            STRUCT.addGenericPropertyCode(parentModel, currentModel.name, extensions)
         elseif parentModel:instanceOf(TypeTransferModel) then
             -- object must write it self model (currentModel) and must send it type to parent object
             parentModel.name = currentModel.name
