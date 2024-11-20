@@ -24,6 +24,7 @@ pub enum WriteMode {
 #[serde(rename_all = "camelCase")]
 pub enum Script {
     Target,
+    ErrorHandler,
     VisitOperationResponsesStart,
     VisitOperationResponsesEnd,
     VisitResponsesStart,
@@ -595,6 +596,7 @@ impl From<&Script> for &'static str {
             Script::VisitObjectPropertyReferenceEnd => {
                 "return VISITORS.components.schemas.kind.type.object.visitObjectPropertyReferenceEnd"
             }
+            Script::ErrorHandler => "return errorHandler",
 
         }
     }

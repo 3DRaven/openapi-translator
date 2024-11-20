@@ -45,19 +45,14 @@ components:
   schemas:
     PagingSimplifiedTrackObject:
       type: object
-      additionalProperties: 
-        type: object
-        properties:
-          some_property:
-            type: string
-      # allOf:
-      #   - $ref: "#/components/schemas/CustomCode"
-      #   - type: object
-      #     properties:
-      #       items:
-      #         type: array
-      #         items:
-      #           $ref: "#/components/schemas/CustomCode"
+      allOf:
+        - $ref: "#/components/schemas/CustomCode"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/CustomCode"
     CustomCode:
       type: object
       properties:

@@ -3,7 +3,7 @@
 
 local DEFAULT_PRINT_ARGS_INDENT = 8
 
-local calls = {}
+local CALLS = {}
 
 -----------------------------------------------------------------------------------------------------------------
 --- Constructions below is used solely to inform the Lua language server
@@ -905,29 +905,31 @@ end
 
 function printCalls()
     print("The call stack, markdown links (#link-x) work and are clickable:")
-    printTable(calls)
+    printTable(CALLS)
 end
 
-local function callWithErrorHandler(callable, args)
-    local function errorHandler(err)
-        printBreak()
-        print("Error handled")
-        print("Names stack")
-        printTable(GLOBAL_CONTEXT.names)
-        print("Saved names stack")
-        printTable(GLOBAL_CONTEXT.savedNames)
-        print("Models stack")
-        printTable(GLOBAL_CONTEXT.models)
-        printCalls()
-        return err
-    end
-    local status, result = xpcall(callable, errorHandler, table.unpack(args))
-    if status then
-        return result
-    else
-        error(result)
-    end
+function errorHandler(err)
+    printBreak()
+    print("Error handled")
+    print(err)
+    print("Names stack")
+    printTable(GLOBAL_CONTEXT.names)
+    print("Saved names stack")
+    printTable(GLOBAL_CONTEXT.savedNames)
+    print("Models stack")
+    printTable(GLOBAL_CONTEXT.models)
+    printCalls()
+    return err
 end
+
+-- local function callWithErrorHandler(callable, args)
+-- local status, result = xpcall(callable, errorHandler, table.unpack(args))
+-- if status then
+--     return result
+-- else
+--     error(result)
+-- end
+-- end
 
 --- Function decorator for logging
 --- @param funcName string # name of called function
@@ -937,14 +939,14 @@ end
 function functionCallAndLog(funcName, mainFunc, beforeDecorator, afterDecorator)
     return function(...)
         local args = { ... }
-        local callNumber = tostring(#calls)
+        local callNumber = tostring(#CALLS)
         local callId = args[#args]
 
         if callId == NULL then
             callId = "no-id"
         end
 
-        table.insert(calls, "[" .. callNumber .. "](#link-" .. callNumber .. ") " .. funcName .. " -> {" .. callId .. "}")
+        table.insert(CALLS, "[" .. callNumber .. "](#link-" .. callNumber .. ") " .. funcName .. " -> {" .. callId .. "}")
         print("# link-" .. callNumber .. "\nCALL <- [" .. funcName .. "]")
 
         for i, v in ipairs(args) do
@@ -962,13 +964,13 @@ function functionCallAndLog(funcName, mainFunc, beforeDecorator, afterDecorator)
         end
 
         if beforeDecorator ~= nil then
-            callWithErrorHandler(beforeDecorator, args)
+            beforeDecorator(...)
         end
 
-        local result = callWithErrorHandler(mainFunc, args)
+        local result = mainFunc(...)
 
         if afterDecorator ~= nil then
-            callWithErrorHandler(afterDecorator, args)
+            afterDecorator(...)
         end
 
         if type(result) == "table" then

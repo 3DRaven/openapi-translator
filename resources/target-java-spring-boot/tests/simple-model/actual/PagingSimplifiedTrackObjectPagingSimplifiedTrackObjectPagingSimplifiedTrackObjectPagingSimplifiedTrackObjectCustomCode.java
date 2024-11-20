@@ -1,8 +1,7 @@
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Autowired;
-import java.util.List;
 
-public class PagingSimplifiedTrackObject {
+public class PagingSimplifiedTrackObjectPagingSimplifiedTrackObjectPagingSimplifiedTrackObjectPagingSimplifiedTrackObjectCustomCode {
 
 
     private  String another_field;
@@ -10,6 +9,5 @@ public class PagingSimplifiedTrackObject {
     @Autowired
 
     private  String some_field;
-    private  List<CustomCode> items = new List<>();
 
 }

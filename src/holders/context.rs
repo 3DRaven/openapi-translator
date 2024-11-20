@@ -18,6 +18,7 @@ pub const DEFAULT_TESTS_OUT_DIR_NAME: &str = "actual";
 pub const DEFAULT_TESTS_EXPECTED_DIR_NAME: &str = "expected";
 pub const DEFAULT_TESTS_OPENAPI_FILE_NAME: &str = "openapi.yml";
 pub const DEFAULT_LOGS_COLOR_MODE: &str = "always";
+pub const DEFAULT_CALLS_STACK_NAME: &str = "CALLS";
 pub const DEFAULT_LOGS_LOG_LEVEL: &str = "debug";
 
 pub const EXTENSION_FOR_NAME: &str = "x-ot-name";
