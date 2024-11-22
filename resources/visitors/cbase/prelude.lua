@@ -1438,7 +1438,7 @@ end
 --- passed to the script either from the OpenAPI specification or from the command line. Command line
 --- parameters take precedence and override the specification parameters. Parameters are stored in the
 --- global variable `targetParameters` created by the translator (Rust code) in the Lua context
---- @param callId string? # some usefull identifier of this visitor call
+--- @param callId string? # some useful identifier of this visitor call
 local function prelude(callId)
     print("    targetParamaters type: " .. type(TARGET_PARAMETERS))
     print("    targetParamaters value:")

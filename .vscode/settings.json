@@ -98,6 +98,7 @@
         "diffy",
         "indexmap",
         "mlua",
+        "Nillable",
         "openapi",
         "openapiv",
         "OUTPATH",
@@ -105,5 +106,8 @@
         "reqwest",
         "springframework"
     ],
-    "lldb.launch.stdio": [null, "openapi-translator.log", null]
+    "lldb.launch.stdio": [null, "openapi-translator.log", null],
+    "files.associations": {
+        "openapi-translator.log": "markdown"
+    }
 }

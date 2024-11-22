@@ -16,7 +16,7 @@ CODE = require("code")
 --- is a set of visitors and utility functions for generating.
 VISITORS = require("cbase")
 
---- @param callId string? # some usefull identifier of this visitor call
+--- @param callId string? # some useful identifier of this visitor call
 local function target(callId)
     print("Target script called")
 end
