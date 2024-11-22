@@ -931,6 +931,8 @@ end
 -- end
 -- end
 
+local lastShowedModelName
+
 --- Function decorator for logging
 --- @param funcName string # name of called function
 --- @param mainFunc function # main function with arguments from Rust code
@@ -946,7 +948,24 @@ function functionCallAndLog(funcName, mainFunc, beforeDecorator, afterDecorator)
             callId = "no-id"
         end
 
-        table.insert(CALLS, "[" .. callNumber .. "](#link-" .. callNumber .. ") " .. funcName .. " -> {" .. callId .. "}")
+        local currentModelName = concatStackCapitalized(GLOBAL_CONTEXT.names)
+
+        local appendModelName = ""
+        if lastShowedModelName ~= currentModelName then
+            lastShowedModelName = currentModelName
+            if lastShowedModelName ~= nil and #lastShowedModelName ~= 0 then
+                appendModelName = " : " .. lastShowedModelName
+            else
+                appendModelName = " : empty"
+            end
+        end
+
+        table.insert(CALLS,
+            "[" ..
+            callNumber ..
+            "](#link-" ..
+            callNumber ..
+            ") " .. funcName .. " -> {" .. callId .. "}" .. appendModelName)
         print("# link-" .. callNumber .. "\nCALL <- [" .. funcName .. "]")
 
         for i, v in ipairs(args) do

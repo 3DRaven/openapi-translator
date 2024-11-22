@@ -6,7 +6,6 @@
 local function visitAllOfEnd(schemas, extensions, callId)
     ---@type AllOfModel
     local currentModel = GLOBAL_CONTEXT.models:pop()
-
     if currentModel == nil then
         error("Model for allOf not found")
     else

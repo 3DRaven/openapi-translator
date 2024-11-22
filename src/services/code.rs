@@ -5,7 +5,7 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use log::{info, warn};
+use log::{debug, info, warn};
 
 use crate::{enums::common::WriteMode, structs::common::Code};
 
@@ -42,8 +42,11 @@ fn modify_file(file_path: &Path, text: &Option<String>, mode: &WriteMode) -> Res
                         .truncate(true)
                         .open(file_path)?;
 
-                    file.write_all(text.as_bytes())?;
-                    file.write_all(contents.as_bytes())?;
+                    file.write_all(text.as_bytes())
+                        .inspect(|_| debug!("Prepend to file [{:?}]", file_path))
+                        .with_context(|| format!("Prepend to file [{:?}] error", file_path))?;
+                    file.write_all(contents.as_bytes())
+                        .with_context(|| format!("Prepend to file [{:?}] error", file_path))?;
                 } else {
                     let mut file = File::create(file_path)?;
                     file.write_all(text.as_bytes())?;
@@ -59,7 +62,9 @@ fn modify_file(file_path: &Path, text: &Option<String>, mode: &WriteMode) -> Res
                     .create(true)
                     .open(file_path)?;
 
-                file.write_all(text.as_bytes())?;
+                file.write_all(text.as_bytes())
+                    .inspect(|_| debug!("Append to file [{:?}]", file_path))
+                    .with_context(|| format!("Append to file [{:?}] error", file_path))?;
             } else {
                 warn!("Empty text prepend to file [{:?}]", file_path)
             }

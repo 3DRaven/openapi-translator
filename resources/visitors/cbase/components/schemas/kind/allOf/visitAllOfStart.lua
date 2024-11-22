@@ -4,8 +4,6 @@
 --- @param callId string? # some useful identifier of this visitor call
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 local function visitAllOfStart(schemas, extensions, callId)
-    printBreak()
-    printTable(GLOBAL_CONTEXT.names)
     GLOBAL_CONTEXT.models:push(AllOfModel.new(concatStackCapitalized(GLOBAL_CONTEXT.names)))
     return {}
 end
