@@ -1316,6 +1316,20 @@ function TypeTransferModel.new(name)
 end
 
 --- Derived class that inherits from BaseClass
+--- @class AnySchemaModel:ModelBase
+AnySchemaModel = setmetatable({}, { __index = ModelBase })
+AnySchemaModel.__index = AnySchemaModel
+
+--- @param name string
+--- @return AnySchemaModel
+function AnySchemaModel.new(name)
+    local instance = ModelBase.new(name)
+    setmetatable(instance, AnySchemaModel)
+    ---@type AnySchemaModel
+    return instance
+end
+
+--- Derived class that inherits from BaseClass
 --- @class AllOfModel:ModelBase
 AllOfModel = setmetatable({}, { __index = ModelBase })
 AllOfModel.__index = AllOfModel

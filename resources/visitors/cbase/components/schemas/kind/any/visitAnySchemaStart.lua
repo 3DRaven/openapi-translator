@@ -8,14 +8,22 @@
 local function visitAnySchemaStart(anySchemaDescriptor, extensions, callId)
     --- @type ModelBase?
     local currentModel = GLOBAL_CONTEXT.models:peek()
-    if currentModel ~= nil then
-        if currentModel:instanceOf(TypeTransferModel) then
-            currentModel.name = CODE.getAnyType()
-        else
-            error("Unknown model for Any schema")
-        end
+    -- it is additionalProperties without structure (additionalProperties: {})
+    -- or array with object items type
+    if currentModel ~= nil and currentModel:instanceOf(TypeTransferModel) then
+        currentModel.name = CODE.getAnyType()
     else
-        print("Root model for Any schema")
+        -- It is unknown combination of properties (redundant or not allowed by OpenAPI 3)
+        -- so, we process this as special type of model
+        -- translator try to convert any schema to all of grouped types as allOf, anyOf and other
+        -- and then try to convert to concrete types as string and other if type set in schema
+        -- so, after calling visitAnySchemaStart may be called visitors for all possible variants
+        -- if they exists
+        print(formatAndTrimIndent([[
+            Found unknown combination of properties in OpenAPI 3 spec,
+            will be used separated sets of names for every known parts
+        ]]))
+        GLOBAL_CONTEXT.models:push(AnySchemaModel.new("any-schema"))
     end
     return {}
 end
