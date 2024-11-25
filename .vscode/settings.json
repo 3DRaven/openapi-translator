@@ -95,6 +95,7 @@
         "diffy",
         "indexmap",
         "javax",
+        "lldb",
         "mlua",
         "Nillable",
         "Nonnull",

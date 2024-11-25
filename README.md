@@ -153,6 +153,10 @@ When some model name found first time it be added to call description
 `    25: [24](#link-24) visitSchemaStart -> {no-id} : SomeModelName`, after model processed it be dropped
 `    66: [65](#link-65) visitMediaTypeEnd -> {application/json} : empty` or replaced to new found model name
 
+## VSCode
+
+By configuring `"lldb.launch.stdio": [null, "openapi-translator.log", null]`, logs are separated: LUA logs are saved to the `openapi-translator.log` file, while Rust logs appear in the console. This setup works in debug mode. Additionally, by setting `"files.associations": {"openapi-translator.log": "markdown"}`, the log file will open as a Markdown document every time.
+
 ## Alternatives
 
 - Hard to customize <https://github.com/OpenAPITools/openapi-generator>
