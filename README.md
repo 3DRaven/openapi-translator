@@ -156,6 +156,7 @@ When some model name found first time it be added to call description
 ## VSCode
 
 By configuring `"lldb.launch.stdio": [null, "openapi-translator.log", null]`, logs are separated: LUA logs are saved to the `openapi-translator.log` file, while Rust logs appear in the console. This setup works in debug mode. Additionally, by setting `"files.associations": {"openapi-translator.log": "markdown"}`, the log file will open as a Markdown document every time.
+`sumneko.lua` extension used as Lua language server, so autocomplete and code navigation fully works.
 
 ## Alternatives
 
