@@ -21,7 +21,5 @@ local function target(callId)
     print("Target script called")
 end
 
---- During the target invocation, the prelude script has already been executed, so we can call functionCallAndLog.
---- However, during the script verification stage, they are called one by one just for checking, and this function
---- is not available there.
+--- During the target invocation, the prelude script has already been executed (in require("cbase")), so we can call functionCallAndLog.
 return functionCallAndLog("target", target)
