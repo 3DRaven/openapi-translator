@@ -76,7 +76,7 @@ Often, we need to specify special conditions during generation in a specific par
 
 - `stringDescriptor`: This is just a set of data that the visitor must process from the specification.
 - `extensions`: Extensions are `x-properties` that can be added to the specification for its extension, such as `x-ot-model-name`, an extension I've used to simplify the assignment of model names; in general, they can be anything.
-- `callId`: Just some text id to logging visitor call and debug.
+- `callId`: A textual identifier used for logging the visitor call and debugging. It provides information about which part of the specification is being processed by this visitor.
 - `return value`: for all scripts it is WriteOperation[] it is write operations to some file or file removing operation.
 
 Every visitor always receives all associated information in full. Visitors can form a context by passing information to other visitors, for example, using:
