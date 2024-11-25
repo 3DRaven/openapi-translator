@@ -10,8 +10,8 @@ function module.getVariant(variant)
         return defaultCodeBase.new()
     else
         --- @type CodeBase
-        local foundModule = require("variants." .. variant)
-        return foundModule.new()
+        local customCodeBase = require("variants." .. variant)
+        return customCodeBase.new()
     end
 end
 
