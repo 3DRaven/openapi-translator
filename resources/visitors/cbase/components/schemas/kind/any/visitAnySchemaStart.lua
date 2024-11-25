@@ -11,7 +11,8 @@ local function visitAnySchemaStart(anySchemaDescriptor, extensions, callId)
     -- it is additionalProperties without structure (additionalProperties: {})
     -- or array with object items type
     if currentModel ~= nil and currentModel:instanceOf(TypeTransferModel) then
-        currentModel.name = CODE.getAnyType()
+        local codeVariant = CODE.getVariant(extensions[Extensions.VARIANT])
+        currentModel.name = codeVariant:getAnyType()
     else
         -- It is unknown combination of properties (redundant or not allowed by OpenAPI 3)
         -- so, we process this as special type of model

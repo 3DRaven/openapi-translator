@@ -5,13 +5,14 @@ local module = {}
 --- @param extensions table # table with free form with "x-" OpenAPI extensions for this level of spec
 --- @return WriteOperation[]
 function module.addAdditionalProperty(currentModel, type, extensions)
+    local codeVariant = CODE.getVariant(extensions[Extensions.VARIANT])
     -- Adding the import at the beginning of the current model file
-    currentModel:adaptToIncludes({ WriteOperation.new_prepend(CODE.getAdditionalPropertiesImport(),
+    currentModel:adaptToIncludes({ WriteOperation.new_prepend(codeVariant:getAdditionalPropertiesImport(),
         currentModel.name) })
     --- @type string
     --- @diagnostic disable-next-line: assign-type-mismatch
     local propertyName = extensions[Extensions.ADDITIONAL_PROPERTY_NAME] or "additionalProperties"
-    local code = CODE.getAdditionalPropertiesProperty(type, propertyName);
+    local code = codeVariant:getAdditionalPropertiesProperty(type, propertyName);
 
     currentModel:addModelProperty(propertyName, extensions)
     currentModel:adaptToLastProperty({ WriteOperation.new_append(code, currentModel.name) })
@@ -28,39 +29,30 @@ function module.addGenericPropertyCode(currentModel, type, extensions)
         --- such a schema is not a model but can be used as a reference in other schemas.
         --- For example, you can add descriptions and other elements to it instead of copying them
         --- within the specification. So, we simply don't need to do anything in this case.
-        print(type .. " property without parent skipt")
+        print(type .. " property without parent skip")
     else
         if currentModel:instanceOf(ObjectModel) or currentModel:instanceOf(AllOfModel) then
             ---@type Property?
             local property = currentModel.properties:peek()
             if property ~= nil then
-                local codeExtension = extensions[Extensions.CODE_BEFORE]
-                local codeBefore = nil
+                local requiredMarker
+                local codeVariant = CODE.getVariant(extensions[Extensions.VARIANT])
+                if currentModel:isPropertyRequired(property.name) then
+                    currentModel:adaptToIncludes({ WriteOperation.new_prepend(codeVariant:getRequiredImport(),
+                        currentModel.name) })
+                    requiredMarker = codeVariant:getRequiredMarker()
+                end
 
-                if codeExtension ~= nil then
-                    for _, it in ipairs(codeExtension) do
-                        local import = it[Extensions.IMPORT]
-                        if import ~= nil then
-                            currentModel:adaptToIncludes({ WriteOperation.new_append(import .. "\n", currentModel.name) })
-                        end
-                        local code = it[Extensions.CODE]
-                        if codeBefore == nil and code then
-                            codeBefore = "    " .. code .. "\n"
-                        elseif codeBefore ~= nil and code then
-                            codeBefore = codeBefore .. "    " .. code .. "\n"
-                        end
+                local customMarkers = codeVariant:getCustomMarkers()
+                if customMarkers ~= nil then
+                    local customImports = codeVariant:getCustomImports()
+                    if customImports ~= nil then
+                        currentModel:adaptToIncludes({ WriteOperation.new_prepend(customImports,
+                            currentModel.name) })
                     end
                 end
 
-                local requiredMarker
-
-                if currentModel:isPropertyRequired(property.name) then
-                    currentModel:adaptToIncludes({ WriteOperation.new_prepend(CODE.getRequiredImport(), currentModel
-                    .name) })
-                    requiredMarker = CODE.getRequiredMarker()
-                end
-
-                local code = CODE.getPropertyCode(codeBefore or "", requiredMarker or "", type, property.name);
+                local code = codeVariant:getPropertyCode(customMarkers, requiredMarker, type, property.name);
 
                 property.code:push(WriteOperation.new_append(code, currentModel.name))
             else

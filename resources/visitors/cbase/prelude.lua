@@ -1030,20 +1030,16 @@ WriteMode.REMOVE = "REMOVE"
 --- @field PROPERTY_NAME string #
 --- @field ADDITIONAL_PROPERTY_NAME string #
 --- @field ADDITIONAL_PROPERTY_MODEL_NAME string #
---- @field CODE_BEFORE string #
---- @field IMPORT string #
---- @field CODE string #
---- @field DEBUG_STOP string #
+--- @field DEBUG_STOP string # if found, then stop
+--- @field VARIANT string # code variant for generation
 Extensions = {}
 
 Extensions.MODEL_NAME = "x-ot-model-name"
 Extensions.PROPERTY_NAME = "x-ot-property-name"
 Extensions.ADDITIONAL_PROPERTY_NAME = "x-ot-additional-property-name"
 Extensions.ADDITIONAL_PROPERTY_MODEL_NAME = "x-ot-additional-property-model-name"
-Extensions.CODE_BEFORE = "x-ot-code-before"
-Extensions.IMPORT = "import"
-Extensions.CODE = "code"
 Extensions.DEBUG_STOP = "x-ot-debug-stop"
+Extensions.VARIANT = "x-ot-variant"
 
 --- Extracts the last component from a string delimited by '/'.
 --- @param reference string # representing a path where components are separated by '/'.
@@ -1295,8 +1291,7 @@ ObjectModel.__index = ObjectModel
 --- @param name string
 --- @return ObjectModel
 function ObjectModel.new(name)
-    local instance = ModelBase.new(name)
-    setmetatable(instance, ObjectModel)
+    local instance = setmetatable(ModelBase.new(name), ObjectModel)
     ---@type ObjectModel
     return instance
 end
@@ -1309,8 +1304,7 @@ TypeTransferModel.__index = TypeTransferModel
 --- @param name string
 --- @return TypeTransferModel
 function TypeTransferModel.new(name)
-    local instance = ModelBase.new(name)
-    setmetatable(instance, TypeTransferModel)
+    local instance = setmetatable(ModelBase.new(name), TypeTransferModel)
     ---@type TypeTransferModel
     return instance
 end
@@ -1323,8 +1317,7 @@ AnySchemaModel.__index = AnySchemaModel
 --- @param name string
 --- @return AnySchemaModel
 function AnySchemaModel.new(name)
-    local instance = ModelBase.new(name)
-    setmetatable(instance, AnySchemaModel)
+    local instance = setmetatable(ModelBase.new(name), AnySchemaModel)
     ---@type AnySchemaModel
     return instance
 end
@@ -1337,8 +1330,7 @@ AllOfModel.__index = AllOfModel
 --- @param name string
 --- @return AllOfModel
 function AllOfModel.new(name)
-    local instance = ModelBase.new(name)
-    setmetatable(instance, AllOfModel)
+    local instance = setmetatable(ModelBase.new(name), AllOfModel)
     ---@type AllOfModel
     return instance
 end
@@ -1351,8 +1343,7 @@ OneOfModel.__index = OneOfModel
 --- @param name string
 --- @return OneOfModel
 function OneOfModel.new(name)
-    local instance = ModelBase.new(name)
-    setmetatable(instance, OneOfModel)
+    local instance = setmetatable(ModelBase.new(name), OneOfModel)
     ---@type OneOfModel
     return instance
 end

@@ -16,12 +16,14 @@ local function visitAllOfEnd(schemas, extensions, callId)
     if currentModel == nil then
         error("Model for allOf not found")
     else
+        local codeVariant = CODE.getVariant(extensions[Extensions.VARIANT])
         return concatTables(
             currentModel.includes.items,
-            { WriteOperation.new_append(CODE.getClassHeader(currentModel.name), currentModel.name) },
+            { WriteOperation.new_append(codeVariant:getClassHeader(currentModel.name), currentModel.name) },
             currentModel:collectAllPropertiesCode(),
             currentModel.methods.items,
-            { WriteOperation.new_append(CODE.getClassFooter(), currentModel.name) })
+            { WriteOperation.new_append(codeVariant:getClassFooter(),
+                currentModel.name) })
     end
 end
 

@@ -5,7 +5,8 @@
 --- @param callId string? # some useful identifier of this visitor call
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 local function visitBooleanProperty(booleanDescriptor, extensions, callId)
-    return STRUCT.addGenericPropertyCode(GLOBAL_CONTEXT.models:peek(), CODE.getBooleanType(), extensions)
+    local codeVariant = CODE.getVariant(extensions[Extensions.VARIANT])
+    return STRUCT.addGenericPropertyCode(GLOBAL_CONTEXT.models:peek(), codeVariant:getBooleanType(), extensions)
 end
 
 return functionCallAndLog("visitBooleanProperty", visitBooleanProperty)

@@ -13,7 +13,8 @@ local function visitAdditionalPropertiesAny(flag, minProperties, maxProperties, 
     if currentModel == nil then
         error("additionalProperties with type any in unknown position")
     else
-        return STRUCT.addAdditionalProperty(currentModel, CODE.getAnyType(), extensions)
+        local codeVariant = CODE.getVariant(extensions[Extensions.VARIANT])
+        return STRUCT.addAdditionalProperty(currentModel, codeVariant:getAnyType(), extensions)
     end
 end
 

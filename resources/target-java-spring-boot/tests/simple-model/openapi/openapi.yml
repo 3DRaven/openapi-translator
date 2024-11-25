@@ -50,6 +50,7 @@ components:
         - type: object
           properties:
             security:
+              x-ot-variant: transactional
               type: string
             items:
               type: array
@@ -61,6 +62,7 @@ components:
         some_field:
           type: string
         another_field:
+          x-ot-variant: transactional
           type: string
     # AllOf:
     #   x-ot-model-name: CompositeObject

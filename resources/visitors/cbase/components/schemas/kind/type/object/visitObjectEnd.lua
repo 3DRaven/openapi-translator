@@ -1,13 +1,14 @@
 --- @param model ModelBase
 --- @return WriteOperation[] # final code
-local function getCollectedCode(model)
+local function getCollectedCode(model, extensions)
+    local codeVariant = CODE.getVariant(extensions[Extensions.VARIANT])
     return concatTables(
         model.includes.items,
-        { WriteOperation.new_append(CODE.getClassHeader(model.name),
+        { WriteOperation.new_append(codeVariant:getClassHeader(model.name),
             model.name) },
         model:collectAllPropertiesCode(),
         model.methods.items,
-        { WriteOperation.new_append(CODE.getClassFooter(), model.name) })
+        { WriteOperation.new_append(codeVariant:getClassFooter(), model.name) })
 end
 
 --- This visitor is invoked after all the content inside a schema of type object has been processed.
@@ -41,7 +42,7 @@ local function visitObjectEnd(objectDescriptor, extensions, callId)
         end
     end
 
-    return getCollectedCode(currentModel)
+    return getCollectedCode(currentModel, extensions)
 end
 
 return functionCallAndLog("visitObjectEnd", visitObjectEnd)
