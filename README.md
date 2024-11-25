@@ -118,7 +118,6 @@ CALL <- [visitAnySchemaStart]
     will be used separated sets of names for every known parts
 CONTEXT <- push to stack [models], after
 [
-```yaml
 stackName: models
 items:
   1:
@@ -133,7 +132,6 @@ items:
     properties:
       stackName: any-schema->properties
       items: empty
-```
 ]
 
 RETURN <- [visitAnySchemaStart] [table] empty
