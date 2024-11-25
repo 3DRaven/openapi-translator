@@ -149,6 +149,10 @@ The call stack, markdown links (#link-x) work and are clickable:
 Every visitor call marked by Markdown links (in example it is # link-22), so if log opened as Markdown
 file, this links `[0](#link-0)` are clickable and can be used to navigation in log file.
 
+When some model name found first time it be added to call description
+`    25: [24](#link-24) visitSchemaStart -> {no-id} : SomeModelName`, after model processed it be dropped
+`    66: [65](#link-65) visitMediaTypeEnd -> {application/json} : empty` or replaced to new found model name
+
 ## Alternatives
 
 - Hard to customize <https://github.com/OpenAPITools/openapi-generator>
