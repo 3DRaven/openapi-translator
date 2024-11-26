@@ -46,7 +46,7 @@ components:
     PagingSimplifiedTrackObject:
       type: object
       allOf:
-        # - $ref: "#/components/schemas/CustomCode"
+        - $ref: "#/components/schemas/CustomCode"
         - type: object
           properties:
             security:

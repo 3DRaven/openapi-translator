@@ -952,12 +952,16 @@ function functionCallAndLog(funcName, mainFunc, beforeDecorator, afterDecorator)
 
         local appendModelName = ""
         if lastShowedModelName ~= currentModelName then
-            lastShowedModelName = currentModelName
-            if lastShowedModelName ~= nil and #lastShowedModelName ~= 0 then
-                appendModelName = " : " .. lastShowedModelName
+            if currentModelName ~= nil and #currentModelName ~= 0 then
+                appendModelName = " : started " .. currentModelName
             else
-                appendModelName = " : empty"
+                if lastShowedModelName ~= nil and #lastShowedModelName ~= 0 then
+                    appendModelName = " : finished " .. lastShowedModelName
+                else
+                    appendModelName = " : empty"
+                end
             end
+            lastShowedModelName = currentModelName
         end
 
         table.insert(CALLS,

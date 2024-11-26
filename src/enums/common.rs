@@ -180,10 +180,16 @@ pub enum Script {
     VisitBooleanProperty,
     VisitOneOfStart,
     VisitOneOfEnd,
+    VisitOneOfElementStart,
+    VisitOneOfElementEnd,
     VisitAllOfStart,
     VisitAllOfEnd,
+    VisitAllOfElementStart,
+    VisitAllOfElementEnd,
     VisitAnyOfStart,
     VisitAnyOfEnd,
+    VisitAnyOfElementStart,
+    VisitAnyOfElementEnd,
 }
 
 impl Script {
@@ -597,7 +603,12 @@ impl From<&Script> for &'static str {
                 "return VISITORS.components.schemas.kind.type.object.visitObjectPropertyReferenceEnd"
             }
             Script::ErrorHandler => "return errorHandler",
-
+            Script::VisitAllOfElementStart => "return VISITORS.components.schemas.kind.allOf.visitAllOfElementStart",
+            Script::VisitAllOfElementEnd =>  "return VISITORS.components.schemas.kind.allOf.visitAllOfElementEnd",
+            Script::VisitAnyOfElementStart => "return VISITORS.components.schemas.kind.anyOf.visitAnyOfElementStart",
+            Script::VisitAnyOfElementEnd => "return VISITORS.components.schemas.kind.anyOf.visitAnyOfElementEnd",
+            Script::VisitOneOfElementStart => "return VISITORS.components.schemas.kind.oneOf.visitOneOfElementStart",
+            Script::VisitOneOfElementEnd => "return VISITORS.components.schemas.kind.oneOf.visitOneOfElementEnd",
         }
     }
 }

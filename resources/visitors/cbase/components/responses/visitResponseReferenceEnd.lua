@@ -5,6 +5,10 @@
 --- @param callId string? # some useful identifier of this visitor call
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 local function visitResponseReferenceEnd(responseName, responseReference, extensions, callId)
+    -- if we found reference we every time use names from reference or from extension
+    GLOBAL_CONTEXT.names:clear()
+    GLOBAL_CONTEXT.names:pushAll(GLOBAL_CONTEXT.savedNames.items)
+    GLOBAL_CONTEXT.savedNames:clear()
     return {}
 end
 

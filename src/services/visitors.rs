@@ -203,6 +203,10 @@ pub fn visit_schema(
                         start: Script::VisitOneOfStart,
                         end: Script::VisitOneOfEnd,
                     },
+                    &BracketScripts {
+                        start: Script::VisitOneOfElementStart,
+                        end: Script::VisitOneOfElementEnd,
+                    },
                     schema_extensions,
                 ),
                 openapiv3::SchemaKind::AllOf { all_of } => visit_group_of(
@@ -213,6 +217,10 @@ pub fn visit_schema(
                         start: Script::VisitAllOfStart,
                         end: Script::VisitAllOfEnd,
                     },
+                    &BracketScripts {
+                        start: Script::VisitAllOfElementStart,
+                        end: Script::VisitAllOfElementEnd,
+                    },
                     schema_extensions,
                 ),
                 openapiv3::SchemaKind::AnyOf { any_of } => visit_group_of(
@@ -222,6 +230,10 @@ pub fn visit_schema(
                     &BracketScripts {
                         start: Script::VisitAnyOfStart,
                         end: Script::VisitAnyOfEnd,
+                    },
+                    &BracketScripts {
+                        start: Script::VisitAnyOfElementStart,
+                        end: Script::VisitAnyOfElementEnd,
                     },
                     schema_extensions,
                 ),
@@ -350,6 +362,10 @@ pub fn visit_any_schema(
                 start: Script::VisitAllOfStart,
                 end: Script::VisitAllOfEnd,
             },
+            &BracketScripts {
+                start: Script::VisitAllOfElementStart,
+                end: Script::VisitAllOfElementEnd,
+            },
             extensions,
         )?;
     }
@@ -363,6 +379,10 @@ pub fn visit_any_schema(
                 start: Script::VisitAnyOfStart,
                 end: Script::VisitAnyOfEnd,
             },
+            &BracketScripts {
+                start: Script::VisitAnyOfElementStart,
+                end: Script::VisitAnyOfElementEnd,
+            },
             extensions,
         )?;
     }
@@ -374,6 +394,10 @@ pub fn visit_any_schema(
             &BracketScripts {
                 start: Script::VisitOneOfStart,
                 end: Script::VisitOneOfEnd,
+            },
+            &BracketScripts {
+                start: Script::VisitOneOfElementStart,
+                end: Script::VisitOneOfElementEnd,
             },
             extensions,
         )?;
@@ -493,6 +517,7 @@ pub fn visit_group_of(
     out_path: &Path,
     schemas: &[ReferenceOr<Schema>],
     braced_scripts: &BracketScripts,
+    element_scripts: &BracketScripts,
     extensions: &IndexMap<String, serde_json::Value>,
 ) -> Result<()> {
     if !schemas.is_empty() {
@@ -500,7 +525,13 @@ pub fn visit_group_of(
             .start
             .call_with_descriptor(None, out_path, &(schemas, &extensions))?;
         for schema in schemas {
+            element_scripts
+                .start
+                .call_with_descriptor(None, out_path, &(schema, &extensions))?;
             visit_schema(parsed_spec, out_path, None, schema)?;
+            element_scripts
+                .end
+                .call_with_descriptor(None, out_path, &(schema, &extensions))?;
         }
 
         braced_scripts
