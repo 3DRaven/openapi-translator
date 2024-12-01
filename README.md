@@ -141,17 +141,27 @@ After any error will be printed visitors calls stack
 
 ```text
 The call stack, markdown links (#link-x) work and are clickable:
-    1: [0](#link-0) prelude -> {no-id} : empty
-    2: [1](#link-1) target -> {no-id}
-    3: [2](#link-2) visitSpecStart -> {resources/target-java-spring-boot/tests/simple-model/openapi/openapi.yml}
+    101: [100](#link-100)[]visitSchemaStart -> {CustomCode}
+    102: [101](#link-101)[]visitObjectStart -> {no-id} : started CustomCode
+    103: [102](#link-102)[ ]visitObjectPropertiesStart -> {no-id}
+    104: [103](#link-103)[ ]visitObjectPropertyStart -> {another_field}
+    105: [104](#link-104)[ ]visitSchemaStart -> {no-id}
+    106: [105](#link-105)[ ]visitStringProperty -> {no-id}
+    107: [106](#link-106)[ ]visitSchemaEnd -> {no-id}
+    108: [107](#link-107)[ ]visitObjectPropertyEnd -> {another_field}
+    109: [108](#link-108)[ ]visitObjectPropertyStart -> {some_field}
+    110: [109](#link-109)[ ]visitSchemaStart -> {no-id}
+    111: [110](#link-110)[ ]visitStringProperty -> {no-id}
+    112: [111](#link-111)[ ]visitSchemaEnd -> {no-id}
+    113: [112](#link-112)[ ]visitObjectPropertyEnd -> {some_field}
+    114: [113](#link-113)[ ]visitObjectPropertiesEnd -> {no-id}
+    115: [114](#link-114)[ ]visitObjectEnd -> {no-id}
+    116: [115](#link-115)[]visitSchemaEnd -> {CustomCode}
+    117: [116](#link-116)[]visitSchemaStart -> {ObjectWithAllOfInProperty} : finished CustomCode
 ```
 
-Every visitor call marked by Markdown links (in example it is # link-22), so if log opened as Markdown
-file, this links `[22](#link-22)` are clickable and can be used to navigation in log file.
-
-When some model name found first time it be added to call description
-`    25: [24](#link-24) visitSchemaStart -> {no-id} : SomeModelName`, after model processed it be dropped
-`    66: [65](#link-65) visitMediaTypeEnd -> {application/json} : empty` or replaced to new found model name
+Every visitor call marked by Markdown links (in example it is # link-${number}), so if log opened as Markdown
+file, this links `[${number}](#link-${number})` are clickable and can be used to navigation in log file. When some model name found first time it be added to call description `102: [101](#link-101)[]visitObjectStart -> {no-id} : started CustomCode`, after model processed it be dropped `117: [116](#link-116)[]visitSchemaStart -> {ObjectWithAllOfInProperty} : finished CustomCode` or replaced to new found model name. Each call log entry includes an indentation that represents the nesting level of the processed model. This makes it easy to determine where the processing of a particular model begins and ends. For example, in `110: [109](#link-109)[ ]visitSchemaStart -> {no-id}`, the spaces inside the square brackets (`109)[ ]vis`) indicate the nesting level.
 
 ## VSCode
 
