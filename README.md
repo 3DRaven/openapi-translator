@@ -137,7 +137,7 @@ items:
 RETURN <- [visitAnySchemaStart] [table] empty
 ```
 
-After any error will be printed visitors calls stack
+After any error or at the end of spec will be printed visitors calls stack
 
 ```text
 The call stack, markdown links (#link-x) work and are clickable:
