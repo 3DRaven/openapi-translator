@@ -7,4 +7,4 @@ local function visitMediaTypeEncodingsStart(encodings, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitMediaTypeEncodingsStart", visitMediaTypeEncodingsStart)
+return functionCallAndLog("visitMediaTypeEncodingsStart", visitMediaTypeEncodingsStart, 1)

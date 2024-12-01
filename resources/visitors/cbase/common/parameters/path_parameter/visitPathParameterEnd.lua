@@ -8,4 +8,4 @@ local function visitPathParameterEnd(parameterName, parameter, extensions, callI
     return {}
 end
 
-return functionCallAndLog("visitPathParameterEnd", visitPathParameterEnd)
+return functionCallAndLog("visitPathParameterEnd", visitPathParameterEnd, -1)

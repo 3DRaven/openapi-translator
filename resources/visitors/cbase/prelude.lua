@@ -4,6 +4,7 @@
 local DEFAULT_PRINT_ARGS_INDENT = 8
 
 local CALLS = {}
+local INDENT = 0
 
 -----------------------------------------------------------------------------------------------------------------
 --- Constructions below is used solely to inform the Lua language server
@@ -658,6 +659,8 @@ function Stack:pushAll(elements)
     end
 end
 
+--- return last element and delete it from stack
+--- @return any
 function Stack:pop()
     if #self.items == 0 then
         error(string.format("Stack [%s] is empty", self.stackName))
@@ -753,12 +756,16 @@ end
 
 --- Concatenates all elements of the stack into a single string with each element's first letter capitalized.
 --- @param stack Stack # The stack whose elements will be concatenated.
---- @return string # The concatenated string with each element's first letter capitalized.
+--- @return string? # The concatenated string with each element's first letter capitalized.
 function concatStackCapitalized(stack)
     local reducer = function(acc, item)
         return acc .. item:gsub("^%l", string.upper)
     end
-    return stack:reduce("", reducer)
+    if (#stack.items == 0) then
+        return nil
+    else
+        return stack:reduce("", reducer)
+    end
 end
 
 --- Class for storing variables across scripts with loggable access manner for all chain of models
@@ -832,7 +839,7 @@ function printTable(t, indent)
         -- print(string.rep(" ", indent) .. "empty")
     else
         for key, value in pairs(t) do
-            local formatting = string.rep(" ", indent) .. tostring(key) .. ":"
+            local formatting = string.rep(" ", indent) .. string.format("%s", key) .. ":"
             if type(value) == "table" then
                 print(formatting)
                 printTable(value, indent + 2)
@@ -872,7 +879,7 @@ function tableToString(tbl, indent)
     local spacing = string.rep(" ", indent)
 
     for key, value in pairs(tbl) do
-        local formatting = spacing .. tostring(key) .. ":"
+        local formatting = spacing .. string.format("%s", key) .. ":"
         if type(value) == "table" then
             if isTableEmpty(value) then
                 table.insert(result, formatting .. " empty")
@@ -936,9 +943,8 @@ local lastShowedModelName
 --- Function decorator for logging
 --- @param funcName string # name of called function
 --- @param mainFunc function # main function with arguments from Rust code
---- @param beforeDecorator function? # decorator for calling before mainFunc with same args as mainFunc
---- @param afterDecorator function? # decorator for calling after mainFunc with same args as mainFunc
-function functionCallAndLog(funcName, mainFunc, beforeDecorator, afterDecorator)
+--- @param localIndent integer? # indent for function call logger
+function functionCallAndLog(funcName, mainFunc, localIndent)
     return function(...)
         local args = { ... }
         local callNumber = tostring(#CALLS)
@@ -964,13 +970,15 @@ function functionCallAndLog(funcName, mainFunc, beforeDecorator, afterDecorator)
             lastShowedModelName = currentModelName
         end
 
-        table.insert(CALLS,
-            "[" ..
-            callNumber ..
-            "](#link-" ..
-            callNumber ..
-            ") " .. funcName .. " -> {" .. callId .. "}" .. appendModelName)
+        local callLink = string.format("[%s](#link-%s)[%s]", callNumber, callNumber,
+            string.rep(" ", GLOBAL_CONTEXT.models:size()))
+
+        table.insert(CALLS, callLink .. funcName .. " -> {" .. callId .. "}" .. appendModelName)
         print("# link-" .. callNumber .. "\nCALL <- [" .. funcName .. "]")
+
+        if localIndent ~= nil then
+            INDENT = INDENT + localIndent
+        end
 
         for i, v in ipairs(args) do
             local indent = "    "
@@ -986,15 +994,7 @@ function functionCallAndLog(funcName, mainFunc, beforeDecorator, afterDecorator)
             end
         end
 
-        if beforeDecorator ~= nil then
-            beforeDecorator(...)
-        end
-
         local result = mainFunc(...)
-
-        if afterDecorator ~= nil then
-            afterDecorator(...)
-        end
 
         if type(result) == "table" then
             if isTableEmpty(result) then

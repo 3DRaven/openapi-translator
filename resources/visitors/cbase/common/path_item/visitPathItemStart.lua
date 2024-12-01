@@ -8,4 +8,4 @@ local function visitPathItemStart(pathItemName, pathItem, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitPathItemStart", visitPathItemStart)
+return functionCallAndLog("visitPathItemStart", visitPathItemStart, 1)

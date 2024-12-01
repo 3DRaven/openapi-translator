@@ -7,4 +7,4 @@ local function visitSchemasStart(schemas, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitSchemasStart", visitSchemasStart)
+return functionCallAndLog("visitSchemasStart", visitSchemasStart, 1)

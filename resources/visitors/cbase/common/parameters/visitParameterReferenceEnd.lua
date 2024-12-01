@@ -8,4 +8,4 @@ local function visitParameterReferenceEnd(parameterName, parameterReference, ext
     return {}
 end
 
-return functionCallAndLog("visitParameterReferenceEnd", visitParameterReferenceEnd)
+return functionCallAndLog("visitParameterReferenceEnd", visitParameterReferenceEnd, -1)

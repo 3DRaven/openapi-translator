@@ -8,4 +8,4 @@ local function visitHeaderEnd(headerName, header, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitHeaderEnd", visitHeaderEnd)
+return functionCallAndLog("visitHeaderEnd", visitHeaderEnd, -1)

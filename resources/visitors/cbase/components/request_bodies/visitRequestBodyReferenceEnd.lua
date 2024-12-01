@@ -8,4 +8,4 @@ local function visitRequestBodyReferenceEnd(requestBodyName, requestBodyReferenc
     return {}
 end
 
-return functionCallAndLog("visitRequestBodyReferenceEnd", visitRequestBodyReferenceEnd)
+return functionCallAndLog("visitRequestBodyReferenceEnd", visitRequestBodyReferenceEnd, -1)

@@ -7,4 +7,4 @@ local function visitSpecInfoEnd(info, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitSpecInfoEnd", visitSpecInfoEnd)
+return functionCallAndLog("visitSpecInfoEnd", visitSpecInfoEnd, -1)

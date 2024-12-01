@@ -9,4 +9,4 @@ local function visitAsyncCallbackEnd(callbackName, callback, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitAsyncCallbackEnd", visitAsyncCallbackEnd)
+return functionCallAndLog("visitAsyncCallbackEnd", visitAsyncCallbackEnd, -1)

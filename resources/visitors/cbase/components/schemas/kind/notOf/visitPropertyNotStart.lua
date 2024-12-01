@@ -7,4 +7,4 @@ local function visitPropertyNotStart(schema, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitPropertyNotStart", visitPropertyNotStart)
+return functionCallAndLog("visitPropertyNotStart", visitPropertyNotStart, 1)

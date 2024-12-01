@@ -8,4 +8,4 @@ local function visitSecuritySchemeOAuth2End(securitySchemeName, securityScheme, 
     return {}
 end
 
-return functionCallAndLog("visitSecuritySchemeOAuth2End", visitSecuritySchemeOAuth2End)
+return functionCallAndLog("visitSecuritySchemeOAuth2End", visitSecuritySchemeOAuth2End, -1)

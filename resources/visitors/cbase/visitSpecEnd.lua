@@ -9,4 +9,4 @@ local function visitSpecEnd(version, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitSpecEnd", visitSpecEnd)
+return functionCallAndLog("visitSpecEnd", visitSpecEnd, -1)

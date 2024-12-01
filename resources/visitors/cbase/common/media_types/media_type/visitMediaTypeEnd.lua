@@ -8,4 +8,4 @@ local function visitMediaTypeEnd(mediaTypeName, mediaType, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitMediaTypeEnd", visitMediaTypeEnd)
+return functionCallAndLog("visitMediaTypeEnd", visitMediaTypeEnd, -1)

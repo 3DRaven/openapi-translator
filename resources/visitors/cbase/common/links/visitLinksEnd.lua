@@ -7,4 +7,4 @@ local function visitLinksEnd(links, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitLinksEnd", visitLinksEnd)
+return functionCallAndLog("visitLinksEnd", visitLinksEnd, -1)

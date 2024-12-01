@@ -7,4 +7,4 @@ local function visitHeadersEnd(headers, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitHeadersEnd", visitHeadersEnd)
+return functionCallAndLog("visitHeadersEnd", visitHeadersEnd, -1)

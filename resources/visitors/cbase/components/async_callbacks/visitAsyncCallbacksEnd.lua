@@ -7,4 +7,4 @@ local function visitAsyncCallbacksEnd(namesStack, operationCallbacks, extensions
     return {}
 end
 
-return functionCallAndLog("visitAsyncCallbacksEnd", visitAsyncCallbacksEnd)
+return functionCallAndLog("visitAsyncCallbacksEnd", visitAsyncCallbacksEnd, -1)

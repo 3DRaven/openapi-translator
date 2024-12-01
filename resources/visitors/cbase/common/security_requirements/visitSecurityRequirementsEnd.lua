@@ -7,4 +7,4 @@ local function visitSecurityRequirementsEnd(securities, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitSecurityRequirementsEnd", visitSecurityRequirementsEnd)
+return functionCallAndLog("visitSecurityRequirementsEnd", visitSecurityRequirementsEnd, -1)

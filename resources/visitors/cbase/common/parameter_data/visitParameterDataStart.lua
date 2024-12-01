@@ -7,4 +7,4 @@ local function visitParameterDataStart(parameterData, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitParameterDataStart", visitParameterDataStart)
+return functionCallAndLog("visitParameterDataStart", visitParameterDataStart, 1)

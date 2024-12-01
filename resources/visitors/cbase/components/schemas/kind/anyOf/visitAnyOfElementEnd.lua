@@ -7,4 +7,4 @@ local function visitAnyOfElementEnd(schemas, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitAnyOfElementEnd", visitAnyOfElementEnd)
+return functionCallAndLog("visitAnyOfElementEnd", visitAnyOfElementEnd, -1)

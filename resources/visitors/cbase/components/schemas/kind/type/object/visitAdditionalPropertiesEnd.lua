@@ -25,4 +25,4 @@ local function visitAdditionalPropertiesEnd(schema, minProperties, maxProperties
     end
 end
 
-return functionCallAndLog("visitAdditionalPropertiesEnd", visitAdditionalPropertiesEnd)
+return functionCallAndLog("visitAdditionalPropertiesEnd", visitAdditionalPropertiesEnd, -1)

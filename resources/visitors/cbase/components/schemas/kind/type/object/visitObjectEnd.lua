@@ -1,6 +1,7 @@
 --- @param model ModelBase
 --- @return WriteOperation[] # final code
 local function getCollectedCode(model, extensions)
+    -- as example in allOf objects does not generate real models with names, it is just lists of properties
     local codeVariant = CODE.getVariant(extensions[Extensions.VARIANT])
     return concatTables(
         model.includes.items,
@@ -45,4 +46,4 @@ local function visitObjectEnd(objectDescriptor, extensions, callId)
     return getCollectedCode(currentModel, extensions)
 end
 
-return functionCallAndLog("visitObjectEnd", visitObjectEnd)
+return functionCallAndLog("visitObjectEnd", visitObjectEnd, -1)

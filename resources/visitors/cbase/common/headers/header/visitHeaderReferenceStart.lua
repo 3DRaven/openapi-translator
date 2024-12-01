@@ -8,4 +8,4 @@ local function visitHeaderReferenceStart(headerName, headerReference, extensions
     return {}
 end
 
-return functionCallAndLog("visitHeaderReferenceStart", visitHeaderReferenceStart)
+return functionCallAndLog("visitHeaderReferenceStart", visitHeaderReferenceStart, 1)

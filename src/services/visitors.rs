@@ -524,15 +524,19 @@ pub fn visit_group_of(
         braced_scripts
             .start
             .call_with_descriptor(None, out_path, &(schemas, &extensions))?;
-        for schema in schemas {
-            element_scripts
-                .start
-                .call_with_descriptor(None, out_path, &(schema, &extensions))?;
+        schemas.iter().enumerate().try_for_each(|(index, schema)| {
+            element_scripts.start.call_with_descriptor(
+                Some(&index.to_string()),
+                out_path,
+                &(schema, &extensions),
+            )?;
             visit_schema(parsed_spec, out_path, None, schema)?;
-            element_scripts
-                .end
-                .call_with_descriptor(None, out_path, &(schema, &extensions))?;
-        }
+            element_scripts.end.call_with_descriptor(
+                Some(&index.to_string()),
+                out_path,
+                &(schema, &extensions),
+            )
+        })?;
 
         braced_scripts
             .end

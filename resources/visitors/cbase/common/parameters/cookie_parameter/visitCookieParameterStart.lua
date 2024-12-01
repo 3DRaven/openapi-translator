@@ -8,4 +8,4 @@ local function visitCookieParameterStart(parameterName, parameter, extensions, c
     return {}
 end
 
-return functionCallAndLog("visitCookieParameterStart", visitCookieParameterStart)
+return functionCallAndLog("visitCookieParameterStart", visitCookieParameterStart, 1)

@@ -22,4 +22,4 @@ local function visitSchemaStart(schemaName, schemaDescriptor, extensions, callId
     return {}
 end
 
-return functionCallAndLog("visitSchemaStart", visitSchemaStart)
+return functionCallAndLog("visitSchemaStart", visitSchemaStart, 1)

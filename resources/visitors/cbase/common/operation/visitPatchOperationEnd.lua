@@ -7,4 +7,4 @@ local function visitPatchOperationEnd(operation, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitPatchOperationEnd", visitPatchOperationEnd)
+return functionCallAndLog("visitPatchOperationEnd", visitPatchOperationEnd, -1)

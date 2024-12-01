@@ -8,4 +8,4 @@ local function visitObjectPropertyReferenceStart(propertyName, schemaReference, 
     return {}
 end
 
-return functionCallAndLog("visitObjectPropertyReferenceStart", visitObjectPropertyReferenceStart)
+return functionCallAndLog("visitObjectPropertyReferenceStart", visitObjectPropertyReferenceStart, 1)

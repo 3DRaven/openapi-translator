@@ -7,4 +7,4 @@ local function visitOneOfElementStart(schemas, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitOneOfElementStart", visitOneOfElementStart)
+return functionCallAndLog("visitOneOfElementStart", visitOneOfElementStart, 1)

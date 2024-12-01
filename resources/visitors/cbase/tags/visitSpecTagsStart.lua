@@ -7,4 +7,4 @@ local function visitSpecTagsStart(tags, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitSpecTagsStart", visitSpecTagsStart)
+return functionCallAndLog("visitSpecTagsStart", visitSpecTagsStart, 1)

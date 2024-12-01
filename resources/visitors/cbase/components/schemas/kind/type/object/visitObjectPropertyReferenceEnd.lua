@@ -8,4 +8,4 @@ local function visitObjectPropertyReferenceEnd(propertyName, schemaReference, ex
     return {}
 end
 
-return functionCallAndLog("visitObjectPropertyReferenceEnd", visitObjectPropertyReferenceEnd)
+return functionCallAndLog("visitObjectPropertyReferenceEnd", visitObjectPropertyReferenceEnd, -1)

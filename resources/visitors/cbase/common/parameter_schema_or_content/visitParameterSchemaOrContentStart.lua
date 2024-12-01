@@ -8,4 +8,4 @@ local function visitParameterSchemaOrContentStart(parameterName, format, extensi
     return {}
 end
 
-return functionCallAndLog("visitParameterSchemaOrContentStart", visitParameterSchemaOrContentStart)
+return functionCallAndLog("visitParameterSchemaOrContentStart", visitParameterSchemaOrContentStart, 1)

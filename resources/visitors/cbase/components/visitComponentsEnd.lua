@@ -6,4 +6,4 @@ local function visitComponentsEnd(extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitComponentsEnd", visitComponentsEnd)
+return functionCallAndLog("visitComponentsEnd", visitComponentsEnd, -1)

@@ -8,4 +8,4 @@ local function visitAsyncCallbackStart(callbackName, callback, extensions, callI
     return {}
 end
 
-return functionCallAndLog("visitAsyncCallbackStart", visitAsyncCallbackStart)
+return functionCallAndLog("visitAsyncCallbackStart", visitAsyncCallbackStart, 1)

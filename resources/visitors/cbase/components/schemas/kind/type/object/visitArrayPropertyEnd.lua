@@ -18,7 +18,7 @@ local function visitArrayPropertyEnd(arrayDescriptor, extensions, callId)
         local codeVariant = CODE.getVariant(extensions[Extensions.VARIANT])
         -- if it is root object as array we must generate full model
         if currentModel == nil then
-            local arrayModelName = concatStackCapitalized(GLOBAL_CONTEXT.names)
+            local arrayModelName = concatStackCapitalized(GLOBAL_CONTEXT.names) or error("Array model name is empty")
             return { WriteOperation.new_append(codeVariant:getArrayAsModel(arrayModelName, childModel.name),
                 arrayModelName) }
         else -- if it is just property for object or additionalProperties we need to write some to parents
@@ -39,7 +39,4 @@ local function visitArrayPropertyEnd(arrayDescriptor, extensions, callId)
     end
 end
 
-local function beforeDecorator()
-end
-
-return functionCallAndLog("visitArrayPropertyEnd", visitArrayPropertyEnd, beforeDecorator)
+return functionCallAndLog("visitArrayPropertyEnd", visitArrayPropertyEnd, -1)

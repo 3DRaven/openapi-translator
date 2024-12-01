@@ -7,4 +7,4 @@ local function visitOperationResponsesStart(responses, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitOperationResponsesStart", visitOperationResponsesStart)
+return functionCallAndLog("visitOperationResponsesStart", visitOperationResponsesStart, 1)

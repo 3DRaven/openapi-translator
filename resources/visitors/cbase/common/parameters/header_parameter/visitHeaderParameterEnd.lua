@@ -8,4 +8,4 @@ local function visitHeaderParameterEnd(parameterName, parameter, extensions, cal
     return {}
 end
 
-return functionCallAndLog("visitHeaderParameterEnd", visitHeaderParameterEnd)
+return functionCallAndLog("visitHeaderParameterEnd", visitHeaderParameterEnd, -1)

@@ -8,4 +8,4 @@ local function visitResponseEnd(responseName, response, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitResponseEnd", visitResponseEnd)
+return functionCallAndLog("visitResponseEnd", visitResponseEnd, -1)

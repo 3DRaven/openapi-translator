@@ -7,4 +7,4 @@ local function visitServerStart(server, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitServerStart", visitServerStart)
+return functionCallAndLog("visitServerStart", visitServerStart, 1)

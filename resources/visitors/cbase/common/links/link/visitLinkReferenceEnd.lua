@@ -8,4 +8,4 @@ local function visitLinkReferenceEnd(linkName, linkReference, extensions, callId
     return {}
 end
 
-return functionCallAndLog("visitLinkReferenceEnd", visitLinkReferenceEnd)
+return functionCallAndLog("visitLinkReferenceEnd", visitLinkReferenceEnd, -1)

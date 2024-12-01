@@ -11,4 +11,4 @@ local function visitObjectPropertyStart(propertyName, schema, extensions, callId
     return {}
 end
 
-return functionCallAndLog("visitObjectPropertyStart", visitObjectPropertyStart)
+return functionCallAndLog("visitObjectPropertyStart", visitObjectPropertyStart, 1)

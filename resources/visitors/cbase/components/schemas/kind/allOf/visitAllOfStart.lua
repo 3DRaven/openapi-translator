@@ -14,4 +14,4 @@ local function visitAllOfStart(schemas, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitAllOfStart", visitAllOfStart)
+return functionCallAndLog("visitAllOfStart", visitAllOfStart, 1)

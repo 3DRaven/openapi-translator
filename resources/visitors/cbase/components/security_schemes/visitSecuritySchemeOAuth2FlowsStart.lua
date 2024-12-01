@@ -7,4 +7,4 @@ local function visitSecuritySchemeOAuth2FlowsStart(flows, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitSecuritySchemeOAuth2FlowsStart", visitSecuritySchemeOAuth2FlowsStart)
+return functionCallAndLog("visitSecuritySchemeOAuth2FlowsStart", visitSecuritySchemeOAuth2FlowsStart, 1)

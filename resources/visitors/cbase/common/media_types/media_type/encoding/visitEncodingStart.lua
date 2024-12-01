@@ -8,4 +8,4 @@ local function visitEncodingStart(encodingName, encoding, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitEncodingStart", visitEncodingStart)
+return functionCallAndLog("visitEncodingStart", visitEncodingStart, 1)

@@ -8,4 +8,4 @@ local function visitSecuritySchemeReferenceStart(securitySchemeName, securitySch
     return {}
 end
 
-return functionCallAndLog("visitSecuritySchemeReferenceStart", visitSecuritySchemeReferenceStart)
+return functionCallAndLog("visitSecuritySchemeReferenceStart", visitSecuritySchemeReferenceStart, 1)

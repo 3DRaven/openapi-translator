@@ -8,4 +8,4 @@ local function visitQueryParameterStart(parameterName, parameter, extensions, ca
     return {}
 end
 
-return functionCallAndLog("visitQueryParameterStart", visitQueryParameterStart)
+return functionCallAndLog("visitQueryParameterStart", visitQueryParameterStart, 1)

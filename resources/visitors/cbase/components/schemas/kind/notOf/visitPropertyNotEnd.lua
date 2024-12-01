@@ -7,4 +7,4 @@ local function visitPropertyNotEnd(schema, namesStack, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitPropertyNotEnd", visitPropertyNotEnd)
+return functionCallAndLog("visitPropertyNotEnd", visitPropertyNotEnd, -1)

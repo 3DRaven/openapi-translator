@@ -8,4 +8,4 @@ local function visitAsyncCallbackReferenceEnd(callbackName, callbackReference, e
     return {}
 end
 
-return functionCallAndLog("visitAsyncCallbackReferenceEnd", visitAsyncCallbackReferenceEnd)
+return functionCallAndLog("visitAsyncCallbackReferenceEnd", visitAsyncCallbackReferenceEnd, -1)

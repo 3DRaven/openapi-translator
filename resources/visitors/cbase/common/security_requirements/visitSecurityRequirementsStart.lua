@@ -7,4 +7,4 @@ local function visitSecurityRequirementsStart(securities, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitSecurityRequirementsStart", visitSecurityRequirementsStart)
+return functionCallAndLog("visitSecurityRequirementsStart", visitSecurityRequirementsStart, 1)

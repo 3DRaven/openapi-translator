@@ -8,4 +8,4 @@ local function visitCookieParameterEnd(parameterName, parameter, extensions, cal
     return {}
 end
 
-return functionCallAndLog("visitCookieParameterEnd", visitCookieParameterEnd)
+return functionCallAndLog("visitCookieParameterEnd", visitCookieParameterEnd, -1)

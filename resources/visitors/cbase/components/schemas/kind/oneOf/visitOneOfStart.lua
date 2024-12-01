@@ -8,4 +8,4 @@ local function visitOneOfStart(schemas, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitOneOfStart", visitOneOfStart)
+return functionCallAndLog("visitOneOfStart", visitOneOfStart, 1)

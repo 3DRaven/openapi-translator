@@ -8,4 +8,4 @@ local function visitExampleReferenceEnd(exampleName, exampleReference, extension
     return {}
 end
 
-return functionCallAndLog("visitExampleReferenceEnd", visitExampleReferenceEnd)
+return functionCallAndLog("visitExampleReferenceEnd", visitExampleReferenceEnd, -1)

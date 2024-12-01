@@ -8,4 +8,4 @@ local function visitObjectPropertyEnd(propertyName, schema, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitObjectPropertyEnd", visitObjectPropertyEnd)
+return functionCallAndLog("visitObjectPropertyEnd", visitObjectPropertyEnd, -1)

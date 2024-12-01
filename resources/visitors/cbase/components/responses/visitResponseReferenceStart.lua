@@ -12,4 +12,4 @@ local function visitResponseReferenceStart(responseName, responseReference, exte
     return {}
 end
 
-return functionCallAndLog("visitResponseReferenceStart", visitResponseReferenceStart)
+return functionCallAndLog("visitResponseReferenceStart", visitResponseReferenceStart, 1)

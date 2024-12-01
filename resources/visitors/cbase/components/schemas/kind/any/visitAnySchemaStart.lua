@@ -29,4 +29,4 @@ local function visitAnySchemaStart(anySchemaDescriptor, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitAnySchemaStart", visitAnySchemaStart)
+return functionCallAndLog("visitAnySchemaStart", visitAnySchemaStart, 1)

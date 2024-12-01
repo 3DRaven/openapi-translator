@@ -43,6 +43,12 @@ components:
       type: http
       scheme: basic
   schemas:
+    ObjectWithAllOfInProperty:
+      type: object
+      properties:
+        some_field:
+          allOf:
+            - $ref: "#/components/schemas/CustomCode"
     PagingSimplifiedTrackObject:
       type: object
       allOf:

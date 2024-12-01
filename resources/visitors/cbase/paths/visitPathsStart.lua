@@ -7,4 +7,4 @@ local function visitPathsStart(paths, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitPathsStart", visitPathsStart)
+return functionCallAndLog("visitPathsStart", visitPathsStart, 1)

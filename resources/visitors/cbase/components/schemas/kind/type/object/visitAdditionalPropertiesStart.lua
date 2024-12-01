@@ -14,4 +14,4 @@ local function visitAdditionalPropertiesStart(schema, minProperties, maxProperti
     return {}
 end
 
-return functionCallAndLog("visitAdditionalPropertiesStart", visitAdditionalPropertiesStart)
+return functionCallAndLog("visitAdditionalPropertiesStart", visitAdditionalPropertiesStart, 1)

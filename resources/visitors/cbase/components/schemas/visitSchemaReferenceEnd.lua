@@ -12,4 +12,4 @@ local function visitSchemaReferenceEnd(schemaName, schemaReference, extensions, 
     return {}
 end
 
-return functionCallAndLog("visitSchemaReferenceEnd", visitSchemaReferenceEnd)
+return functionCallAndLog("visitSchemaReferenceEnd", visitSchemaReferenceEnd, -1)

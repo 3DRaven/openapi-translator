@@ -8,4 +8,4 @@ local function visitRequestBodyEnd(requestBodyName, requestBody, extensions, cal
     return {}
 end
 
-return functionCallAndLog("visitRequestBodyEnd", visitRequestBodyEnd)
+return functionCallAndLog("visitRequestBodyEnd", visitRequestBodyEnd, -1)

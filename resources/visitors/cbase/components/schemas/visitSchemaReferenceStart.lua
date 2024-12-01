@@ -12,4 +12,4 @@ local function visitSchemaReferenceStart(schemaName, schemaReference, extensions
     return {}
 end
 
-return functionCallAndLog("visitSchemaReferenceStart", visitSchemaReferenceStart)
+return functionCallAndLog("visitSchemaReferenceStart", visitSchemaReferenceStart, 1)

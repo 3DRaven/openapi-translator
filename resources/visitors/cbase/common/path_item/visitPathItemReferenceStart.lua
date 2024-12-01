@@ -8,4 +8,4 @@ local function visitPathItemReferenceStart(pathItemName, pathItemReference, exte
     return {}
 end
 
-return functionCallAndLog("visitPathItemReferenceStart", visitPathItemReferenceStart)
+return functionCallAndLog("visitPathItemReferenceStart", visitPathItemReferenceStart, 1)

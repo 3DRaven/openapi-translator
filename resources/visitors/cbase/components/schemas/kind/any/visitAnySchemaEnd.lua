@@ -13,4 +13,4 @@ local function visitAnySchemaEnd(anySchemaDescriptor, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitAnySchemaEnd", visitAnySchemaEnd)
+return functionCallAndLog("visitAnySchemaEnd", visitAnySchemaEnd, -1)

@@ -8,4 +8,4 @@ local function visitParameterReferenceStart(parameterName, parameterReference, e
     return {}
 end
 
-return functionCallAndLog("visitParameterReferenceStart", visitParameterReferenceStart)
+return functionCallAndLog("visitParameterReferenceStart", visitParameterReferenceStart, 1)

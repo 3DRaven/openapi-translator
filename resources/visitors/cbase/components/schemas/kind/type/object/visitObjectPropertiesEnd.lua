@@ -7,4 +7,4 @@ local function visitObjectPropertiesEnd(properties, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitObjectPropertiesEnd", visitObjectPropertiesEnd)
+return functionCallAndLog("visitObjectPropertiesEnd", visitObjectPropertiesEnd, -1)

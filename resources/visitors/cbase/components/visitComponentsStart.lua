@@ -7,4 +7,4 @@ local function visitComponentsStart(components, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitComponentsStart", visitComponentsStart)
+return functionCallAndLog("visitComponentsStart", visitComponentsStart, 1)

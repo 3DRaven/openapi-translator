@@ -15,4 +15,4 @@ local function visitOneOfEnd(schemas, extensions, callId)
     end
 end
 
-return functionCallAndLog("visitOneOfEnd", visitOneOfEnd)
+return functionCallAndLog("visitOneOfEnd", visitOneOfEnd, -1)

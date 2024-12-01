@@ -8,4 +8,4 @@ local function visitHeaderParameterStart(parameterName, parameter, extensions, c
     return {}
 end
 
-return functionCallAndLog("visitHeaderParameterStart", visitHeaderParameterStart)
+return functionCallAndLog("visitHeaderParameterStart", visitHeaderParameterStart, 1)

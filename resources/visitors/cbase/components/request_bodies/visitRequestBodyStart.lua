@@ -8,4 +8,4 @@ local function visitRequestBodyStart(requestBodyName, requestBody, extensions, c
     return {}
 end
 
-return functionCallAndLog("visitRequestBodyStart", visitRequestBodyStart)
+return functionCallAndLog("visitRequestBodyStart", visitRequestBodyStart, 1)

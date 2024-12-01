@@ -7,4 +7,4 @@ local function visitDeleteOperationEnd(operation, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitDeleteOperationEnd", visitDeleteOperationEnd)
+return functionCallAndLog("visitDeleteOperationEnd", visitDeleteOperationEnd, -1)

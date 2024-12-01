@@ -7,4 +7,4 @@ local function visitSpecStart(version, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitSpecStart", visitSpecStart)
+return functionCallAndLog("visitSpecStart", visitSpecStart, 1)

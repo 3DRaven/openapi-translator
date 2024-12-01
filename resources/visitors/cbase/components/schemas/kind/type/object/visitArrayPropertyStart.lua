@@ -14,7 +14,4 @@ local function visitArrayPropertyStart(arrayDescriptor, extensions, callId)
     return {}
 end
 
-local function beforeDecorator()
-end
-
-return functionCallAndLog("visitArrayPropertyStart", visitArrayPropertyStart, beforeDecorator)
+return functionCallAndLog("visitArrayPropertyStart", visitArrayPropertyStart, 1)

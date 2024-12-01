@@ -7,4 +7,4 @@ local function visitRequestBodiesStart(requestBodies, extensions, callId)
     return {}
 end
 
-return functionCallAndLog("visitRequestBodiesStart", visitRequestBodiesStart)
+return functionCallAndLog("visitRequestBodiesStart", visitRequestBodiesStart, 1)
