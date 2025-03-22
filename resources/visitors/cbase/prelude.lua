@@ -937,6 +937,7 @@ end
 
 --- Class for storing variables across scripts with loggable access manner for all chain of models
 --- @class GlobalContext
+--- @field generatedClasses Stack # stack of names of generated classes
 --- @field names Stack # stack of names of processed schemas
 --- @field savedNames Stack # stack of names for temporary save when reference processing executed
 --- @field values Stack # stack of models or properties in processing
@@ -954,6 +955,8 @@ function GlobalContext:new()
     instance.savedNames = Stack.new("savedNames")
     --- @type Stack
     instance.values = Stack.new("values")
+    --- @type Stack
+    instance.generatedClasses = Stack.new("generatedClasses")
     return instance
 end
 
