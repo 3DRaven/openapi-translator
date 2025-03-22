@@ -81,7 +81,13 @@
         "printLastArgTable",
         "incrementCallNumber",
         "errorHandler",
-        "printCalls"
+        "printCalls",
+        "mergeTablesWithUniqueKeys",
+        "mergeArraysUnique",
+        "createProperty",
+        "is_string_empty",
+        "concatStackCleanCapitalized",
+        "is_string_blank"
     ],
     "terminal.integrated.scrollback": 16777216,
     "references.preferredLocation": "view",
@@ -91,11 +97,14 @@
         "canonicalize",
         "cbase",
         "chrono",
+        "clazz",
         "dicriminator",
         "diffy",
+        "incapsulation",
         "indexmap",
         "javax",
         "lldb",
+        "loggable",
         "mlua",
         "Nillable",
         "Nonnull",
@@ -104,10 +113,16 @@
         "OUTPATH",
         "Petstore",
         "reqwest",
-        "springframework"
+        "springframework",
+        "vararg"
     ],
     "files.associations": {
         "openapi-translator.log": "markdown"
     },
-    "lldb.launch.stdio": [null, "openapi-translator.log", null]
+    "lldb.launch.stdio": [
+        null,
+        "openapi-translator.log",
+        null
+    ],
+    "CodeGPT.apiKey": "CodeGPT Plus Beta"
 }

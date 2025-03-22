@@ -7,22 +7,7 @@
 --- @param callId string? # some useful identifier of this visitor call
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 local function visitAdditionalPropertiesEnd(schema, minProperties, maxProperties, extensions, callId)
-    --- @type ModelBase
-    local childModel = GLOBAL_CONTEXT.models:pop()
-    --- @type ModelBase
-    local currentModel = GLOBAL_CONTEXT.models:element()
-    --- removed name part prepared in visitAdditionalPropertiesStart
-    GLOBAL_CONTEXT.names:pop()
-
-    if currentModel:instanceOf(ObjectModel) then
-        if childModel:instanceOf(TypeTransferModel) then
-            return STRUCT.addAdditionalProperty(currentModel, childModel.name, extensions)
-        else
-            error("Child type for additionalProperties not found")
-        end
-    else
-        error("additionalProperties not in object found")
-    end
+    return {}
 end
 
 return functionCallAndLog("visitAdditionalPropertiesEnd", visitAdditionalPropertiesEnd, -1)

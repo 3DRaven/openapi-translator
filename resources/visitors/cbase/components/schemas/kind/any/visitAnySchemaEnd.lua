@@ -6,10 +6,6 @@
 --- @param callId string? # some useful identifier of this visitor call
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 local function visitAnySchemaEnd(anySchemaDescriptor, extensions, callId)
-    local currentModel = GLOBAL_CONTEXT.models:peek()
-    if currentModel ~= nil and currentModel:instanceOf(AnySchemaModel) then
-        GLOBAL_CONTEXT.models:pop()
-    end
     return {}
 end
 

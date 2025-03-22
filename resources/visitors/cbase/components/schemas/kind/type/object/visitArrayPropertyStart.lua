@@ -7,10 +7,6 @@
 --- @param callId string? # some useful identifier of this visitor call
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 local function visitArrayPropertyStart(arrayDescriptor, extensions, callId)
-    --- @type ModelBase?
-    -- This is a temporary model for collecting information about the schemas inside the array
-    GLOBAL_CONTEXT.models:push(TypeTransferModel.new("unknown-items"))
-
     return {}
 end
 

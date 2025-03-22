@@ -8,14 +8,7 @@
 --- @param callId string? # some useful identifier of this visitor call
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 local function visitAdditionalPropertiesAny(flag, minProperties, maxProperties, extensions, callId)
-    --- @type ModelBase
-    local currentModel = GLOBAL_CONTEXT.models:element()
-    if currentModel == nil then
-        error("additionalProperties with type any in unknown position")
-    else
-        local codeVariant = CODE.getVariant(extensions[Extensions.VARIANT])
-        return STRUCT.addAdditionalProperty(currentModel, codeVariant:getAnyType(), extensions)
-    end
+    return {}
 end
 
 return functionCallAndLog("visitAdditionalPropertiesAny", visitAdditionalPropertiesAny)

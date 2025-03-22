@@ -35,7 +35,7 @@ paths:
             application/json:
               x-ot-model-name: SuccessResponse
               schema:
-                $ref: "#/components/schemas/PagingSimplifiedTrackObject"
+                $ref: "#/components/schemas/SimpleModel"
 
 components:
   securitySchemes:
@@ -43,33 +43,106 @@ components:
       type: http
       scheme: basic
   schemas:
-    ObjectWithAllOfInProperty:
+    # StringWithMinLength:
+    #   type: string
+    #   minLength: 3
+    # StringWithMaxLength:
+    #   type: string
+    #   maxLength: 3
+    SimpleModel:
       type: object
       properties:
-        some_field:
-          allOf:
-            - $ref: "#/components/schemas/CustomCode"
-    PagingSimplifiedTrackObject:
-      type: object
-      allOf:
-        - $ref: "#/components/schemas/CustomCode"
-        - type: object
+        simple_field:
+          type: string
+        object_field:
+          type: object
           properties:
-            security:
-              x-ot-variant: transactional
+            simple_property:
               type: string
-            items:
-              type: array
-              items:
-                $ref: "#/components/schemas/CustomCode"
-    CustomCode:
-      type: object
-      properties:
-        some_field:
-          type: string
-        another_field:
-          x-ot-variant: transactional
-          type: string
+    # ObjectWithAllOfInProperty:
+    #   type: object
+    #   properties:
+    #     object_field:
+    #       type: object
+    #       properties:
+    #         p1:
+    #           type: string
+    #     string_field:
+    #       type: string
+          
+    #     array_field:
+    #       type: array
+    #       items:
+    #         type: string
+    #     all_of_field:
+    #       allOf:
+    #         - type: object
+    #           properties:
+    #             p1:
+    #               type: string
+    #               minLength: 10
+    #         - type: object
+    #           properties:
+    #             p1:
+    #               type: string
+    # ObjectWithAllOfInPropertyWithStrings:
+    #   type: object
+    #   properties:
+    #     object_field:
+    #       allOf:
+    #         - $ref: "#/components/schemas/StringWithMinLength"
+    #         - $ref: "#/components/schemas/StringWithMaxLength"
+    # ObjectWithReferenceInProperty:
+    #   type: object
+    #   properties:
+    #     object_field:
+    #       type: object
+    #       properties:
+    #         field:
+    #           type: string
+    #     object_ref:
+    #       $ref: "#/components/schemas/StringWithMinLength"
+    #     string_field:
+    #       $ref: "#/components/schemas/StringWithMinLength"
+
+        # object_field_ref:
+        #   allOf:
+        #     - $ref: "#/components/schemas/CustomCode"
+        #     - type: object
+        #       properties:
+        #         p1:
+        #           type: string
+        # string_field:
+        #   allOf:
+        #     - type: string
+        #     - type: string
+        #       minLength: 10
+    # ReferenceToObjectInProperty:
+    #   type: object
+    #   properties:
+    #     field:
+    #       $ref: "#/components/schemas/ObjectWithAllOfInProperty"
+    # PagingSimplifiedTrackObject:
+    #   type: object
+    #   allOf:
+    #     - $ref: "#/components/schemas/ObjectWithAllOfInProperty"
+    #     - type: object
+    #       properties:
+    #         security:
+    #           x-ot-variant: transactional
+    #           type: string
+    #         items:
+    #           type: array
+    #           items:
+    #             $ref: "#/components/schemas/CustomCode"
+    # CustomCode:
+    #   type: object
+    #   properties:
+    #     some_field:
+    #       type: string
+    #     another_field:
+    #       x-ot-variant: transactional
+    #       type: string
     # AllOf:
     #   x-ot-model-name: CompositeObject
     #   allOf:

@@ -627,7 +627,8 @@ IntegerFormat.INT64 = "int64"
 
 ---------------------------------------------------------------------------------------------------
 --- Generic stack
---- @class Stack
+--- @generic T
+--- @class Stack<T>
 --- @field items any[]
 --- @field stackName string
 Stack = {}
@@ -636,8 +637,42 @@ Stack.__index = Stack
 function Stack.new(stackName)
     local instance = setmetatable({}, Stack)
     instance.stackName = stackName
+    --- @generic T
+    --- @type T[]
     instance.items = {}
     return instance
+end
+
+--- @generic T
+--- @return T[]
+function Stack:items()
+    return self.items
+end
+
+--- Creates a shallow copy of the current stack
+--- @generic T
+--- @return Stack<T> # A new stack instance containing the same items
+function Stack:clone()
+    local newStack = Stack.new(self.stackName)
+
+    for i, item in ipairs(self.items) do
+        newStack.items[i] = item
+    end
+
+    return newStack
+end
+
+--- Checks whether the given item is in the stack.
+--- @generic T
+--- @param item T # The item to check for.
+--- @return boolean # True if the item is in the stack, false otherwise.
+function Stack:contains(item)
+    for _, v in ipairs(self.items) do
+        if v == item then
+            return true
+        end
+    end
+    return false
 end
 
 function Stack:push(item)
@@ -651,8 +686,14 @@ CONTEXT <- push to stack [%s], after
     return item
 end
 
+function Stack:pushSilent(item)
+    table.insert(self.items, item)
+    return item
+end
+
 --- Pushes all elements from the given table onto the stack.
---- @param elements any[] # A table containing elements to be pushed onto the stack
+--- @generic T
+--- @param elements T[] # A table containing elements to be pushed onto the stack
 function Stack:pushAll(elements)
     for _, element in ipairs(elements) do
         table.insert(self.items, element)
@@ -660,7 +701,8 @@ function Stack:pushAll(elements)
 end
 
 --- return last element and delete it from stack
---- @return any
+--- @generic T
+--- @return T
 function Stack:pop()
     if #self.items == 0 then
         error(string.format("Stack [%s] is empty", self.stackName))
@@ -675,6 +717,15 @@ CONTEXT -> pop from stack [%s], before
     return item
 end
 
+--- @return Property
+function Stack:popProperty()
+    local property = self:pop()
+    assert(property:instanceOf(Property), "Found not a Property")
+    return property
+end
+
+--- @generic T
+--- @return T
 function Stack:peek()
     if #self.items == 0 then
         return nil
@@ -691,7 +742,8 @@ end
 
 --- Retrieves, but does not remove, the head of this stack.
 --- This method differs from peek only in that it throws an error if this stack is empty.
---- @return any # The head of this stack
+--- @generic T
+--- @return T # The head of this stack
 function Stack:element()
     if #self.items == 0 then
         error(string.format("Stack [%s] is empty.", self.stackName))
@@ -706,9 +758,17 @@ CONTEXT -> element from stack [%s]
     return item
 end
 
+--- @return ObjectModel
+function Stack:elementObjectModel()
+    local value = self:element()
+    assert(value:instanceOf(ObjectModel), "Found not a ObjectModel")
+    return value
+end
+
 --- Retrieves, but does not remove, the penultimate element of this stack.
 --- This method return nil if the stack has fewer than two elements.
---- @return any|nil # The penultimate element of this stack
+--- @generic T
+--- @return T|nil # The penultimate element of this stack
 function Stack:penultimate()
     if #self.items < 2 then
         return nil
@@ -724,17 +784,40 @@ CONTEXT -> penultimate from stack [%s]
 end
 
 --- Method to apply a given function to each element in the stack.
---- @param action function # A function to be applied to each element in the stack.
+--- @generic T
+--- @param action fun(it:T) # A function to be applied to each element in the stack.
 function Stack:forEach(action)
     for _, item in ipairs(self.items) do
         action(item)
     end
 end
 
+--- Method to create a new stack by applying a given function to each element in the current stack.
+--- @generic T,R
+--- @param transform fun(it:T):R # A function to transform each element in the stack.
+--- @return Stack<T> # A new stack containing the transformed elements.
+function Stack:map(transform)
+    local newStack = Stack.new()
+    self:forEach(function(item)
+        newStack:pushSilent(transform(item))
+    end)
+    return newStack
+end
+
+--- Method to apply a given function to each property in the stack.
+---@param action fun(property: Property) # A function to be applied to each element in the stack.
+function Stack:forEachProperty(action)
+    for _, item in ipairs(self.items) do
+        assert(item:instanceOf(Property), "Not a Property type of:" .. tableToString(item))
+        action(item)
+    end
+end
+
 --- Method to reduce the elements of the stack to a single value.
+--- @generic T
 --- @param accumulator any # The initial value for the reduction.
 --- @param reducer function # A function that takes the accumulator and an element, and returns a new accumulator.
---- @return any # The final reduced value.
+--- @return T # The final reduced value.
 function Stack:reduce(accumulator, reducer)
     for _, item in ipairs(self.items) do
         accumulator = reducer(accumulator, item)
@@ -754,25 +837,109 @@ function Stack:size()
     return #self.items
 end
 
---- Concatenates all elements of the stack into a single string with each element's first letter capitalized.
---- @param stack Stack # The stack whose elements will be concatenated.
---- @return string? # The concatenated string with each element's first letter capitalized.
-function concatStackCapitalized(stack)
-    local reducer = function(acc, item)
-        return acc .. item:gsub("^%l", string.upper)
-    end
+--- @param separator string?
+--- @return string # A string containing all elements concatenated with separator
+function Stack:concat(separator)
+    separator = separator or ""
+    return table.concat(self.items, separator)
+end
+
+--- Concatenates all elements of the stack into a single string, with each element's first letter capitalized.
+--- @param stack table # The stack whose elements will be concatenated. Must have an `items` array.
+--- @param separator string? # The separator between elements (defaults to an empty string).
+--- @return string? # The concatenated string with each element's first letter capitalized, or `nil` if the stack is empty.
+function concatStackCapitalized(stack, separator)
+    separator = separator or "" -- Use an empty string if no separator is provided
     if (#stack.items == 0) then
         return nil
-    else
-        return stack:reduce("", reducer)
     end
+
+    local result = ""
+    for i, item in ipairs(stack.items) do
+        local capitalized = item:gsub("^%l", string.upper)
+        result = result .. (i > 1 and separator or "") .. capitalized
+    end
+
+    return result
+end
+
+--- Concatenates all elements of the stack into a single string,
+--- capitalizing the first letter of each word and removing underscores
+--- and non-alphanumeric characters.
+---
+--- @param stack Stack # The stack whose elements will be concatenated. Must have an `items` array.
+--- @param separator string? # The separator between elements (defaults to an empty string).
+--- @return string # The concatenated string with processed elements, or `nil` if the stack is empty.
+function concatStackCleanCapitalized(stack, separator)
+    separator = separator or "" -- Use an empty string if no separator is provided
+    assert(#stack.items, "Stack is empty")
+
+    local result = ""
+    for i, item in ipairs(stack.items) do
+        assert(type(item) == "string", "Non string value for concatenation")
+        -- Remove underscores and non-alphanumeric characters, then capitalize first letter
+        local cleaned_item = item:gsub("[^%w%d]", ""):gsub("_", "")     -- Remove non-alphanumeric and underscores
+        local capitalized_item = cleaned_item:gsub("^%l", string.upper) -- Capitalize first letter
+        result = result .. (i > 1 and separator or "") .. capitalized_item
+    end
+
+    return result
+end
+
+--- Merges two tables if they have unique keys.
+--- This function merges two tables into one if they do not have any overlapping keys.
+--- If a duplicate key is found, an error is thrown.
+--- @param left table The first table to merge.
+--- @param right table The second table to merge.
+--- @return table The merged table containing all unique keys from both input tables.
+--- @throws Error if a duplicate key is found in both tables.
+function mergeTablesWithUniqueKeys(left, right)
+    local result = {}
+
+    for key, value in pairs(left) do
+        result[key] = value
+    end
+
+    for key, value in pairs(right) do
+        if result[key] ~= nil then
+            error("Duplicate key [" .. tostring(key) .. "] with value [" .. tostring(value) .. "]")
+        end
+        result[key] = value
+    end
+
+    return result
+end
+
+--- Merges two arrays into one, excluding duplicate elements.
+--- @param left table # The first array.
+--- @param right table # The second array.
+--- @return table # A merged array containing unique elements from both arrays.
+function mergeArraysUnique(left, right)
+    local result = {}
+    local seen = {}
+
+    for _, value in ipairs(left) do
+        if not seen[value] then
+            table.insert(result, value)
+            seen[value] = true
+        end
+    end
+
+    for _, value in ipairs(right) do
+        if not seen[value] then
+            table.insert(result, value)
+            seen[value] = true
+        end
+    end
+
+    return result
 end
 
 --- Class for storing variables across scripts with loggable access manner for all chain of models
 --- @class GlobalContext
 --- @field names Stack # stack of names of processed schemas
 --- @field savedNames Stack # stack of names for temporary save when reference processing executed
---- @field models Stack # stack of models in processing
+--- @field values Stack # stack of models or properties in processing
 GlobalContext = {}
 GlobalContext.__index = GlobalContext
 
@@ -786,7 +953,7 @@ function GlobalContext:new()
     --- @type Stack
     instance.savedNames = Stack.new("savedNames")
     --- @type Stack
-    instance.models = Stack.new("models")
+    instance.values = Stack.new("values")
     return instance
 end
 
@@ -924,7 +1091,7 @@ function errorHandler(err)
     print("Saved names stack")
     printTable(GLOBAL_CONTEXT.savedNames)
     print("Models stack")
-    printTable(GLOBAL_CONTEXT.models)
+    printTable(GLOBAL_CONTEXT.values)
     printCalls()
     return err
 end
@@ -954,7 +1121,7 @@ function functionCallAndLog(funcName, mainFunc, localIndent)
             callId = "no-id"
         end
 
-        local currentModelName = concatStackCapitalized(GLOBAL_CONTEXT.names)
+        local currentModelName = concatStackCapitalized(GLOBAL_CONTEXT.names, "->")
 
         local appendModelName = ""
         if lastShowedModelName ~= currentModelName then
@@ -971,7 +1138,7 @@ function functionCallAndLog(funcName, mainFunc, localIndent)
         end
 
         local callLink = string.format("[%s](#link-%s)[%s]", callNumber, callNumber,
-            string.rep(" ", GLOBAL_CONTEXT.models:size()))
+            string.rep(" ", GLOBAL_CONTEXT.values:size()))
 
         table.insert(CALLS, callLink .. funcName .. " -> {" .. callId .. "}" .. appendModelName)
         print("# link-" .. callNumber .. "\nCALL <- [" .. funcName .. "]")
@@ -1100,6 +1267,17 @@ function WriteOperation.new_remove(modelName)
     return instance
 end
 
+--- @param code Stack<string> # produced code
+--- @param fileName string # data for generate file name
+function WriteOperation.new_from_code(code, fileName)
+    assert(not is_string_blank(fileName), "empty fileName")
+    local instance = setmetatable({}, WriteOperation)
+    instance.code = code:concat()
+    instance.file = fileName
+    instance.mode = WriteMode.APPEND
+    return instance
+end
+
 --- @param code string # produced code
 --- @param modelName string # data for generate file name
 function WriteOperation.new_append(code, modelName)
@@ -1156,99 +1334,186 @@ function adaptWriteOperations(writeOperations, modelName)
     return newWriteOperations
 end
 
---- We gather elements to create a model for disk storage. A typical Java model consists of includes
---- and code block related to a model class, containing properties and methods. Since visitors might need
---- to add elements to the model at any time (when they called), they are represented as separate lists
---- of disk write operations. For example, before saving, we can sort our write operations based on
---- certain criteria if needed.
---- @class ModelBase
---- @field name string
---- @field required string[]
---- @field includes Stack
---- @field properties Stack
---- @field methods Stack
-ModelBase = {}
-ModelBase.__index = ModelBase
+--- Checks if a string value is nil, null, or empty.
+---
+--- @param value string|nil|null The string value to check.
+--- @return boolean Returns true if the value is nil, null, or empty, false otherwise.
+function is_string_blank(value)
+    if value == nil or value == NULL then
+        return true
+    end
+    if type(value) ~= "string" then
+        error("Not a string")
+    end
+    if string.len(value) == 0 then
+        return true
+    end
+    if string.lower(value) == "null" then
+        return true
+    end
+    return false
+end
 
---- @param name string # name of model
-function ModelBase.new(name)
-    local instance = setmetatable({}, ModelBase)
-    instance.name = name
-    instance.required = {}
-    instance.includes = Stack.new(name .. "->includes")
-    instance.properties = Stack.new(name .. "->properties")
-    instance.methods = Stack.new(name .. "->methods")
+--- @class Value
+--- @field className string? # Type, described by this model, String, CustomGenericModel
+--- @field modelName string # just for logs information (ModelBase,ObjectModel, Property...)
+--- @field descriptor table # descriptor from spec
+--- @field extensions table # extensions from descriptor, just for usability
+Value = {}
+Value.__index = Value
+
+--- @param className string?
+--- @param modelName string
+--- @param descriptor table
+--- @param extensions table
+function Value:new(className, modelName, descriptor, extensions)
+    local instance = setmetatable({}, self) --- child set as metatable for parent instance
+    instance.className = className
+    instance.modelName = modelName
+    instance.descriptor = descriptor
+    instance.extensions = extensions
+    return instance
+end
+
+--- Method to determinate type of model
+--- @param clazz table # Class
+--- @return boolean # true if this model is instance of that class
+function Value:instanceOf(clazz)
+    return self ~= nil and clazz ~= nil and getmetatable(self) == clazz
+end
+
+--- @param extensions table
+--- @return Stack<string>
+function Value:getCode(extensions)
+    return Stack.new("unknown value code stack")
+end
+
+--- @class ObjectModel: Value
+--- @field required string[] # list of required properties
+--- @field properties Stack<Property> # list of properties
+ObjectModel = {}
+ObjectModel.__index = ObjectModel
+setmetatable(ObjectModel, { __index = Value })
+
+--- @param className string?
+--- @param required string[] # list of required properties names
+--- @param descriptor table
+--- @param extensions table
+--- @return ObjectModel
+function ObjectModel.new(className, required, descriptor, extensions)
+    --- @class ObjectModel
+    local instance = Value.new(ObjectModel, className, "ObjectModel", descriptor, extensions)
+    instance.required = required
+    instance.properties = Stack.new(className .. "->properties")
     return instance
 end
 
 --- Method to get property required status
 --- @param propertyName string # Type of last parent
 --- @return boolean # required property (true) or not (false)
-function ModelBase:isPropertyRequired(propertyName)
+function ObjectModel:isPropertyRequired(propertyName)
     local required = table.contains(self.required, propertyName)
-    print("\nCONTEXT <- for model [" .. self.name .. "] and property [" ..
+    print("\nCONTEXT <- for model [" .. self.className .. "] and property [" ..
         propertyName .. "] get required status as [" .. tostring(required) .. "]")
     return required
 end
 
---- Method to include and adapt model
---- @param model ModelBase #
-function ModelBase:includeModel(model)
-    self:adaptToIncludes(model.includes.items)
-    self:adaptToProperties(model.properties.items)
-    self:adaptToMethods(model.methods.items)
-end
-
---- Method to adapt includes to new model
---- @param writeOperations WriteOperation[] # Collected by visitor write operation
---- @return boolean # true if new code added to model false if code already in model
-function ModelBase:adaptToIncludes(writeOperations)
-    local lookup = {}
-    for _, operation in ipairs(writeOperations) do
-        lookup[operation.code] = true
-    end
-
-    for _, item in ipairs(self.includes.items) do
-        ---@type WriteOperation
-        local typedItem = item
-        if lookup[typedItem.code] then
-            print("Already added include, skip")
-            return false
+--- Method to add model
+--- @param property Property # Required model name
+--- @return Property # created property
+function ObjectModel:addProperty(property)
+    --- @type Property
+    for _, item in ipairs(self.properties.items) do
+        if item.name == property.name then
+            error(string.format("Duplicate property name [%s]", property.name))
         end
     end
-    self.includes:pushAll(adaptWriteOperations(writeOperations, self.name))
-    return true
+    self.properties:push(property)
+    return property
 end
 
---- Method to adapt write operations to new model for last added property
---- @param writeOperations WriteOperation[] # Collected by visitor write operation
-function ModelBase:adaptToLastProperty(writeOperations)
-    ---@type Property
-    local property = self.properties:element()
-    property.code:pushAll(adaptWriteOperations(writeOperations, self.name))
-end
+--- Merges two ObjectModel instances into a new ObjectModel.
+--- @param left ObjectModel # The first ObjectModel instance.
+--- @param right ObjectModel # The second ObjectModel instance.
+--- @return ObjectModel # A new ObjectModel instance containing the merged data.
+function ObjectModel.__add(left, right)
+    assert(left:instanceOf(ObjectModel), "Left parameter must be an ObjectModel")
+    assert(right:instanceOf(ObjectModel), "Right parameter must be an ObjectModel")
+    assert(left.className == right.className, "Different class names")
 
---- Method to adapting properties to model with replacing target file name
---- @param properties Property[] # Collected by visitor write operation
-function ModelBase:adaptToProperties(properties)
-    for _, property in ipairs(properties) do
-        ---@type Property
-        local typedProperty = property
-        self.properties:push(typedProperty:adaptToModel(self.name))
+    local mergedModel = ObjectModel.new(
+        left.className .. "_" .. right.className,
+        mergeArraysUnique(left.required, right.required),
+        mergeTablesWithUniqueKeys(left.descriptor, right.descriptor),
+        mergeTablesWithUniqueKeys(left.extensions, right.extensions)
+    )
+
+    for _, property in ipairs(left.properties.items) do
+        mergedModel:addProperty(property)
     end
+
+    for _, property in ipairs(right.properties.items) do
+        local exists = false
+        for i, existingProperty in ipairs(mergedModel.properties.items) do
+            if existingProperty.name == property.name then
+                mergedModel.properties.items[i] = existingProperty + property
+                exists = true
+                break
+            end
+        end
+        if not exists then
+            mergedModel:addProperty(property)
+        end
+    end
+
+    return mergedModel
 end
 
---- Method to adapting method to new model name
---- @param writeOperations WriteOperation[] # Collected by visitor write operation
-function ModelBase:adaptToMethods(writeOperations)
-    self.methods:pushAll(adaptWriteOperations(writeOperations, self.name))
+--- @param extensions table
+--- @return Stack<string>
+function ObjectModel:getCode(extensions)
+    local codeVariant = CODE.getVariant(extensions[Extensions.VARIANT])
+
+    local classFileName = codeVariant:getClassFileName(self.className)
+
+    --- @type Stack<string>
+    local code = Stack.new("object [" .. classFileName .. "] code")
+
+    self.properties:forEachProperty(
+        function(it)
+            code:pushAll(it:getIncludes().items)
+        end)
+
+    code:push(codeVariant:getClassHeader(self.className))
+
+    self.properties:forEachProperty(
+        function(it)
+            code:pushAll(it:getCode(extensions).items)
+        end)
+
+    code:push(codeVariant:getClassFooter())
+
+    print("Generated code")
+    printTable(code.items)
+
+    return code
 end
 
---- Method to add model
---- @param propertyName string|nil # Required model name
---- @param extensions table<string,string> #
---- @return Property # created property
-function ModelBase:addModelProperty(propertyName, extensions)
+--- @class Property: Value
+--- @field name string
+--- @field includes Stack<string> # includes for this type of property and all markers
+--- @field markers Stack<string> # annotations for this property
+--- @field methods Stack<string> # access methods for property
+Property = {}
+Property.__index = Property
+setmetatable(Property, { __index = Value })
+
+--- @param propertyName string # name of property
+--- @param className string # class name for property value
+--- @param descriptor table # descriptor from spec
+--- @param extensions table # extensions from spec
+--- @return Property
+function Property.new(propertyName, className, descriptor, extensions)
     local name = extensions[Extensions.PROPERTY_NAME] or propertyName
 
     if not name then
@@ -1256,121 +1521,94 @@ function ModelBase:addModelProperty(propertyName, extensions)
             Extensions.PROPERTY_NAME .. "' in extensions is provided.")
     end
 
-    --- @type Property
-    for _, item in ipairs(self.properties.items) do
-        if item.name == name then
-            error(string.format("Duplicate property name [%s]", name))
+    --- @class Property
+    local newProperty = Value.new(Property, className, "Property", descriptor, extensions)
+
+    newProperty.name = name
+    newProperty.includes = Stack.new(className .. "->includes")
+    newProperty.markers = Stack.new(className .. "->markers")
+    newProperty.methods = Stack.new(className .. "->methods")
+    return newProperty
+end
+
+---@param include string?
+function Property:addInclude(include)
+    if include ~= nil then
+        if not self.includes:contains(include) then
+            self.includes:push(include)
         end
     end
-
-    local property = Property.new(name)
-    self.properties:push(property)
-    return property
 end
 
---- Method to determinate type of model
---- @param clazz table # Class
---- @return boolean # true if this model is instance of that class
-function ModelBase:instanceOf(clazz)
-    return getmetatable(self) == clazz
+--- @return Stack<string>
+function Property:getIncludes()
+    return self.includes:clone()
 end
 
---- Collects all code from properties in the model
---- @return WriteOperation[] # Array of code from all properties
-function ModelBase:collectAllPropertiesCode()
-    local allCode = {}
-    for _, property in ipairs(self.properties.items) do
-        for _, codeItem in ipairs(property.code.items) do
-            table.insert(allCode, codeItem)
+---@param marker string?
+function Property:addMarker(marker)
+    if marker ~= nil then
+        if not self.markers:contains(marker) then
+            self.markers:push(marker)
+        else
+            error("Duplicate marker in property")
         end
     end
-    return allCode
 end
 
---- Derived class that inherits from BaseClass
---- @class ObjectModel:ModelBase
-ObjectModel = setmetatable({}, { __index = ModelBase })
-ObjectModel.__index = ObjectModel
-
---- @param name string
---- @return ObjectModel
-function ObjectModel.new(name)
-    local instance = setmetatable(ModelBase.new(name), ObjectModel)
-    ---@type ObjectModel
-    return instance
+---@param method string?
+function Property:addMethod(method)
+    if method ~= nil then
+        if not self.methods:contains(method) then
+            self.methods:push(method)
+        else
+            error("Duplicate method in property")
+        end
+    end
 end
 
---- Derived class that inherits from BaseClass
---- @class TypeTransferModel:ModelBase
-TypeTransferModel = setmetatable({}, { __index = ModelBase })
-TypeTransferModel.__index = TypeTransferModel
+---@param left Property
+---@param right Property
+function Property.__add(left, right)
+    assert(left:instanceOf(Property), "Left operand is not Property")
+    assert(right:instanceOf(Property), "Right operand is not Property")
+    assert(left.name == right.name, "Different properties names")
+    assert(left.className == right.className, "Different properties classNames")
 
---- @param name string
---- @return TypeTransferModel
-function TypeTransferModel.new(name)
-    local instance = setmetatable(ModelBase.new(name), TypeTransferModel)
-    ---@type TypeTransferModel
-    return instance
+    local newProp = Property.new(left.name,
+        left.className,
+        mergeTablesWithUniqueKeys(left.descriptor, right.descriptor),
+        mergeTablesWithUniqueKeys(left.extensions, right.extensions)
+    )
+
+    newProp.includes = left.includes:clone()
+    for _, inc in ipairs(right.includes.items) do
+        newProp:addInclude(inc)
+    end
+
+    newProp.markers = left.markers:clone()
+    for _, marker in ipairs(right.markers.items) do
+        newProp:addMarker(marker)
+    end
+
+    newProp.methods = left.methods:clone()
+    for _, method in ipairs(right.methods.items) do
+        newProp:addMethod(method)
+    end
+
+    return newProp
 end
 
---- Derived class that inherits from BaseClass
---- @class AnySchemaModel:ModelBase
-AnySchemaModel = setmetatable({}, { __index = ModelBase })
-AnySchemaModel.__index = AnySchemaModel
-
---- @param name string
---- @return AnySchemaModel
-function AnySchemaModel.new(name)
-    local instance = setmetatable(ModelBase.new(name), AnySchemaModel)
-    ---@type AnySchemaModel
-    return instance
-end
-
---- Derived class that inherits from BaseClass
---- @class AllOfModel:ModelBase
-AllOfModel = setmetatable({}, { __index = ModelBase })
-AllOfModel.__index = AllOfModel
-
---- @param name string
---- @return AllOfModel
-function AllOfModel.new(name)
-    local instance = setmetatable(ModelBase.new(name), AllOfModel)
-    ---@type AllOfModel
-    return instance
-end
-
---- Derived class that inherits from BaseClass
---- @class OneOfModel:ModelBase
-OneOfModel = setmetatable({}, { __index = ModelBase })
-OneOfModel.__index = OneOfModel
-
---- @param name string
---- @return OneOfModel
-function OneOfModel.new(name)
-    local instance = setmetatable(ModelBase.new(name), OneOfModel)
-    ---@type OneOfModel
-    return instance
-end
-
---- @class Property
---- @field name string
---- @field code Stack
-Property = {}
-Property.__index = Property
-
-function Property.new(name)
-    local instance = setmetatable({}, Property)
-    instance.name = name
-    instance.code = Stack.new("code")
-    return instance
-end
-
---- @param modelName string # model name to adapt
---- @return Property # adapted to other model name
-function Property:adaptToModel(modelName)
-    local adaptedProperty = Property.new(self.name)
-    adaptedProperty.code:pushAll(adaptWriteOperations(self.code.items, modelName))
-    return adaptedProperty
+--- @param extensions table
+--- @return Stack<string>
+function Property:getCode(extensions)
+    local code = Stack.new("Property " .. self.name .. " code")
+    self.markers:forEach(
+        function(it)
+            code:push(it)
+        end)
+    code:push("public " .. self.className .. " " .. self.name .. ";")
+    return code
 end
 
 --- Replaces placeholders in the string with corresponding values from a table.
@@ -1468,8 +1706,8 @@ end
 --- global variable `targetParameters` created by the translator (Rust code) in the Lua context
 --- @param callId string? # some useful identifier of this visitor call
 local function prelude(callId)
-    print("    targetParamaters type: " .. type(TARGET_PARAMETERS))
-    print("    targetParamaters value:")
+    print("    targetParameters type: " .. type(TARGET_PARAMETERS))
+    print("    targetParameters value:")
     printTable(TARGET_PARAMETERS)
 end
 

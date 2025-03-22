@@ -130,4 +130,10 @@ function CodeBase:getArrayAsModel(arrayModelName, childModelName)
         ]]))
 end
 
+--- @param className string # name of the model class
+--- @return string # extension for class file (e.g. `.java`)
+function CodeBase:getClassFileName(className)
+    return className .. ".java"
+end
+
 return CodeBase

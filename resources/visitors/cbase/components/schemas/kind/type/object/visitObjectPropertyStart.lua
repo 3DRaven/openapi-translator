@@ -5,9 +5,7 @@
 --- @param callId string? # some useful identifier of this visitor call
 --- @return WriteOperation[] # Returns the output code and  file name for writing code
 local function visitObjectPropertyStart(propertyName, schema, extensions, callId)
-    --- @type ModelBase
-    local model = GLOBAL_CONTEXT.models:element()
-    model:addModelProperty(nullableAsNillable(propertyName), extensions)
+    GLOBAL_CONTEXT.names:push(propertyName)
     return {}
 end
 
